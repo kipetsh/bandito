@@ -608,6 +608,14 @@ function setPreview(target) {
     $('#placementPreview').classList.remove('hidden');
     status(choosePlacementMessage, '', choosePlacementTouchMessage);
 }
+function clearPlacementPreview() {
+    if (!state.placementPreview) return;
+    state.placementPreview = null;
+    for (const t of boardTargets) t.pin.classList.remove('board__pin--preview');
+    $('#board [data-ghost]').classList.add('hidden');
+    $('#placementPreview').classList.add('hidden');
+    if (state.selected >= 0) status(choosePlacementMessage, '', choosePlacementTouchMessage);
+}
 const boardEl = $('#board');
 let boardPointer = '';
 // A hovering pointer moves the preview to the placement under it, as the arrows do.
@@ -621,8 +629,12 @@ boardEl.addEventListener('pointermove', (e) => {
     boardPointer = position;
     boardEl.classList.toggle('board--pointing', !!target);
     if (target && moved && !isPreviewed(target)) setPreview(target);
+    else if (!target && e.pointerType === 'mouse') clearPlacementPreview();
 });
-boardEl.addEventListener('pointerleave', () => boardEl.classList.remove('board--pointing'));
+boardEl.addEventListener('pointerleave', (e) => {
+    boardEl.classList.remove('board--pointing');
+    if (e.pointerType === 'mouse') clearPlacementPreview();
+});
 // A press on a placement must not take focus from the hand or the placement buttons.
 boardEl.addEventListener('mousedown', (e) => {
     if (targetAt({ x: e.clientX, y: e.clientY })) e.preventDefault();
@@ -761,7 +773,7 @@ function selectCard(i) {
     }
     if (!state.placementPreview) return;
     revealPreview();
-    $('#placementConfirm').focus();
+    if (narrowScreen()) $('#placementConfirm').focus();
 }
 
 // The hand is fixed to the bottom on phones: scrolling it into view would scroll the page under it.
@@ -963,6 +975,10 @@ document.addEventListener('keydown', (e) => {
     } else if (['1', '2', '3'].includes(e.key)) {
         // The same as a click on the card.
         $('#hand').children[Number(e.key) - 1]?.click();
+    } else if ((e.key === 'Enter' || e.key === ' ') && state.placementPreview && state.selected >= 0 && !narrowScreen()) {
+        e.preventDefault();
+        const { x, y, r } = state.placementPreview;
+        play(x, y, rotated(state.hand[state.selected].m, r));
     } else if (arrow && state.placementPreview) {
         e.preventDefault();
         moveKeyboardPreview(e.key);
