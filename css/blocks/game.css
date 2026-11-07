@@ -347,6 +347,10 @@
             cursor: default;
         }
 
+        body.game-help-open .game__hand-section {
+            z-index: 50;
+        }
+
         body.game-help-open::before {
             content: '';
             position: fixed;
