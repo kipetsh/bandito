@@ -48,13 +48,11 @@ for (const inputPath of sourceImages) {
     let pipeline = sharp(inputPath, { failOn: 'error' }).rotate();
 
     if (isRetinaIcon) {
-        pipeline = pipeline
-            .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 8 })
-            .resize({
-                ...iconSize,
-                fit: 'contain',
-                background: { r: 0, g: 0, b: 0, alpha: 0 },
-            });
+        pipeline = pipeline.trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 8 }).resize({
+            ...iconSize,
+            fit: 'contain',
+            background: { r: 0, g: 0, b: 0, alpha: 0 },
+        });
     } else {
         pipeline = pipeline.resize({
             width: maxDimension,
