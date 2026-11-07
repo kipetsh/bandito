@@ -965,7 +965,7 @@ function showBoardFromEndScreen(layer) {
         layer.classList.remove('hidden');
         endScreenDismissed = false;
     };
-    $('.game__boardbox').append(back);
+    $('.game__subtitle-row').append(back);
 }
 export function resetEndScreen() {
     endScreenDismissed = false;
