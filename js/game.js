@@ -1000,7 +1000,10 @@ export function showEndScreen(won) {
             menu.onclick = () => {
                 state.tutorial = null;
                 layer.classList.add('is-closing');
-                window.setTimeout(() => $('#leaveLobby').click(), 140);
+                window.setTimeout(() => {
+                    layer.remove();
+                    $('#leaveLobby').click();
+                }, 140);
             };
         const view = layer.querySelector('[data-end="view"]');
         if (view)
