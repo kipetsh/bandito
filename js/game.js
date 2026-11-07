@@ -3,6 +3,7 @@ import { $ } from '#js/dom.js';
 import { applySettings, saveSettings } from '#js/settings.js';
 import { snackbar } from '#js/snackbar.js';
 import {
+    createMultiplayerRoom,
     leaveMultiplayer,
     mpExchange,
     mpPlay,
@@ -1057,7 +1058,47 @@ $('#leaveLobby').onclick = async () => {
     $('#play').classList.add('hidden');
     $('#menu').classList.remove('hidden');
 };
-document.querySelectorAll('[data-start]').forEach((b) => (b.onclick = () => begin(+b.dataset.start)));
+let selectedMenuMode = 'solo';
+let selectedSoloExits = 5;
+
+function updateMenuSelection() {
+    document.querySelectorAll('[data-menu-mode]').forEach((button) => {
+        const selected = button.dataset.menuMode === selectedMenuMode;
+        button.setAttribute('aria-pressed', String(selected));
+        button.closest('.menu__card')?.classList.toggle('menu__card--selected', selected);
+    });
+    document.querySelectorAll('[data-solo-exits]').forEach((button) => {
+        const selected = Number(button.dataset.soloExits) === selectedSoloExits;
+        button.setAttribute('aria-pressed', String(selected));
+    });
+    const startButton = $('#menuStart');
+    startButton.textContent = selectedMenuMode === 'solo' ? 'Начать игру' : 'Создать комнату';
+    startButton.disabled = selectedMenuMode === 'solo' && !state.all.length;
+}
+
+document.querySelectorAll('[data-menu-mode]').forEach((button) => {
+    button.addEventListener('click', () => {
+        selectedMenuMode = button.dataset.menuMode;
+        updateMenuSelection();
+    });
+});
+
+document.querySelectorAll('[data-solo-exits]').forEach((button) => {
+    button.addEventListener('click', () => {
+        selectedSoloExits = Number(button.dataset.soloExits);
+        updateMenuSelection();
+    });
+});
+
+$('#menuStart').addEventListener('click', async () => {
+    if (selectedMenuMode === 'multiplayer') {
+        await createMultiplayerRoom();
+        return;
+    }
+    await begin(selectedSoloExits);
+});
+
+updateMenuSelection();
 updateStats();
 fetch('./resources/bandido-matrices/cards.json')
     .then((r) => {
@@ -1066,14 +1107,14 @@ fetch('./resources/bandido-matrices/cards.json')
     })
     .then((d) => {
         state.all = d.cards.filter((c) => c.matrix);
-        document.querySelectorAll('[data-start]').forEach((b) => (b.disabled = false));
+        updateMenuSelection();
         $('#loadstate').classList.remove('hidden');
         $('#loadstate').textContent = 'Колода загружена. Можно начинать.';
     })
     .catch((e) => {
         $('#loadstate').classList.remove('hidden');
         $('#loadstate').textContent = 'Не удалось загрузить колоду: ' + e.message + '. Обнови страницу.';
-        document.querySelectorAll('[data-start]').forEach((b) => (b.disabled = true));
+        updateMenuSelection();
     });
 
 const settingsModal = $('#settingsModal');

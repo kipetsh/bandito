@@ -18,6 +18,38 @@
         --card-radius: var(--radius-xl);
 
         position: relative;
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        transition: outline-color var(--duration-fast);
+    }
+
+    .menu__card--selected {
+        outline-color: var(--color-accent);
+    }
+
+    .menu__mode-select {
+        display: flex;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    .menu__mode-select:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 5px;
+        border-radius: var(--radius-md);
+    }
+
+    .menu__start {
+        width: min(100%, 420px);
+        margin: var(--space-5) auto 0;
     }
 
     .menu__card--solo {

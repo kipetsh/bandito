@@ -381,7 +381,7 @@ async function mpEnsureAuth() {
         );
     }
 }
-async function mpCreate() {
+export async function createMultiplayerRoom() {
     // Prevent an underlying create-room action if a modal is open.
     if (!$('#settingsModal').classList.contains('hidden') || mpBusy) return;
     mpBusy = true;
@@ -659,8 +659,17 @@ export async function leaveMultiplayer(showMenu = true) {
     mpMessage(mpReadyMessage);
     if (showMenu) snackbar('Ты вышел из комнаты');
 }
-$('#mpCreate').onclick = mpCreate;
 $('#mpJoin').onclick = mpJoin;
+const inviteCode = window.location.hash.slice(1).trim().toUpperCase();
+if (/^[A-Z0-9]{6}$/.test(inviteCode)) {
+    $('#mpCode').value = inviteCode;
+}
+$('#mpCode').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        mpJoin();
+    }
+});
 $('#mpStart').onclick = mpStart;
 $('#mpLeave').onclick = () => leaveMultiplayer();
 $('#mpCopyCode').onclick = async () => {
@@ -684,15 +693,52 @@ $('#mpCopyCode').onclick = async () => {
         field.remove();
     }
 };
+$('#mpInvite').onclick = async () => {
+    if (!mpRoomCode) return;
+    const inviteUrl = new URL(window.location.href);
+    inviteUrl.hash = mpRoomCode;
+    const url = inviteUrl.toString();
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Bandito — приглашение в комнату',
+                text: 'Присоединяйся к моей игре Bandito',
+                url,
+            });
+            return;
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+        }
+    }
+    try {
+        await navigator.clipboard.writeText(url);
+        snackbar('Ссылка приглашения скопирована');
+    } catch {
+        const field = document.createElement('textarea');
+        field.value = url;
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.append(field);
+        field.select();
+        try {
+            document.execCommand('copy');
+            snackbar('Ссылка приглашения скопирована');
+        } catch {
+            snackbar('Не удалось скопировать ссылку. Выдели её вручную', 'error');
+        }
+        field.remove();
+    }
+};
 try {
     firebase.initializeApp(firebaseConfig);
     mpAuth = firebase.auth();
     mpDb = firebase.database();
     mpAuth.onAuthStateChanged((u) => {
-        if (u) {
-            mpUid = u.uid;
-            mpMessage(mpReadyMessage);
-        } else mpMessage('Войди анонимно, чтобы играть онлайн.');
+        if (u) mpUid = u.uid;
+        if (/^[A-Z0-9]{6}$/.test(inviteCode)) {
+            mpMessage('Приглашение в комнату ' + inviteCode + '. Нажми «Войти», чтобы подключиться.');
+        } else if (u) mpMessage(mpReadyMessage);
+        else mpMessage('Войди анонимно, чтобы играть онлайн.');
     });
 } catch (e) {
     mpMessage('Firebase не загрузился: ' + e.message);
