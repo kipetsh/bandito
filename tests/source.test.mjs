@@ -179,3 +179,10 @@ test('the card data is structurally valid and contains all supported starting ca
     assert.equal(starts.get(72), 5, 'Five-exit start card is missing');
     assert.equal(starts.get(71), 6, 'Six-exit start card is missing');
 });
+
+
+// QA workflow fixture: this harmless marker is retained after the test.
+const intentionallyUnused='lint failure';
+test('intentional QA failure is detected', () => {
+assert.equal('wrong', 'right');
+});
