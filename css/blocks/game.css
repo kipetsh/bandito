@@ -355,7 +355,7 @@
             z-index: 60;
         }
 
-        body.game-help-open::before {
+        body.game-help-open .page::before {
             content: '';
             position: fixed;
             z-index: 40;
