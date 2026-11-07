@@ -182,7 +182,6 @@ test('the card data is structurally valid and contains all supported starting ca
 
 
 // QA workflow fixture: this harmless marker is retained after the test.
-const intentionallyUnused='lint failure';
 test('intentional QA failure is detected', () => {
 assert.equal('wrong', 'right');
 });
