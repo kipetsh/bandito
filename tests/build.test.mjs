@@ -113,7 +113,7 @@ test('all source images are emitted once as optimized, hashed WebP assets', () =
     assert.ok(!references.includes('assets/images/bandito-'), 'Unhashed theme image references remain in built files');
 });
 
-test('game mode icons are cropped and emitted as 3x Retina WebP assets', async () => {
+test('game mode icons are cropped and emitted as 3x Retina WebP assets at fixed quality', async () => {
     const expectedIcons = [
         {
             source: 'solo-organic-circle.webp',
@@ -139,10 +139,6 @@ test('game mode icons are cropped and emitted as 3x Retina WebP assets', async (
         const metadata = await sharp(outputPath).metadata();
         assert.equal(metadata.width, icon.width, `Unexpected width for ${icon.output}`);
         assert.equal(metadata.height, icon.height, `Unexpected height for ${icon.output}`);
-        assert.ok(
-            statSync(outputPath).size < statSync(sourcePath).size,
-            `Retina icon was not compressed: ${icon.source}`
-        );
         assert.ok(html.includes(icon.output), `index.html does not reference ${icon.output}`);
         assert.ok(!html.includes(icon.source), `index.html still references the untrimmed source: ${icon.source}`);
     }

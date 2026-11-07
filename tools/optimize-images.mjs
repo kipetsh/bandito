@@ -77,26 +77,12 @@ for (const inputPath of sourceImages) {
     let result;
 
     if (isRetinaIcon) {
-        // Small source WebP icons can already be highly compressed. Reduce quality
-        // progressively so the required Retina asset is still emitted smaller.
-        for (const quality of [76, 64, 52, 44]) {
-            result = await pipeline
-                .clone()
-                .webp({ quality, alphaQuality: 100, effort: 6, smartSubsample: false })
-                .toFile(outputPath);
-
-            if (result.size < original.size) {
-                break;
-            }
-
-            await unlink(outputPath);
-        }
-
-        if (!result || result.size >= original.size) {
-            throw new Error(
-                `Could not compress Retina icon below its source size: ${inputPath} (${original.size} bytes).`
-            );
-        }
+        // Always emit the required Retina asset at a consistent quality.
+        // Its output size is not compared with the source: the source may already
+        // be highly optimized, and visual quality takes priority over byte savings.
+        result = await pipeline
+            .webp({ quality: 76, alphaQuality: 100, effort: 6, smartSubsample: false })
+            .toFile(outputPath);
     } else {
         if (isMainLogo) {
             pipeline = pipeline.webp({ quality: 76, alphaQuality: 100, effort: 6, smartSubsample: false });
