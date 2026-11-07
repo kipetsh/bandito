@@ -79,16 +79,21 @@ function dims(m) {
 }
 let boardIndex = null,
     indexedBoard = null,
-    indexedBoardLength = -1;
+    indexedBoardSignature = '';
 function ensureBoardIndex() {
-    if (boardIndex && indexedBoard === state.placed && indexedBoardLength === state.placed.length) return boardIndex;
+    // A board snapshot can be updated in place without changing its array identity or length.
+    // Include every piece's position and matrix in the cache key so legality never uses stale cells.
+    const signature = state.placed
+        .map((p) => p.x + ',' + p.y + ':' + p.m.map((row) => row.join('')).join('/'))
+        .join(';');
+    if (boardIndex && indexedBoard === state.placed && indexedBoardSignature === signature) return boardIndex;
     const index = new Map();
     for (const p of state.placed)
         for (let y = 0; y < p.m.length; y++)
             for (let x = 0; x < p.m[y].length; x++) index.set(p.x + x + ',' + (p.y + y), p.m[y][x]);
     boardIndex = index;
     indexedBoard = state.placed;
-    indexedBoardLength = state.placed.length;
+    indexedBoardSignature = signature;
     return index;
 }
 function cellAt(gx, gy) {
@@ -98,6 +103,13 @@ function cellAt(gx, gy) {
 export function valid(m, x, y) {
     const [w, h] = dims(m),
         index = ensureBoardIndex();
+    // A card occupies its entire rectangular footprint, including wall cells.
+    // Checking piece bounds explicitly prevents a stale/missing cell index from
+    // allowing a card to be squeezed into a gap that is smaller than the card.
+    for (const p of state.placed) {
+        const [pw, ph] = dims(p.m);
+        if (x < p.x + pw && x + w > p.x && y < p.y + ph && y + h > p.y) return false;
+    }
     let connected = false;
     for (let yy = 0; yy < h; yy++)
         for (let xx = 0; xx < w; xx++) {
