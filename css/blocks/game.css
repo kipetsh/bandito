@@ -9,15 +9,20 @@
         margin-bottom: var(--space-4);
     }
 
-    .game__head {
-        position: relative;
+    .game__subtitle-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        margin-top: var(--space-2);
+    }
+
+    .game__subtitle-row .game__subtitle {
+        margin: 0;
     }
 
     .game__return {
-        position: absolute;
-        z-index: 2;
-        right: calc(280px + var(--space-4));
-        bottom: 0;
+        flex: none;
         box-shadow: var(--shadow-float);
     }
 
@@ -188,9 +193,7 @@
 
     .game__head .game__subtitle--tutorial {
         display: block;
-        max-width: min(760px, calc(100% - 190px));
         max-width: 760px;
-        margin-top: var(--space-2);
         padding: 9px 13px;
         border-left: 3px solid var(--color-primary);
         border-radius: var(--radius-sm);
@@ -201,8 +204,9 @@
     }
 
     @media (max-width: 760px) {
-        .game__return {
-            right: 0;
+        .game__subtitle-row {
+            align-items: flex-start;
+            gap: var(--space-2);
         }
 
         .game__head {
@@ -243,77 +247,6 @@
         .game__metrics {
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: var(--space-2);
-        }
-
-        /* An Android-style bottom sheet that always stays open: edge to edge, rounded at the top only,
-           with a drag handle that only marks it as a sheet. */
-        .game__hand-section {
-            position: fixed;
-            z-index: 30;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            display: grid;
-            gap: var(--space-1);
-            padding: var(--space-2) max(var(--space-3), env(safe-area-inset-right))
-                calc(var(--space-2) + env(safe-area-inset-bottom)) max(var(--space-3), env(safe-area-inset-left));
-            border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
-            background: var(--color-surface-raised);
-            box-shadow: var(--shadow-sheet);
-            text-align: center;
-        }
-
-        .game__hand-section::before {
-            content: '';
-            justify-self: center;
-            width: 32px;
-            height: 4px;
-            margin-bottom: var(--space-2);
-            border-radius: var(--radius-full);
-            background: var(--color-border-strong);
-        }
-
-        .game__hand-section > .caption {
-            font-size: var(--text-xs);
-        }
-
-        .game__hand {
-            display: flex;
-            flex-wrap: nowrap;
-            margin: 0 calc(-1 * var(--space-1));
-            /* The cards' own paddings give room for the lift above and the frame below;
-               the side padding keeps the frame of an edge card from being cut by the scroll box. */
-            padding: 0 var(--space-1);
-            /* The cards lie flat here: six cells across a card. */
-            --hand-card-cell: calc((100cqw - 2 * var(--space-4) - 1px) / 18);
-            /* safe: a strip wider than the screen starts at the left edge and scrolls instead of being cut. */
-            justify-content: safe center;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scrollbar-width: none;
-        }
-
-        .game__hand::-webkit-scrollbar {
-            display: none;
-        }
-
-        .game__placement-preview {
-            right: 8px;
-            bottom: 8px;
-            left: 8px;
-            justify-content: space-between;
-            gap: 6px;
-        }
-
-        .game__placement-label {
-            max-width: 112px;
-        }
-    }
-
-    @media (max-width: 380px) {
-        .game__boardbox {
-            height: 48svh;
-            min-height: 280px;
         }
     }
 }
