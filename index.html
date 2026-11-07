@@ -313,6 +313,11 @@
                         >
                             <div id="board" class="board"></div>
                         </div>
+                        <div class="game__zoom" role="group" aria-label="Масштаб поля">
+                            <button id="zoomOut" class="btn btn--icon game__zoom-button" type="button" aria-label="Уменьшить масштаб" title="Уменьшить масштаб">−</button>
+                            <span id="zoomLevel" class="game__zoom-level" aria-live="polite">100%</span>
+                            <button id="zoomIn" class="btn btn--icon game__zoom-button" type="button" aria-label="Увеличить масштаб" title="Увеличить масштаб">+</button>
+                        </div>
                         <div
                             id="placementPreview"
                             class="game__placement-preview hidden"
@@ -378,30 +383,9 @@
                             <div id="hand" class="game__hand" role="radiogroup" aria-label="Карты в руке"></div>
                         </div>
                         <div class="game__actions">
-                            <button id="exchange" class="btn btn--sm game__exchange" type="button">
+                            <button id="exchange" class="btn btn--sm game__exchange" type="button" aria-hidden="true">
                                 Сбросить карты
                             </button>
-                            <div class="game__zoom">
-                                <button
-                                    id="zoomOut"
-                                    class="btn btn--sm btn--icon"
-                                    type="button"
-                                    aria-label="Уменьшить масштаб"
-                                    title="Уменьшить масштаб"
-                                >
-                                    −
-                                </button>
-                                <span id="zoomLevel" class="game__zoom-level" aria-live="polite">100%</span>
-                                <button
-                                    id="zoomIn"
-                                    class="btn btn--sm btn--icon"
-                                    type="button"
-                                    aria-label="Увеличить масштаб"
-                                    title="Увеличить масштаб"
-                                >
-                                    +
-                                </button>
-                            </div>
                         </div>
                         <div id="mpTimer" class="notice notice--strong hidden">⏱ До конца хода: 60 сек.</div>
                         <div id="tutorialGoal" class="notice notice--strong game__tutorial-goal hidden">
