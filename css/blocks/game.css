@@ -164,6 +164,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: center;
         min-height: 40px;
+        column-gap: 28px;
     }
 
     .game__hand-heading > .caption {
