@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-apps-${{ github.ref }}
+  group: build-apps-v2-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
