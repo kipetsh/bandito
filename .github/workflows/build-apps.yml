@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: build-apps-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   desktop:
@@ -84,7 +84,7 @@ jobs:
           java-version: '17'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install Android SDK and NDK
         run: |
