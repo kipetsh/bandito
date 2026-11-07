@@ -19,14 +19,12 @@
         color: var(--color-icon);
     }
 
-    .heading__icon svg {
-        width: 52px;
-        height: 48px;
+    .heading__icon img {
+        width: 56px;
+        height: 56px;
+        object-fit: contain;
     }
 
-    .heading__icon-detail {
-        fill: var(--color-surface-selected);
-    }
 
     .heading__text {
         min-width: 0;
