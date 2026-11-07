@@ -404,7 +404,10 @@ export function render({ hand = true } = {}) {
     $('#deckcount').textContent = state.deck.length;
     $('#openCount').textContent = opens();
     $('#turnCount').textContent = state.turnCount;
-    $('#exchange').disabled = state.finished || !canAct || state.hand.length === 0 || hasMoves;
+    const canExchange = !state.finished && canAct && state.hand.length > 0 && !hasMoves;
+    $('#exchange').disabled = !canExchange;
+    $('#exchange').classList.toggle('is-visible', canExchange);
+    $('#exchange').setAttribute('aria-hidden', String(!canExchange));
     $('#zoomLevel').textContent = Math.round((cellSize / zoomBase) * 100) + '%';
     if (!mpRoomCode && canAct && !state.finished && state.hand.length > 0 && !hasMoves) {
         if (!state.deck.length) {
