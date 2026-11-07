@@ -209,7 +209,7 @@
     .game-help {
         position: absolute;
         z-index: 50;
-        top: calc(100% + 10px);
+        top: calc(40px + var(--space-2) + 10px);
         right: 0;
         width: min(420px, calc(100vw - 32px));
         max-height: min(66svh, 560px);
@@ -464,16 +464,6 @@
 
         .game-help__content {
             max-height: calc(min(62svh, 500px) - 76px);
-        }
-
-        .game__hand-section::before {
-            content: '';
-            justify-self: center;
-            width: 32px;
-            height: 4px;
-            margin-bottom: var(--space-2);
-            border-radius: var(--radius-full);
-            background: var(--color-border-strong);
         }
 
         .game__hand-section > .caption {
