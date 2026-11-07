@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-apps-v3-${{ github.ref }}
+  group: build-apps-v4-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -39,7 +39,6 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
