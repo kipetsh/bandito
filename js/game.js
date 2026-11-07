@@ -882,12 +882,14 @@ const gameHelpPanel = $('#gameHelpPanel');
 function closeGameHelp() {
     if (gameHelpPanel.classList.contains('hidden')) return;
     gameHelpPanel.classList.add('hidden');
+    document.body.classList.remove('game-help-open');
     $('#gameHelpToggle').setAttribute('aria-expanded', 'false');
 }
 $('#gameHelpToggle').onclick = (event) => {
     event.stopPropagation();
     const opening = gameHelpPanel.classList.contains('hidden');
     gameHelpPanel.classList.toggle('hidden', !opening);
+    document.body.classList.toggle('game-help-open', opening && narrowScreen());
     $('#gameHelpToggle').setAttribute('aria-expanded', String(opening));
 };
 $('#closeGameHelp').onclick = closeGameHelp;
@@ -930,7 +932,8 @@ let panState = null,
     // A drag of the camera ends with a click, which must not place a card.
     panDragged = false;
 cameraEl.addEventListener('pointerdown', (e) => {
-    if ((e.pointerType === 'mouse' && e.button !== 0) || e.target.closest('button')) return;
+    // Touchscreens use native overflow scrolling for smooth, momentum-based panning.
+    if (e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('button')) return;
     panDragged = false;
     panState = {
         id: e.pointerId,
