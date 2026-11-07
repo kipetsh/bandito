@@ -163,7 +163,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: var(--space-2);
+        gap: 16px;
     }
 
     .game__help-toggle {
@@ -172,6 +172,8 @@
         min-width: 28px;
         height: 28px;
         padding: 0;
+        border-radius: 50%;
+        aspect-ratio: 1;
         font-size: var(--text-sm);
         font-weight: var(--weight-semibold);
         line-height: 1;
@@ -284,6 +286,12 @@
         min-width: 56px;
         color: var(--color-text);
         font-size: var(--text-sm);
+    }
+
+    @media (min-width: 761px) {
+        .game__placement-preview {
+            display: none;
+        }
     }
 
     @media (max-height: 650px) and (min-width: 761px) {
@@ -436,6 +444,7 @@
         }
 
         .game__placement-preview {
+            display: flex;
             right: 8px;
             bottom: 8px;
             left: 8px;
