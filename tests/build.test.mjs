@@ -69,9 +69,14 @@ test('all source images are emitted once as optimized, hashed WebP assets', () =
         const sourcePath = join(sourceImagesDirectory, sourceName);
         const sourceSize = statSync(sourcePath).size;
         const stem = sourceName.replace(/\.(?:png|jpe?g)$/i, '');
-        // Vite appends an 8-character hash; an exact pattern keeps "clean" from matching "clean-night".
+        // Vite uses an 8-character base64url hash; exclude source stems that extend this stem.
         const hashedNamePattern = new RegExp(`^${stem}-[\\w-]{8}\\.(?:webp|png|jpe?g)$`, 'i');
-        const matches = outputFiles.filter((name) => hashedNamePattern.test(name));
+        const longerStems = sourceFiles
+            .map((name) => name.replace(/\.(?:png|jpe?g)$/i, ''))
+            .filter((candidate) => candidate.startsWith(`${stem}-`));
+        const matches = outputFiles.filter(
+            (name) => hashedNamePattern.test(name) && !longerStems.some((candidate) => name.startsWith(`${candidate}-`))
+        );
 
         originalBytes += sourceSize;
         assert.equal(matches.length, 1, `Expected one hashed image for ${sourceName}; found ${matches.length}`);
