@@ -5,8 +5,8 @@ import { extname, join, resolve } from 'node:path';
 const buildDirectory = resolve('build');
 const rasterExtensions = new Set(['.jpg', '.jpeg', '.png']);
 const retinaIconSizes = new Map([
-    ['solo-organic-circle', { width: 120, height: 120 }],
-    ['multiplayer-stars', { width: 156, height: 144 }],
+    ['solo-organic-circle', { width: 168, height: 168 }],
+    ['multiplayer-stars', { width: 168, height: 156 }],
 ]);
 const textExtensions = new Set(['.html', '.css', '.js', '.json', '.map']);
 
