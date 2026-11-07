@@ -1,20 +1,38 @@
 /* Floating settings button in the top right corner. */
 @layer blocks {
-    .settings-launcher {
+    .settings-launcher,
+    .tutorial-launcher {
         --btn-icon-size: 48px;
 
         position: fixed;
         top: var(--space-4);
-        right: var(--space-4);
         z-index: var(--z-launcher);
     }
 
+    .settings-launcher {
+        right: var(--space-4);
+    }
+
+    .tutorial-launcher {
+        right: calc(var(--space-4) + 48px + var(--space-2));
+        font-size: 20px;
+        font-weight: var(--weight-semibold);
+    }
+
     @media (max-width: 760px) {
-        .settings-launcher {
+        .settings-launcher,
+        .tutorial-launcher {
             --btn-icon-size: 44px;
 
             top: var(--space-3);
+        }
+
+        .settings-launcher {
             right: var(--space-3);
+        }
+
+        .tutorial-launcher {
+            right: calc(var(--space-3) + 44px + var(--space-2));
         }
     }
 }

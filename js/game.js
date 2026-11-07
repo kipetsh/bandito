@@ -180,6 +180,7 @@ async function begin(n) {
     $('#menu').classList.add('hidden');
     $('#play').classList.remove('hidden');
     $('#heading').textContent = n === 2 ? 'Bandito · лёгкая партия' : 'Bandito · ' + n + ' выходов';
+    $('.game__subtitle').classList.remove('game__subtitle--tutorial');
     $('.game__subtitle').textContent = 'Выбери карту и нажми на точку нужного поворота.';
     status(chooseCardMessage, '', chooseCardTouchMessage);
     render();
@@ -191,22 +192,22 @@ const tutorialLevels = [
         start: 75,
         exits: 2,
         cards: [45, 65],
-        subtitle: 'Закрой оба выхода: используй Г-образную и прямую карты-закрывашки.',
-        status: 'Поставь две карты так, чтобы закрыть оба выхода.',
+        subtitle: 'Уровень 1 · Поставь Г-образную и прямую карты, чтобы закрыть оба выхода.',
+        status: 'Выбери карту в руке, затем подходящий поворот на поле.',
     },
     {
-        start: 72,
-        exits: 5,
-        cards: [45, 46, 50, 55, 64],
-        subtitle: 'Подбери положение и поворот пяти карт, чтобы закрыть все выходы.',
-        status: 'Закрой пять выходов. Карты можно поворачивать.',
+        start: 75,
+        exits: 2,
+        cards: [45, 46, 50, 55, 64, 65],
+        subtitle: 'Уровень 2 · В руке шесть простых карт: прямые участки и повороты. Подбери совпадающие края и закрой оба выхода.',
+        status: 'Используй прямые участки и повороты. Все края должны совпадать.',
     },
     {
-        start: 72,
-        exits: 5,
-        cards: [45, 46, 50, 55, 64, 65, 66, 1, 3, 4, 5, 14, 17, 19, 20, 22, 24, 27, 30, 35, 37],
-        subtitle: 'Небольшая партия: в колоде 21 заранее подобранная карта.',
-        status: 'Сыграй партию и постарайся закрыть все выходы.',
+        start: 75,
+        exits: 2,
+        cards: [45, 46, 50, 55, 64, 65, 3, 17, 22],
+        subtitle: 'Уровень 3 · Девять карт, включая прямые и зигзагообразные участки. Собери маршрут и закрой оба выхода.',
+        status: 'Выбирай подходящие карты, поворачивай их и закрой оба выхода.',
     },
 ];
 
@@ -242,6 +243,7 @@ async function startTutorial(levelNumber) {
     $('#mpLobby').classList.add('hidden');
     $('#play').classList.remove('hidden');
     $('#heading').textContent = 'Обучение · ' + levelNumber + ' уровень';
+    $('.game__subtitle').classList.add('game__subtitle--tutorial');
     $('.game__subtitle').textContent = level.subtitle;
     $('#gameMenu').classList.add('hidden');
     $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
@@ -953,7 +955,7 @@ export function resetEndScreen() {
 export function showEndScreen(won) {
     if (endScreenDismissed || document.querySelector('[data-end-screen]')) return;
     const layer = document.createElement('div');
-    layer.className = 'end-screen' + (won ? '' : ' end-screen--lose');
+    layer.className = 'end-screen' + (state.tutorial ? ' end-screen--tutorial' : '') + (won ? '' : ' end-screen--lose');
     layer.dataset.endScreen = '';
     if (state.tutorial) {
         const level = state.tutorial.level;
@@ -984,21 +986,21 @@ export function showEndScreen(won) {
         const next = layer.querySelector('[data-end="tutorial-next"]');
         if (next)
             next.onclick = () => {
-                layer.remove();
-                startTutorial(level + 1);
+                layer.classList.add('is-closing');
+                window.setTimeout(() => startTutorial(level + 1), 140);
             };
         const retry = layer.querySelector('[data-end="tutorial-retry"]');
         if (retry)
             retry.onclick = () => {
-                layer.remove();
-                startTutorial(level);
+                layer.classList.add('is-closing');
+                window.setTimeout(() => startTutorial(level), 140);
             };
         const menu = layer.querySelector('[data-end="tutorial-menu"]');
         if (menu)
             menu.onclick = () => {
                 state.tutorial = null;
-                layer.remove();
-                $('#leaveLobby').click();
+                layer.classList.add('is-closing');
+                window.setTimeout(() => $('#leaveLobby').click(), 140);
             };
         const view = layer.querySelector('[data-end="view"]');
         if (view)
@@ -1178,39 +1180,29 @@ $('#leaveLobby').onclick = async () => {
         return;
     }
     $('#play').classList.add('hidden');
+    $('.game__subtitle').classList.remove('game__subtitle--tutorial');
     $('#menu').classList.remove('hidden');
 };
 document.querySelectorAll('[data-start]').forEach((b) => (b.onclick = () => begin(+b.dataset.start)));
 updateStats();
 function showWelcomePrompt() {
-    let seen = false;
-    try {
-        seen = localStorage.getItem('banditoTutorialPromptSeen') === '1';
-    } catch {}
-    if (seen) return;
-    const layer = document.createElement('div');
-    layer.className = 'end-screen';
-    layer.dataset.welcomePrompt = '';
-    layer.innerHTML =
-        '<div class="end-screen__card"><div class="end-screen__mark">?</div>' +
-        '<h2 class="end-screen__title">Ты впервые играешь в BANDITO?</h2>' +
-        '<p class="end-screen__subtitle">Хочешь пройти короткое обучение перед первой партией?</p>' +
-        '<div class="end-screen__actions">' +
-        '<button class="btn btn--lg btn--primary end-screen__action" data-welcome="yes">Пройти обучение</button>' +
-        '<button class="btn btn--lg end-screen__action" data-welcome="no">Я уже знаю правила</button>' +
-        '</div></div>';
-    document.body.append(layer);
-    const rememberChoice = () => {
-        try {
-            localStorage.setItem('banditoTutorialPromptSeen', '1');
-        } catch {}
-        layer.remove();
-    };
-    layer.querySelector('[data-welcome="yes"]').onclick = () => {
-        rememberChoice();
-        startTutorial(1);
-    };
-    layer.querySelector('[data-welcome="no"]').onclick = rememberChoice;
+    welcomeModal.classList.remove('is-closing', 'hidden');
+}
+
+function closeWelcomePrompt() {
+    if (welcomeModal.classList.contains('hidden') || welcomeModal.classList.contains('is-closing')) return;
+    const reducedMotion =
+        document.body.classList.contains('reduce-motion') ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) {
+        welcomeModal.classList.add('hidden');
+        return;
+    }
+    welcomeModal.classList.add('is-closing');
+    window.setTimeout(() => {
+        welcomeModal.classList.add('hidden');
+        welcomeModal.classList.remove('is-closing');
+    }, 140);
 }
 
 fetch('./resources/bandido-matrices/cards.json')
@@ -1232,6 +1224,7 @@ fetch('./resources/bandido-matrices/cards.json')
     });
 
 const settingsModal = $('#settingsModal');
+const welcomeModal = $('#welcomeModal');
 let settingsCloseTimer;
 
 function openSettings() {
@@ -1259,6 +1252,16 @@ $('#openSettings').onclick = (event) => {
     event.stopPropagation();
     openSettings();
 };
+$('#openTutorial').onclick = () => startTutorial(1);
+$('#welcomeAlreadyPlayed').onclick = closeWelcomePrompt;
+$('#closeWelcome').onclick = closeWelcomePrompt;
+$('#welcomeNewPlayer').onclick = () => {
+    closeWelcomePrompt();
+    window.setTimeout(() => startTutorial(1), 140);
+};
+welcomeModal.addEventListener('click', (event) => {
+    if (event.target === welcomeModal) closeWelcomePrompt();
+});
 $('#closeSettings').onclick = closeSettings;
 settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) closeSettings();
@@ -1268,10 +1271,6 @@ $('#darkTheme').addEventListener('change', saveSettings);
 $('#resetSettings').onclick = () => {
     localStorage.removeItem('banditoSettings');
     applySettings();
-};
-$('#replayTutorial').onclick = () => {
-    closeSettings();
-    startTutorial(1);
 };
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeSettings();

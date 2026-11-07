@@ -77,6 +77,13 @@
         <main class="page">
             <section id="menu" class="menu">
                 <button
+                    id="openTutorial"
+                    class="btn btn--icon btn--glass tutorial-launcher"
+                    type="button"
+                    aria-label="Обучение"
+                    title="Обучение"
+                >?</button>
+                <button
                     id="openSettings"
                     class="btn btn--icon btn--glass settings-launcher"
                     type="button"
@@ -363,6 +370,22 @@
                 </div>
             </section>
         </main>
+        <div id="welcomeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+            <section class="card card--dialog modal__dialog modal__dialog--welcome">
+                <header class="modal__head modal__head--welcome">
+                    <div class="heading__text">
+                        <p class="modal__eyebrow">BANDITO · ПЕРВЫЙ ЗАПУСК</p>
+                        <h2 id="welcomeTitle" class="heading__title">Ты уже играл в BANDITO?</h2>
+                        <p class="heading__subtitle">Если правила пока незнакомы, покажем всё на коротких заданиях.</p>
+                    </div>
+                    <button id="closeWelcome" class="btn btn--icon" type="button" aria-label="Закрыть">×</button>
+                </header>
+                <div class="welcome__actions">
+                    <button id="welcomeAlreadyPlayed" class="btn btn--lg welcome__choice" type="button">Да, уже играл</button>
+                    <button id="welcomeNewPlayer" class="btn btn--lg btn--primary welcome__choice" type="button">Нет, пройти обучение</button>
+                </div>
+            </section>
+        </div>
         <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
             <section class="card card--dialog modal__dialog">
                 <header class="modal__head">
@@ -390,7 +413,6 @@
                 </label>
                 <footer class="modal__footer">
                     <span class="note note--sm">Настройки сохраняются автоматически</span>
-                    <button id="replayTutorial" class="btn btn--sm" type="button">Пройти обучение</button>
                     <button id="resetSettings" class="btn btn--sm" type="button">Сбросить</button>
                 </footer>
             </section>
