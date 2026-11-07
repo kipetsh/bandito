@@ -5,10 +5,19 @@ import { extname, join, resolve } from 'node:path';
 const buildDirectory = resolve('build');
 const rasterExtensions = new Set(['.jpg', '.jpeg', '.png']);
 const retinaIconSizes = new Map([
-    ['solo-organic-circle.webp', { width: 120, height: 120 }],
-    ['multiplayer-stars.webp', { width: 156, height: 144 }],
+    ['solo-organic-circle', { width: 120, height: 120 }],
+    ['multiplayer-stars', { width: 156, height: 144 }],
 ]);
 const textExtensions = new Set(['.html', '.css', '.js', '.json', '.map']);
+
+function getRetinaIconName(file) {
+    const baseName = file.split('/').at(-1);
+    return (
+        [...retinaIconSizes.keys()].find(
+            (name) => baseName === `${name}.webp` || (baseName.startsWith(`${name}-`) && baseName.endsWith('.webp'))
+        ) ?? null
+    );
+}
 
 async function walk(directory) {
     const entries = await readdir(directory, { withFileTypes: true });
@@ -23,8 +32,7 @@ async function walk(directory) {
 
 const files = await walk(buildDirectory);
 const sourceImages = files.filter((file) => {
-    const baseName = file.split('/').at(-1);
-    return rasterExtensions.has(extname(file).toLowerCase()) || retinaIconSizes.has(baseName);
+    return rasterExtensions.has(extname(file).toLowerCase()) || getRetinaIconName(file);
 });
 
 if (sourceImages.length === 0) {
@@ -37,10 +45,11 @@ const skipped = [];
 for (const inputPath of sourceImages) {
     const extension = extname(inputPath);
     const baseName = inputPath.split('/').at(-1);
-    const iconSize = retinaIconSizes.get(baseName);
+    const retinaIconName = getRetinaIconName(inputPath);
+    const iconSize = retinaIconName ? retinaIconSizes.get(retinaIconName) : null;
     const isRetinaIcon = Boolean(iconSize);
     const outputPath = isRetinaIcon
-        ? inputPath.slice(0, -extension.length) + '-optimized.webp'
+        ? inputPath.slice(0, inputPath.lastIndexOf('/') + 1) + retinaIconName + '-optimized.webp'
         : inputPath.slice(0, -extension.length) + '.webp';
     const isJpeg = extension.toLowerCase() === '.jpg' || extension.toLowerCase() === '.jpeg';
     const maxDimension = baseName.includes('background') ? 2560 : 1600;
