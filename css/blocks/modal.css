@@ -75,12 +75,17 @@
     }
 
     .modal__dialog {
+        background: #fff;
         --card-padding: var(--space-6);
         --card-radius: var(--radius-xl);
 
         width: min(460px, 100%);
         max-height: 100%;
         overflow: auto;
+    }
+
+    .dark-theme .modal__dialog {
+        background: #292d32;
     }
 
     .modal--welcome {
