@@ -18,7 +18,29 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate and build
+    name: Code checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run npm run check
+        run: npm run check
+
+      - name: Run source tests
+        run: npm run test:source
+
+  build:
+    name: Build and test production output
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,14 +56,13 @@ jobs:
           cache: npm
 
       - name: Install locked dependencies
-        id: dependencies
         run: npm ci
 
-      - name: Run npm run check
-        run: npm run check
+      - name: Build production site
+        run: npm run build
 
-      - name: Run npm run test
-        run: npm run test
+      - name: Test production build
+        run: npm run test:build
 
       - name: Configure GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -58,7 +79,9 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: validate
+    needs:
+      - validate
+      - build
     runs-on: ubuntu-latest
     permissions:
       pages: write

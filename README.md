@@ -113,7 +113,7 @@ Production-сборка находится в `build/`. Vite собирает с
 
 ### Публикация
 
-GitHub Actions запускает проверки для pull request в `main`. При push в `main` workflow повторяет проверки и сборку, а затем публикует только каталог `build/` на GitHub Pages. Если проверки или сборка завершаются ошибкой, деплой не запускается.
+GitHub Actions запускает две независимые jobs параллельно: одна выполняет `npm run check` и `npm run test:source`, вторая — `npm run build` и `npm run test:build`. При pull request в `main` обе jobs проверяют изменения без публикации. При push в `main` после успешного завершения обеих jobs сборка из `build/` загружается как Pages Artifact и отдельная deploy job публикует её на GitHub Pages. Если любая из jobs завершается ошибкой, деплой не запускается.
 
 ### Где что менять
 
