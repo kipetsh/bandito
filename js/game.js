@@ -180,6 +180,7 @@ async function begin(n) {
     $('#menu').classList.add('hidden');
     $('#play').classList.remove('hidden');
     $('#heading').textContent = n === 2 ? 'Bandito · лёгкая партия' : 'Bandito · ' + n + ' выходов';
+    $('#tutorialGoal').classList.add('hidden');
     $('.game__subtitle').classList.remove('game__subtitle--tutorial');
     $('.game__subtitle').textContent = 'Выбери карту и нажми на точку нужного поворота.';
     status(chooseCardMessage, '', chooseCardTouchMessage);
@@ -243,6 +244,7 @@ async function startTutorial(levelNumber) {
     $('#mpLobby').classList.add('hidden');
     $('#play').classList.remove('hidden');
     $('#heading').textContent = 'Обучение · ' + levelNumber + ' уровень';
+    $('#tutorialGoal').classList.remove('hidden');
     $('.game__subtitle').classList.add('game__subtitle--tutorial');
     $('.game__subtitle').textContent = level.subtitle;
     $('#gameMenu').classList.add('hidden');
@@ -948,9 +950,26 @@ document.addEventListener('keydown', (e) => {
     }
 });
 let endScreenDismissed = false;
+function showBoardFromEndScreen(layer) {
+    endScreenDismissed = true;
+    layer.classList.add('hidden');
+    document.querySelector('[data-end-return]')?.remove();
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'btn btn--sm end-screen__return';
+    back.dataset.endReturn = '';
+    back.textContent = 'Вернуться к результату';
+    back.setAttribute('aria-label', 'Вернуться к меню результата игры');
+    back.onclick = () => {
+        back.remove();
+        layer.classList.remove('hidden');
+        endScreenDismissed = false;
+    };
+    document.body.append(back);
+}
 export function resetEndScreen() {
     endScreenDismissed = false;
-    document.querySelector('[data-end-screen]')?.remove();
+    document.querySelectorAll('[data-end-screen], [data-end-return]').forEach((el) => el.remove());
 }
 export function showEndScreen(won) {
     if (endScreenDismissed || document.querySelector('[data-end-screen]')) return;
@@ -1010,11 +1029,7 @@ export function showEndScreen(won) {
                 }, 140);
             };
         const view = layer.querySelector('[data-end="view"]');
-        if (view)
-            view.onclick = () => {
-                endScreenDismissed = true;
-                layer.remove();
-            };
+        if (view) view.onclick = () => showBoardFromEndScreen(layer);
         return;
     }
     const multi = !!mpRoomCode,
@@ -1060,11 +1075,7 @@ export function showEndScreen(won) {
             layer.remove();
         };
     const view = layer.querySelector('[data-end="view"]');
-    if (view)
-        view.onclick = () => {
-            endScreenDismissed = true;
-            layer.remove();
-        };
+    if (view) view.onclick = () => showBoardFromEndScreen(layer);
     const leave = layer.querySelector('[data-end="leave"]');
     if (leave) leave.onclick = () => leaveMultiplayer();
 }
