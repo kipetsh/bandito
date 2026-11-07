@@ -223,6 +223,10 @@
         animation: game-help-in 120ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
     }
 
+    .dark-theme .game-help {
+        background: #292d32;
+    }
+
     .game-help__head {
         display: flex;
         align-items: center;
