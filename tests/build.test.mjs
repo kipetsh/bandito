@@ -3,7 +3,6 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import sharp from 'sharp';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const buildDirectory = resolve(projectRoot, 'build');
