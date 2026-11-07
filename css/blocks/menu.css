@@ -138,6 +138,25 @@
         .menu__card-head {
             margin-bottom: var(--space-4);
         }
+
+        .menu__card-head .heading__icon {
+            flex: 0 0 64px;
+            width: 64px;
+            height: 64px;
+        }
+
+        .menu__card-head .heading__icon img {
+            width: 64px;
+            height: 64px;
+        }
+
+        .menu__card-head .heading__icon--solo img {
+            transform: scale(0.9);
+        }
+
+        .menu__card-head .heading__icon--multiplayer img {
+            transform: scale(1);
+        }
     }
 
     @media (max-width: 360px) {

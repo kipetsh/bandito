@@ -91,13 +91,14 @@
         }
 
         #coopCard .heading__icon {
-            width: 44px;
-            height: 44px;
+            flex: 0 0 64px;
+            width: 64px;
+            height: 64px;
         }
 
-        #coopCard .heading__icon svg {
-            width: 42px;
-            height: 40px;
+        #coopCard .heading__icon img {
+            width: 64px;
+            height: 64px;
         }
 
         #coopCard .heading__title {
