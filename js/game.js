@@ -1070,6 +1070,7 @@ function updateMenuSelection() {
     document.querySelectorAll('[data-solo-exits]').forEach((button) => {
         const selected = Number(button.dataset.soloExits) === selectedSoloExits;
         button.setAttribute('aria-pressed', String(selected));
+        button.disabled = !state.all.length;
     });
     const startButton = $('#menuStart');
     startButton.textContent = selectedMenuMode === 'solo' ? 'Начать игру' : 'Создать комнату';
