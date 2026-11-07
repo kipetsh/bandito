@@ -58,13 +58,18 @@
           "wss://*.firebaseio.com",
           "https://identitytoolkit.googleapis.com",
           "https://securetoken.googleapis.com",
-          "https://www.googleapis.com"
+          "https://www.googleapis.com",
+          "https://bandito-83823.firebaseapp.com"
         ],
         "object-src": [
           "'none'"
         ],
         "base-uri": [
           "'self'"
+        ],
+        "frame-src": [
+          "'self'",
+          "https://bandito-83823.firebaseapp.com"
         ]
       }
     }
