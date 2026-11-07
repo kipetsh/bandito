@@ -660,7 +660,7 @@ export async function leaveMultiplayer(showMenu = true) {
     if (showMenu) snackbar('Ты вышел из комнаты');
 }
 $('#mpJoin').onclick = mpJoin;
-const inviteCode = window.location.hash.slice(1).trim().toUpperCase();
+const inviteCode = (window.location?.hash || '').slice(1).trim().toUpperCase();
 if (/^[A-Z0-9]{6}$/.test(inviteCode)) {
     $('#mpCode').value = inviteCode;
 }
