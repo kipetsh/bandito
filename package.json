@@ -28,11 +28,11 @@
     "postinstall": "node tools/install-hooks.mjs",
     "dev:local": "vite --host 127.0.0.1 --strictPort",
     "dev:tauri": "vite --host 127.0.0.1 --strictPort",
-    "app:icons": "npx --yes @tauri-apps/cli@2.12.4 icon src-tauri/icons/source.svg --output src-tauri/icons",
-    "app:dev": "npx --yes @tauri-apps/cli@2.12.4 dev",
-    "app:build": "npm run app:icons && npx --yes @tauri-apps/cli@2.12.4 build",
-    "app:android:init": "npx --yes @tauri-apps/cli@2.12.4 android init --ci && npm run app:icons",
-    "app:android:build": "npm run app:icons && npx --yes @tauri-apps/cli@2.12.4 android build --apk"
+    "app:icons": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri icon src-tauri/icons/source.svg --output src-tauri/icons",
+    "app:dev": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri dev",
+    "app:build": "npm run app:icons && npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri build",
+    "app:android:init": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri android init --ci && npm run app:icons",
+    "app:android:build": "npm run app:icons && npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri android build --apk"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",

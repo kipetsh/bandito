@@ -53,8 +53,11 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Generate app icons
+        run: npm run app:icons
+
       - name: Build desktop app
-        run: npm run app:build -- --target ${{ matrix.target }}
+        run: npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri build --target ${{ matrix.target }}
 
       - name: Upload desktop installers
         uses: actions/upload-artifact@v4
