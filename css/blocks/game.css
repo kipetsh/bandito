@@ -293,7 +293,7 @@
         }
     }
 
-    .game__head .game__subtitle--tutorial {
+    .game__subtitle-row .game__subtitle--tutorial {
         display: block;
         max-width: 760px;
         padding: 9px 13px;
@@ -319,6 +319,12 @@
 
         .game__subtitle {
             display: none;
+        }
+
+        .game__subtitle-row .game__subtitle--tutorial {
+            display: block;
+            font-size: var(--text-xs);
+            padding: 7px 9px;
         }
 
         .game__layout {
