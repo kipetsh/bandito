@@ -9,6 +9,23 @@
         margin-bottom: var(--space-4);
     }
 
+    .game__subtitle-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        margin-top: var(--space-2);
+    }
+
+    .game__subtitle-row .game__subtitle {
+        margin: 0;
+    }
+
+    .game__return {
+        flex: none;
+        box-shadow: var(--shadow-float);
+    }
+
     .game__menu {
         position: relative;
         flex: none;
@@ -177,7 +194,6 @@
     .game__head .game__subtitle--tutorial {
         display: block;
         max-width: 760px;
-        margin-top: var(--space-2);
         padding: 9px 13px;
         border-left: 3px solid var(--color-primary);
         border-radius: var(--radius-sm);
@@ -188,6 +204,11 @@
     }
 
     @media (max-width: 760px) {
+        .game__subtitle-row {
+            align-items: flex-start;
+            gap: var(--space-2);
+        }
+
         .game__head {
             --heading-title-size: var(--text-xl);
 
