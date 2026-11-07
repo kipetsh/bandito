@@ -956,7 +956,7 @@ function showBoardFromEndScreen(layer) {
     document.querySelector('[data-end-return]')?.remove();
     const back = document.createElement('button');
     back.type = 'button';
-    back.className = 'btn btn--sm end-screen__return';
+    back.className = 'btn btn--sm game__return';
     back.dataset.endReturn = '';
     back.textContent = 'Вернуться к результату';
     back.setAttribute('aria-label', 'Вернуться к меню результата игры');
@@ -965,7 +965,7 @@ function showBoardFromEndScreen(layer) {
         layer.classList.remove('hidden');
         endScreenDismissed = false;
     };
-    document.body.append(back);
+    $('#play .game__head').append(back);
 }
 export function resetEndScreen() {
     endScreenDismissed = false;
