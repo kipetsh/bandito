@@ -1,10 +1,9 @@
-name: Check and deploy Pages
+name: Validate and deploy Pages
 
 on:
   push:
     branches:
       - main
-      - '**-chatgpt-check'
   pull_request:
     branches:
       - main
@@ -19,7 +18,7 @@ concurrency:
 
 jobs:
   validate:
-    name: npm run check && npm run test
+    name: Validate and build
     runs-on: ubuntu-latest
     permissions:
       contents: read

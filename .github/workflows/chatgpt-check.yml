@@ -1,0 +1,34 @@
+name: ChatGPT branch check
+
+on:
+  push:
+    branches:
+      - '**-chatgpt-check'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chatgpt-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: npm run check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run npm run check
+        run: npm run check
