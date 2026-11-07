@@ -164,3 +164,23 @@
         }
     }
 }
+
+
+/* Flaticon close icon 5254940; source: flaticon.com/free-icon/close_5254940. */
+@layer blocks {
+    .btn--close-icon {
+        display: grid;
+        place-items: center;
+        font-size: 0;
+    }
+
+    .btn--close-icon::before {
+        content: "";
+        display: block;
+        width: 17px;
+        height: 17px;
+        background-color: currentColor;
+        -webkit-mask: url("https://cdn-icons-png.flaticon.com/512/5254/5254940.png") center / contain no-repeat;
+        mask: url("https://cdn-icons-png.flaticon.com/512/5254/5254940.png") center / contain no-repeat;
+    }
+}
