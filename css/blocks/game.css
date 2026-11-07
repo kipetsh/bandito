@@ -168,8 +168,8 @@
     }
 
     .game__hand-heading > .caption {
-        justify-self: center;
-        text-align: center;
+        justify-self: start;
+        text-align: left;
     }
 
     .game__help-toggle {
@@ -453,6 +453,14 @@
         .game__hand-heading {
             grid-template-columns: repeat(4, minmax(0, 1fr));
             min-height: 36px;
+        }
+
+        .game__hand-heading > .caption {
+            grid-column: 1;
+        }
+
+        .game__help-toggle {
+            grid-column: 4;
         }
 
         .game__help-toggle {
