@@ -143,6 +143,7 @@ Bandito — карточная игра (адаптация настольной
     - Push в `main`: сначала независимо запускается публикация (`npm ci`, `npm run build`, Pages Artifact, deploy). После завершения workflow публикации автоматически запускается `.github/workflows/check.yml` на том же SHA, даже если деплой завершился ошибкой. Публикация не зависит от результата проверок.
     - Любой pull request (независимо от целевой ветки): `.github/workflows/check.yml` запускает `npm ci`, `npm run check` и `npm run test:source`; Pages deployment не выполняется.
     - Push в ветку с окончанием `-chatgpt-check`: `.github/workflows/chatgpt-check.yml` выполняет только `npm ci` и `npm run check`. Он не запускает тесты, production build, Pages Artifact или deployment.
+    - На тот же push независимо от `.github/workflows/chatgpt-check.yml` запускается `.github/workflows/chatgpt-tests.yml`: `npm ci` и `npm test` (source tests, production build и build tests). У workflow отдельная concurrency-группа, поэтому линтеры и тесты выполняются параллельно и не отменяют друг друга.
 
 - **Работа ChatGPT по логам GitHub Actions:**
     1. Сначала изучить `eslint.config.mjs`, `.prettierrc.json` и `.prettierignore`; писать код сразу в соответствии с правилами и форматировать затронутые файлы. Получить актуальный HEAD `main`.
