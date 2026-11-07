@@ -181,8 +181,10 @@ async function begin(n) {
     $('#play').classList.remove('hidden');
     $('#heading').textContent = n === 2 ? 'Bandito · лёгкая партия' : 'Bandito · ' + n + ' выходов';
     $('#tutorialGoal').classList.add('hidden');
-    $('.game__subtitle').classList.remove('game__subtitle--tutorial');
-    $('.game__subtitle').textContent = 'Выбери карту и нажми на точку нужного поворота.';
+    document.querySelectorAll('.game__subtitle').forEach((el) => {
+        el.classList.remove('game__subtitle--tutorial');
+        el.textContent = 'Выбери карту и нажми на точку нужного поворота.';
+    });
     status(chooseCardMessage, '', chooseCardTouchMessage);
     render();
     centerCamera();
@@ -245,8 +247,10 @@ async function startTutorial(levelNumber) {
     $('#play').classList.remove('hidden');
     $('#heading').textContent = 'Обучение · ' + levelNumber + ' уровень';
     $('#tutorialGoal').classList.remove('hidden');
-    $('.game__subtitle').classList.add('game__subtitle--tutorial');
-    $('.game__subtitle').textContent = level.subtitle;
+    document.querySelectorAll('.game__subtitle').forEach((el) => {
+        el.classList.add('game__subtitle--tutorial');
+        el.textContent = level.subtitle;
+    });
     $('#gameMenu').classList.add('hidden');
     $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
     status(level.status);
@@ -849,6 +853,23 @@ $('#gameMenuToggle').onclick = () => {
     menu.classList.toggle('hidden', !opening);
     $('#gameMenuToggle').setAttribute('aria-expanded', String(opening));
 };
+
+const gameHelpPanel = $('#gameHelpPanel');
+function closeGameHelp() {
+    if (gameHelpPanel.classList.contains('hidden')) return;
+    gameHelpPanel.classList.add('hidden');
+    $('#gameHelpToggle').setAttribute('aria-expanded', 'false');
+}
+$('#gameHelpToggle').onclick = (event) => {
+    event.stopPropagation();
+    const opening = gameHelpPanel.classList.contains('hidden');
+    gameHelpPanel.classList.toggle('hidden', !opening);
+    $('#gameHelpToggle').setAttribute('aria-expanded', String(opening));
+};
+$('#closeGameHelp').onclick = closeGameHelp;
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('.game__hand-section')) closeGameHelp();
+});
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.game__menu')) {
         $('#gameMenu').classList.add('hidden');
@@ -945,6 +966,9 @@ document.addEventListener('keydown', (e) => {
     } else if (arrow && state.placementPreview) {
         e.preventDefault();
         moveKeyboardPreview(e.key);
+    } else if (e.key === 'Escape' && !gameHelpPanel.classList.contains('hidden')) {
+        closeGameHelp();
+        e.preventDefault();
     } else if (e.key === 'Escape' && state.selected >= 0) {
         cancelSelection();
     }
@@ -1024,7 +1048,7 @@ export function showEndScreen(won) {
                     $('#gameMenu').classList.add('hidden');
                     $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
                     $('#play').classList.add('hidden');
-                    $('.game__subtitle').classList.remove('game__subtitle--tutorial');
+                    document.querySelectorAll('.game__subtitle').forEach((el) => el.classList.remove('game__subtitle--tutorial'));
                     $('#menu').classList.remove('hidden');
                 }, 140);
             };
@@ -1198,7 +1222,7 @@ $('#leaveLobby').onclick = async () => {
         return;
     }
     $('#play').classList.add('hidden');
-    $('.game__subtitle').classList.remove('game__subtitle--tutorial');
+    document.querySelectorAll('.game__subtitle').forEach((el) => el.classList.remove('game__subtitle--tutorial'));
     $('#menu').classList.remove('hidden');
 };
 document.querySelectorAll('[data-start]').forEach((b) => (b.onclick = () => begin(+b.dataset.start)));
