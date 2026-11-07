@@ -785,15 +785,23 @@ document.addEventListener('click', (e) => {
 // from about 50% to about 150%: 12–36px on the desktop, 8–28px (44–156%) on narrow screens.
 const narrowScreen = () => window.matchMedia('(max-width:760px)').matches;
 const baseCellSize = () => (narrowScreen() ? 18 : 24);
-// The 100% cell the current zoom is measured against.
-let zoomBase = baseCellSize(),
-    cellSize = zoomBase;
+// The 100% cell the current zoom is measured against. Keep the chosen percentage across reloads and new games.
+let zoomBase = baseCellSize();
 const clampCell = (value) => Math.max(Math.floor(zoomBase / 4) * 2, Math.min(Math.ceil((zoomBase * 3) / 4) * 2, value));
+let savedZoom = 100;
+try {
+    const storedZoom = Number(localStorage.getItem('banditoZoom'));
+    if (Number.isFinite(storedZoom) && storedZoom > 0) savedZoom = storedZoom;
+} catch {}
+let cellSize = clampCell(Math.round((zoomBase * savedZoom) / 200) * 2);
 // render() keeps the cell in the middle of the camera, so the zoom goes around the centre of the view.
 function setZoom(next) {
     const value = clampCell(next);
     if (value === cellSize) return;
     cellSize = value;
+    try {
+        localStorage.setItem('banditoZoom', String(Math.round((cellSize / zoomBase) * 100)));
+    } catch {}
     render({ hand: false });
 }
 $('#zoomOut').onclick = () => setZoom(cellSize - 2);
@@ -1014,12 +1022,26 @@ $('#exchange').onclick = () => {
     status(chooseCardMessage, '', chooseCardTouchMessage);
     render();
 };
-$('#newgame').onclick = () => {
+$('#newgame').onclick = async () => {
     $('#gameMenu').classList.add('hidden');
     $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
     state.placementPreview = null;
     if (mpRoomCode) {
-        leaveMultiplayer();
+        if (mpRoomData?.owner !== mpUid) {
+            snackbar('Начать новую партию может только создатель комнаты', 'error');
+            return;
+        }
+        await mpStart();
+        return;
+    }
+    await begin(state.exits);
+};
+$('#leaveLobby').onclick = async () => {
+    $('#gameMenu').classList.add('hidden');
+    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+    state.placementPreview = null;
+    if (mpRoomCode) {
+        await leaveMultiplayer();
         return;
     }
     $('#play').classList.add('hidden');
