@@ -9,6 +9,18 @@
         margin-bottom: var(--space-4);
     }
 
+    .game__head {
+        position: relative;
+    }
+
+    .game__return {
+        position: absolute;
+        z-index: 2;
+        right: calc(280px + var(--space-4));
+        bottom: 0;
+        box-shadow: var(--shadow-float);
+    }
+
     .game__menu {
         position: relative;
         flex: none;
@@ -176,6 +188,7 @@
 
     .game__head .game__subtitle--tutorial {
         display: block;
+        max-width: min(760px, calc(100% - 190px));
         max-width: 760px;
         margin-top: var(--space-2);
         padding: 9px 13px;
@@ -188,6 +201,10 @@
     }
 
     @media (max-width: 760px) {
+        .game__return {
+            right: 0;
+        }
+
         .game__head {
             --heading-title-size: var(--text-xl);
 
