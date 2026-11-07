@@ -62,11 +62,16 @@
     }
 
     @keyframes tutorial-overlay-out {
-        to { opacity: 0; }
+        to {
+            opacity: 0;
+        }
     }
 
     @keyframes tutorial-card-out {
-        to { opacity: 0; transform: translateY(6px) scale(0.985); }
+        to {
+            opacity: 0;
+            transform: translateY(6px) scale(0.985);
+        }
     }
 
     .end-screen--lose {
