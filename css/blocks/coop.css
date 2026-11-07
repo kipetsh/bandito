@@ -101,6 +101,11 @@
             height: 64px;
         }
 
+        #coopCard .heading__icon--multiplayer img {
+            width: 48px;
+            height: 45px;
+        }
+
         #coopCard .heading__title {
             font-size: var(--text-xl);
         }
