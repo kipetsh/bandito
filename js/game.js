@@ -1001,8 +1001,12 @@ export function showEndScreen(won) {
                 state.tutorial = null;
                 layer.classList.add('is-closing');
                 window.setTimeout(() => {
-                    layer.remove();
-                    $('#leaveLobby').click();
+                    resetEndScreen();
+                    $('#gameMenu').classList.add('hidden');
+                    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+                    $('#play').classList.add('hidden');
+                    $('.game__subtitle').classList.remove('game__subtitle--tutorial');
+                    $('#menu').classList.remove('hidden');
                 }, 140);
             };
         const view = layer.querySelector('[data-end="view"]');
