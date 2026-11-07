@@ -10,6 +10,8 @@
     }
 
     .game__subtitle-row {
+        grid-column: 1;
+        grid-row: 1;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -96,10 +98,13 @@
     .game__layout {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 280px;
-        gap: var(--space-4);
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: var(--space-3) var(--space-4);
     }
 
     .game__boardbox {
+        grid-column: 1;
+        grid-row: 2;
         position: relative;
         --card-padding: var(--space-3);
         --card-radius: var(--radius-lg);
@@ -133,6 +138,8 @@
     }
 
     .game__side {
+        grid-column: 2;
+        grid-row: 1 / span 2;
         --card-padding: var(--space-4);
 
         display: flex;
@@ -147,8 +154,96 @@
     }
 
     .game__hand-section {
+        position: relative;
         display: grid;
         gap: var(--space-2);
+    }
+
+    .game__hand-heading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
+    }
+
+    .game__help-toggle {
+        flex: none;
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        padding: 0;
+        font-size: var(--text-sm);
+        font-weight: var(--weight-semibold);
+        line-height: 1;
+    }
+
+    .game-help {
+        position: absolute;
+        z-index: 50;
+        top: calc(100% + 10px);
+        right: 0;
+        width: min(420px, calc(100vw - 32px));
+        max-height: min(66svh, 560px);
+        overflow: hidden;
+        padding: var(--space-4);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-xl);
+        background: var(--color-surface-raised);
+        box-shadow: var(--shadow-float);
+        transform-origin: top right;
+        animation: game-help-in 120ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    }
+
+    .game-help__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        margin-bottom: var(--space-3);
+    }
+
+    .game-help__head h3 {
+        margin: 0;
+        color: var(--color-text-strong);
+        font-size: var(--text-lg);
+        font-weight: var(--weight-semibold);
+    }
+
+    .game-help__content {
+        display: grid;
+        gap: var(--space-4);
+        max-height: calc(min(66svh, 560px) - 76px);
+        overflow-y: auto;
+        padding-right: var(--space-1);
+        color: var(--color-text-secondary);
+        font-size: var(--text-sm);
+        line-height: var(--leading-normal);
+        text-align: left;
+    }
+
+    .game-help__content section {
+        display: grid;
+        gap: var(--space-1);
+    }
+
+    .game-help__content h4 {
+        margin: 0;
+        color: var(--color-text-strong);
+        font-size: var(--text-sm);
+        font-weight: var(--weight-semibold);
+    }
+
+    .game-help__content p {
+        margin: 0;
+    }
+
+    .game-help__content p + p {
+        margin-top: var(--space-2);
+    }
+
+    @keyframes game-help-in {
+        from { opacity: 0; transform: translateY(-5px) scale(0.985); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     /* Equal columns: a drawn card of another width must not shift its neighbours. */
@@ -228,7 +323,20 @@
 
         .game__layout {
             grid-template-columns: minmax(0, 1fr);
-            gap: var(--space-3);
+            grid-template-rows: auto auto auto;
+            gap: var(--space-2);
+        }
+
+        .game__subtitle-row,
+        .game__boardbox,
+        .game__side {
+            grid-column: 1;
+            grid-row: auto;
+        }
+
+        .game__subtitle-row {
+            min-height: 30px;
+            margin-bottom: 0;
         }
 
         .game {
@@ -272,6 +380,19 @@
             background: var(--color-surface-raised);
             box-shadow: var(--shadow-sheet);
             text-align: center;
+        }
+
+        .game-help {
+            top: auto;
+            right: max(var(--space-3), env(safe-area-inset-right));
+            bottom: calc(100% + 10px);
+            width: min(440px, calc(100vw - 24px));
+            max-height: min(62svh, 500px);
+            transform-origin: bottom right;
+        }
+
+        .game-help__content {
+            max-height: calc(min(62svh, 500px) - 76px);
         }
 
         .game__hand-section::before {
