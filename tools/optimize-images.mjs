@@ -74,7 +74,7 @@ for (const inputPath of sourceImages) {
     const isMainLogo = baseName.startsWith('bandito-logo');
 
     if (isRetinaIcon || isMainLogo) {
-        pipeline = pipeline.webp({ quality: 88, alphaQuality: 100, effort: 6, smartSubsample: false });
+        pipeline = pipeline.webp({ quality: 76, alphaQuality: 100, effort: 6, smartSubsample: false });
     } else if (isJpeg) {
         pipeline = pipeline.webp({ quality: 85, effort: 6, smartSubsample: true });
     } else {
