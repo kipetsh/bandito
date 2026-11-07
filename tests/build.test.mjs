@@ -132,7 +132,6 @@ test('game mode icons are cropped and emitted as 3x Retina WebP assets at fixed 
     const html = readFileSync(resolve(buildDirectory, 'index.html'), 'utf8');
 
     for (const icon of expectedIcons) {
-        const sourcePath = join(sourceImagesDirectory, icon.source);
         const outputPath = builtFiles.find((file) => file.endsWith(icon.output));
         assert.ok(outputPath, `Missing optimized Retina icon: ${icon.output}`);
 
