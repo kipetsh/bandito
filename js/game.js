@@ -229,6 +229,7 @@ const tutorialLevels = [
 async function startTutorial(levelNumber) {
     const level = tutorialLevels[levelNumber - 1];
     if (!level || !state.all.length) return;
+    rememberWelcomeChoice();
     resetEndScreen();
     if (mpRoomCode) await leaveMultiplayer();
     mpStopTimer();
@@ -1264,12 +1265,22 @@ $('#leaveLobby').onclick = async () => {
 };
 document.querySelectorAll('[data-start]').forEach((b) => (b.onclick = () => begin(+b.dataset.start)));
 updateStats();
+function rememberWelcomeChoice() {
+    try {
+        localStorage.setItem('banditoWelcomeSeen', '1');
+    } catch {}
+}
+
 function showWelcomePrompt() {
+    try {
+        if (localStorage.getItem('banditoWelcomeSeen') === '1') return;
+    } catch {}
     welcomeModal.classList.remove('is-closing', 'hidden');
 }
 
 function closeWelcomePrompt() {
     if (welcomeModal.classList.contains('hidden') || welcomeModal.classList.contains('is-closing')) return;
+    rememberWelcomeChoice();
     const reducedMotion =
         document.body.classList.contains('reduce-motion') ||
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
