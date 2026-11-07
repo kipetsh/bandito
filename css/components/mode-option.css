@@ -17,9 +17,7 @@
         text-align: center;
         transition:
             background-color var(--duration-fast),
-            border-color var(--duration-fast),
-            box-shadow var(--duration-fast),
-            transform var(--duration-fast);
+            border-color var(--duration-fast);
     }
 
     .mode-option:hover:not(:disabled),
@@ -84,18 +82,7 @@
         opacity: 0;
     }
 
-    .mode-option[aria-pressed='true'] {
-        box-shadow: var(--shadow-float);
-        transform: translateY(-1px);
-    }
-
     .mode-option[aria-pressed='true'] .mode-option__check {
         opacity: 1;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .mode-option {
-            transition: none;
-        }
     }
 }

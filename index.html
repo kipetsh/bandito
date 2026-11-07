@@ -113,29 +113,29 @@
                 </header>
                 <div class="menu__grid">
                     <section class="card card--glass menu__card menu__card--solo">
-                        <button class="heading menu__card-head menu__mode-select" data-menu-mode="solo" type="button" aria-pressed="true">
+                        <div class="heading menu__card-head">
                             <span class="heading__icon heading__icon--solo" aria-hidden="true"><img src="assets/images/solo-organic-circle.webp" alt="" width="192" height="192" draggable="false" /></span>
-                            <span class="heading__text">
-                                <span class="heading__title" role="heading" aria-level="2">Одиночная игра</span>
-                                <span class="heading__subtitle">Выбери количество выходов</span>
-                            </span>
-                        </button>
+                            <div class="heading__text">
+                                <h2 class="heading__title">Одиночная игра</h2>
+                                <p class="heading__subtitle">Выбери количество выходов</p>
+                            </div>
+                        </div>
                         <div class="mode-list">
-                            <button class="mode-option" data-solo-exits="2" type="button" disabled>
+                            <button class="mode-option" data-start="2" type="button" disabled>
                                 <span class="mode-option__info">
                                     <strong class="mode-option__title">2 выхода</strong>
                                     <small class="mode-option__hint">Лёгкая партия</small>
                                 </span>
                                 <span class="mode-option__check" aria-hidden="true">✓</span>
                             </button>
-                            <button class="mode-option" data-solo-exits="5" type="button" disabled>
+                            <button class="mode-option" data-start="5" type="button" disabled>
                                 <span class="mode-option__info">
                                     <strong class="mode-option__title">5 выходов</strong>
                                     <small class="mode-option__hint">Стандартная партия</small>
                                 </span>
                                 <span class="mode-option__check" aria-hidden="true">✓</span>
                             </button>
-                            <button class="mode-option" data-solo-exits="6" type="button" disabled>
+                            <button class="mode-option" data-start="6" type="button" disabled>
                                 <span class="mode-option__info">
                                     <strong class="mode-option__title">6 выходов</strong>
                                     <small class="mode-option__hint">Сложная партия</small>
@@ -146,12 +146,17 @@
                         <p id="loadstate" class="note menu__status">Загружаю колоду…</p>
                     </section>
                     <section id="coopCard" class="card card--glass menu__card">
-                        <button class="heading menu__card-head menu__mode-select" data-menu-mode="multiplayer" type="button" aria-pressed="false">
+                        <div class="heading menu__card-head">
                             <span class="heading__icon heading__icon--multiplayer" aria-hidden="true"><img src="assets/images/multiplayer-stars.webp" alt="" width="192" height="178" draggable="false" /></span>
-                            <span class="heading__text">
-                                <span class="heading__title" role="heading" aria-level="2">Мультиплеер</span>
-                                <span class="heading__subtitle">Играй вместе с друзьями</span>
-                            </span>
+                            <div class="heading__text">
+                                <h2 class="heading__title">Мультиплеер</h2>
+                                <p class="heading__subtitle">Играй вместе с друзьями</p>
+                            </div>
+                        </div>
+                        <button id="mpCreate" class="btn btn--lg btn--accent btn--block coop__create" type="button">
+                            <span class="coop__plus" aria-hidden="true">＋</span>
+                            Создать комнату
+                            <span class="coop__arrow" aria-hidden="true">↗</span>
                         </button>
                         <div class="divider coop__divider">Или подключись по коду</div>
                         <div class="coop__join">
@@ -172,9 +177,6 @@
                         </p>
                     </section>
                 </div>
-                <button id="menuStart" class="btn btn--lg btn--primary btn--block menu__start" type="button" disabled>
-                    Начать игру
-                </button>
             </section>
             <section id="mpLobby" class="lobby coop__lobby hidden" aria-label="Лобби кооперативной игры">
                 <header class="lobby__head">
@@ -196,10 +198,7 @@
                 <div class="card card--sunken lobby__panel lobby__code">
                     <div class="caption lobby__code-caption">Код приглашения</div>
                     <strong id="mpRoomCode" class="lobby__code-value"></strong>
-                    <div class="lobby__code-actions">
-                        <button id="mpCopyCode" class="btn btn--sm" type="button">Копировать код</button>
-                        <button id="mpInvite" class="btn btn--sm btn--primary" type="button">Пригласить</button>
-                    </div>
+                    <button id="mpCopyCode" class="btn btn--sm" type="button">Копировать код</button>
                 </div>
                 <div class="lobby__players">
                     <div class="lobby__players-head">
