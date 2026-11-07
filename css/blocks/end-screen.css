@@ -82,6 +82,15 @@
         background: var(--color-scrim-danger);
     }
 
+
+    .end-screen__return {
+        position: fixed;
+        z-index: calc(var(--z-end-screen) + 1);
+        top: max(16px, env(safe-area-inset-top));
+        right: max(16px, env(safe-area-inset-right));
+        box-shadow: var(--shadow-float);
+    }
+
     .end-screen__card {
         display: flex;
         flex-direction: column;
