@@ -25,7 +25,8 @@
     "test": "npm run test:source && npm run build && npm run test:build",
     "check": "node tools/check.mjs",
     "check:fix": "npm run lint:fix && npm run format",
-    "postinstall": "node tools/install-hooks.mjs"
+    "postinstall": "node tools/install-hooks.mjs",
+    "dev:local": "vite --host 127.0.0.1 --strictPort"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
