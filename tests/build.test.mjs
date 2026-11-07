@@ -113,34 +113,17 @@ test('all source images are emitted once as optimized, hashed WebP assets', () =
     assert.ok(!references.includes('assets/images/bandito-'), 'Unhashed theme image references remain in built files');
 });
 
-test('game mode icons are cropped and emitted as 3x Retina WebP assets at fixed quality', async () => {
-    const expectedIcons = [
-        {
-            source: 'solo-organic-circle.webp',
-            output: 'solo-organic-circle-optimized.webp',
-            width: 192,
-            height: 192,
-        },
-        {
-            source: 'multiplayer-stars.webp',
-            output: 'multiplayer-stars-optimized.webp',
-            width: 192,
-            height: 178,
-        },
-    ];
-    const builtFiles = walkFiles(buildDirectory);
+test('game mode icons remain inline SVGs in the production build', () => {
     const html = readFileSync(resolve(buildDirectory, 'index.html'), 'utf8');
+    const soloCard = html.match(/<section class="card card--glass menu__card menu__card--solo">([\\s\\S]*?)<\\/section>/);
+    const multiplayerCard = html.match(/<section id="coopCard" class="card card--glass menu__card">([\\s\\S]*?)<\\/section>/);
 
-    for (const icon of expectedIcons) {
-        const outputPath = builtFiles.find((file) => file.endsWith(icon.output));
-        assert.ok(outputPath, `Missing optimized Retina icon: ${icon.output}`);
-
-        const metadata = await sharp(outputPath).metadata();
-        assert.equal(metadata.width, icon.width, `Unexpected width for ${icon.output}`);
-        assert.equal(metadata.height, icon.height, `Unexpected height for ${icon.output}`);
-        assert.ok(html.includes(icon.output), `index.html does not reference ${icon.output}`);
-        assert.ok(!html.includes(icon.source), `index.html still references the untrimmed source: ${icon.source}`);
-    }
+    assert.ok(soloCard, 'Solo game card is missing from the production build');
+    assert.ok(multiplayerCard, 'Multiplayer card is missing from the production build');
+    assert.ok(soloCard[1].includes('<svg viewBox="0 0 48 48">'), 'Solo game SVG icon is missing');
+    assert.ok(multiplayerCard[1].includes('<svg viewBox="0 0 52 48">'), 'Multiplayer SVG icon is missing');
+    assert.ok(!html.includes('solo-organic-circle.webp'), 'The obsolete solo raster icon is still referenced');
+    assert.ok(!html.includes('multiplayer-stars.webp'), 'The obsolete multiplayer raster icon is still referenced');
 });
 
 function walkFiles(directory) {
