@@ -17,7 +17,7 @@
         z-index: 0;
         inset: 0;
         background: var(--color-overlay);
-        backdrop-filter: blur(2px);
+        backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(2px);
         opacity: 0;
         content: "";
