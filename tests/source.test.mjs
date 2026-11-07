@@ -179,3 +179,20 @@ test('the card data is structurally valid and contains all supported starting ca
     assert.equal(starts.get(72), 5, 'Five-exit start card is missing');
     assert.equal(starts.get(71), 6, 'Six-exit start card is missing');
 });
+
+
+
+test('settings modal reveals a static backdrop blur without animating the filter', () => {
+    const css = readFileSync(resolve(projectRoot, 'css/blocks/modal.css'), 'utf8');
+    const keyframesStart = css.indexOf('@keyframes settings-backdrop-in');
+    const keyframesEnd = css.indexOf('\n    .modal__dialog {', keyframesStart);
+    const keyframes = css.slice(keyframesStart, keyframesEnd);
+
+    assert.ok(css.includes('content: "";'));
+    assert.ok(css.includes('backdrop-filter: blur(2px);'));
+    assert.ok(css.includes('settings-backdrop-in 170ms'));
+    assert.ok(css.includes('settings-backdrop-out 140ms'));
+    assert.ok(css.includes('settings-panel-in 170ms'));
+    assert.ok(css.includes('settings-panel-out 140ms'));
+    assert.doesNotMatch(keyframes, /filter:/);
+});

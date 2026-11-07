@@ -121,4 +121,5 @@ GitHub Actions запускает проверки для pull request в `main`
 - Логику одиночной игры — `js/game.js`.
 - Комнаты и сетевую игру — `js/multiplayer.js`.
 - Настройки и переключение дня/ночи — `js/settings.js`.
+- Анимация модала настроек — `css/blocks/modal.css`: статичный backdrop blur проявляется через `opacity`, анимация содержимого использует `opacity` и `transform`, без покадрового изменения радиуса blur.
 - Состав колоды — `resources/bandido-matrices/cards.json`.
