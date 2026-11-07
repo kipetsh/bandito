@@ -175,18 +175,18 @@
     .game__help-toggle {
         display: grid;
         place-items: center;
-        justify-self: center;
+        justify-self: end;
         flex: none;
         width: 40px;
         min-width: 40px;
         height: 40px;
         padding: 0;
-        border: 0;
+        border: 1px solid var(--color-border);
         border-radius: 50%;
         background: transparent;
         color: var(--color-text-secondary);
         cursor: pointer;
-        transition: color 140ms ease, background 140ms ease;
+        transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
     }
 
     .game__help-toggle svg {
@@ -196,6 +196,7 @@
     }
 
     .game__help-toggle:hover {
+        border-color: var(--color-border-strong);
         background: var(--color-surface-sunken);
         color: var(--color-text);
     }
