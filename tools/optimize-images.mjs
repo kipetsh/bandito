@@ -66,13 +66,13 @@ for (const inputPath of sourceImages) {
 
     const isMainLogo = baseName.startsWith('bandito-logo');
 
-    pipeline = isRetinaIcon
-        ? pipeline.webp({ quality: 88, alphaQuality: 100, effort: 6, smartSubsample: false })
-        : isJpeg
-          ? pipeline.webp({ quality: 85, effort: 6, smartSubsample: true })
-          : isMainLogo
-            ? pipeline.webp({ quality: 88, alphaQuality: 100, effort: 6, smartSubsample: false })
-            : pipeline.webp({ lossless: true, effort: 6 });
+    if (isRetinaIcon || isMainLogo) {
+        pipeline = pipeline.webp({ quality: 88, alphaQuality: 100, effort: 6, smartSubsample: false });
+    } else if (isJpeg) {
+        pipeline = pipeline.webp({ quality: 85, effort: 6, smartSubsample: true });
+    } else {
+        pipeline = pipeline.webp({ lossless: true, effort: 6 });
+    }
 
     const result = await pipeline.toFile(outputPath);
     const original = await stat(inputPath);
@@ -92,7 +92,10 @@ for (const inputPath of sourceImages) {
 }
 
 const replacements = new Map(
-    optimized.map(({ inputPath, outputPath }) => [inputPath.split(/[\\/]/).at(-1), outputPath.split(/[\\/]/).at(-1)])
+    optimized.map(({ inputPath, outputPath }) => [
+        inputPath.split('/').at(-1),
+        outputPath.split('/').at(-1),
+    ])
 );
 
 if (replacements.size > 0) {
