@@ -54,21 +54,6 @@
         height: 64px;
     }
 
-    .menu__card-head .heading__icon img {
-        display: block;
-        width: 64px;
-        height: 64px;
-        object-fit: contain;
-    }
-
-    .menu__card-head .heading__icon--solo img {
-        transform: scale(0.9);
-    }
-
-    .menu__card-head .heading__icon--multiplayer img {
-        transform: scale(1);
-    }
-
     .menu__card--solo::before {
         content: '';
         position: absolute;
