@@ -7,3 +7,10 @@ build/
 .vscode/
 *.code-workspace
 .playwright-mcp/
+
+# Tauri native build output
+src-tauri/target/
+src-tauri/gen/
+src-tauri/icons/*.png
+src-tauri/icons/*.ico
+src-tauri/icons/*.icns

@@ -123,3 +123,33 @@ Production-сборка находится в `build/`. Vite собирает с
 - Настройки и переключение дня/ночи — `js/settings.js`.
 - Анимация модала настроек — `css/blocks/modal.css`: статичный backdrop blur проявляется через `opacity`, анимация содержимого использует `opacity` и `transform`, без покадрового изменения радиуса blur.
 - Состав колоды — `resources/bandido-matrices/cards.json`.
+
+## Настольное и мобильное приложение
+
+Bandito можно запускать как отдельное приложение на macOS, Windows и Android. Нативная оболочка использует Tauri 2, а интерфейс и игровая логика остаются общей веб-кодовой базой Vite.
+
+### Команды
+
+| Команда | Назначение |
+| --- | --- |
+| `npm run app:dev` | Запуск приложения в режиме разработки |
+| `npm run app:build` | Сборка приложения для текущей платформы |
+| `npm run app:icons` | Генерация системных иконок из `src-tauri/icons/source.svg` |
+| `npm run app:android:init` | Первичная генерация Android-проекта |
+| `npm run app:android:build` | Сборка Android APK |
+
+### Требования
+
+- Node.js 22.12 или новее.
+- Rust stable.
+- Для macOS — Xcode Command Line Tools.
+- Для Windows — Microsoft C++ Build Tools и WebView2.
+- Для Android — Android Studio, JDK 17, Android SDK, Build Tools и NDK.
+
+Android-проект создаётся командой `npm run app:android:init`; сгенерированная папка `src-tauri/gen/` не хранится в Git и создаётся заново в CI.
+
+### Автоматическая сборка
+
+Workflow `Build Bandito apps` запускается при push в `main-tauri` и вручную из GitHub Actions. Он собирает отдельные установочные артефакты для macOS Apple Silicon, macOS Intel, Windows x64 и Android APK. Артефакты доступны в разделе Artifacts соответствующего запуска и хранятся 14 дней.
+
+Сборки пока не подписаны сертификатами разработчика. Для публичного распространения macOS и Windows понадобятся подпись и, для macOS, notarization; для публикации Android в Google Play потребуется настроить ключ подписи релизов.
