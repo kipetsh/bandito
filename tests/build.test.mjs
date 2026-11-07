@@ -22,7 +22,10 @@ test('production CSS preserves the standard settings backdrop-filter declaration
     assert.ok(cssFiles.length > 0, 'No bundled application stylesheet found');
 
     const css = cssFiles.map((name) => readFileSync(join(assetsDirectory, name), 'utf8')).join('\\n');
-    assert.match(css, /(?:^|[;{])backdrop-filter:blur\\(4px\\)/);
+    assert.ok(
+        css.includes('-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)'),
+        'The production CSS must preserve both backdrop-filter declarations in compatibility order'
+    );
 });
 
 test('production build contains index.html and every referenced local asset', () => {
