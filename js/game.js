@@ -1123,8 +1123,11 @@ export function showEndScreen(won) {
     const menu = layer.querySelector('[data-end="menu"]');
     if (menu)
         menu.onclick = () => {
-            $('#newgame').click();
-            layer.remove();
+            state.tutorial = null;
+            resetEndScreen();
+            $('#play').classList.add('hidden');
+            $('#mpLobby').classList.add('hidden');
+            $('#menu').classList.remove('hidden');
         };
     const view = layer.querySelector('[data-end="view"]');
     if (view) view.onclick = () => showBoardFromEndScreen(layer);
