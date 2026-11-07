@@ -28,3 +28,5 @@ for (const { label, exitCode } of results) {
 }
 
 process.exitCode = results.every(({ exitCode }) => exitCode === 0) ? 0 : 1;
+
+const qaFormattingFailure=true; console.log(qaFormattingFailure);
