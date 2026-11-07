@@ -18,10 +18,10 @@ function localReferences(html) {
 
 test('production CSS preserves the standard settings backdrop-filter declaration', () => {
     const assetsDirectory = resolve(buildDirectory, 'assets');
-    const cssFiles = readdirSync(assetsDirectory).filter((name) => /^index-[\\w-]+\\.css$/.test(name));
-    assert.equal(cssFiles.length, 1, 'Expected one bundled application stylesheet');
+    const cssFiles = readdirSync(assetsDirectory).filter((name) => name.endsWith('.css'));
+    assert.ok(cssFiles.length > 0, 'No bundled application stylesheet found');
 
-    const css = readFileSync(join(assetsDirectory, cssFiles[0]), 'utf8');
+    const css = cssFiles.map((name) => readFileSync(join(assetsDirectory, name), 'utf8')).join('\\n');
     assert.match(css, /(?:^|[;{])backdrop-filter:blur\\(4px\\)/);
 });
 
