@@ -23,12 +23,12 @@ async function walk(directory) {
 
 const files = await walk(buildDirectory);
 const sourceImages = files.filter((file) => {
-    const baseName = file.split(/[\\\\/]/).at(-1);
+    const baseName = file.split('/').at(-1);
     return rasterExtensions.has(extname(file).toLowerCase()) || retinaIconSizes.has(baseName);
 });
 
 if (sourceImages.length === 0) {
-    throw new Error('No JPG or PNG images were found in the production build.');
+    throw new Error('No source images were found in the production build.');
 }
 
 const optimized = [];
@@ -36,25 +36,43 @@ const skipped = [];
 
 for (const inputPath of sourceImages) {
     const extension = extname(inputPath);
-    const outputPath = inputPath.slice(0, -extension.length) + '.webp';
-    const baseName = inputPath.split(/[\\/]/).at(-1);
+    const baseName = inputPath.split('/').at(-1);
+    const iconSize = retinaIconSizes.get(baseName);
+    const isRetinaIcon = Boolean(iconSize);
+    const outputPath = isRetinaIcon
+        ? inputPath.slice(0, -extension.length) + '-optimized.webp'
+        : inputPath.slice(0, -extension.length) + '.webp';
     const isJpeg = extension.toLowerCase() === '.jpg' || extension.toLowerCase() === '.jpeg';
     const maxDimension = baseName.includes('background') ? 2560 : 1600;
 
-    let pipeline = sharp(inputPath, { failOn: 'error' }).rotate().resize({
-        width: maxDimension,
-        height: maxDimension,
-        fit: 'inside',
-        withoutEnlargement: true,
-    });
+    let pipeline = sharp(inputPath, { failOn: 'error' }).rotate();
+
+    if (isRetinaIcon) {
+        pipeline = pipeline
+            .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 8 })
+            .resize({
+                ...iconSize,
+                fit: 'contain',
+                background: { r: 0, g: 0, b: 0, alpha: 0 },
+            });
+    } else {
+        pipeline = pipeline.resize({
+            width: maxDimension,
+            height: maxDimension,
+            fit: 'inside',
+            withoutEnlargement: true,
+        });
+    }
 
     const isMainLogo = baseName.startsWith('bandito-logo');
 
-    pipeline = isJpeg
-        ? pipeline.webp({ quality: 85, effort: 6, smartSubsample: true })
-        : isMainLogo
-          ? pipeline.webp({ quality: 88, alphaQuality: 100, effort: 6, smartSubsample: false })
-          : pipeline.webp({ lossless: true, effort: 6 });
+    pipeline = isRetinaIcon
+        ? pipeline.webp({ quality: 88, alphaQuality: 100, effort: 6, smartSubsample: false })
+        : isJpeg
+          ? pipeline.webp({ quality: 85, effort: 6, smartSubsample: true })
+          : isMainLogo
+            ? pipeline.webp({ quality: 88, alphaQuality: 100, effort: 6, smartSubsample: false })
+            : pipeline.webp({ lossless: true, effort: 6 });
 
     const result = await pipeline.toFile(outputPath);
     const original = await stat(inputPath);
