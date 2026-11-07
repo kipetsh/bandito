@@ -84,14 +84,14 @@
         --text-aura: 0 2px 0 #f4d7aa, 0 5px 15px #65391f30;
 
         /* Surfaces */
-        --color-surface: #fffaf1;
-        --color-surface-glass: #fff5e8e8;
-        --color-surface-raised: #fff;
-        --color-surface-sunken: #f4efe6;
-        --color-surface-tint: #f0e9dd;
-        --color-surface-selected: #f2dfc4;
-        --color-surface-icon: #ead3ae;
-        --color-field: #fffaf1;
+        --color-surface: #fffaf1cc;
+        --color-surface-glass: #fff5e8cc;
+        --color-surface-raised: #ffffffcc;
+        --color-surface-sunken: #f4efe6cc;
+        --color-surface-tint: #f0e9ddcc;
+        --color-surface-selected: #f2dfc4cc;
+        --color-surface-icon: #ead3aecc;
+        --color-field: #fffaf1cc;
 
         /* Borders */
         --color-border: #ddc5a5;
@@ -188,14 +188,14 @@
         --color-icon: #d5d9de;
         --text-aura: none;
 
-        --color-surface: #24272b;
-        --color-surface-glass: #24272b;
-        --color-surface-raised: #292d32;
-        --color-surface-sunken: #292d32;
-        --color-surface-tint: #393e45;
-        --color-surface-selected: #393e45;
-        --color-surface-icon: #34383e;
-        --color-field: #202328;
+        --color-surface: #24272be6;
+        --color-surface-glass: #24272be6;
+        --color-surface-raised: #292d32e6;
+        --color-surface-sunken: #292d32e6;
+        --color-surface-tint: #393e45e6;
+        --color-surface-selected: #393e45e6;
+        --color-surface-icon: #34383ee6;
+        --color-field: #202328e6;
 
         --color-border: #464b52;
         --color-border-strong: #747b84;
