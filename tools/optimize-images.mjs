@@ -4,6 +4,10 @@ import { extname, join, resolve } from 'node:path';
 
 const buildDirectory = resolve('build');
 const rasterExtensions = new Set(['.jpg', '.jpeg', '.png']);
+const retinaIconSizes = new Map([
+    ['solo-organic-circle.webp', { width: 120, height: 120 }],
+    ['multiplayer-stars.webp', { width: 156, height: 144 }],
+]);
 const textExtensions = new Set(['.html', '.css', '.js', '.json', '.map']);
 
 async function walk(directory) {
@@ -18,7 +22,10 @@ async function walk(directory) {
 }
 
 const files = await walk(buildDirectory);
-const sourceImages = files.filter((file) => rasterExtensions.has(extname(file).toLowerCase()));
+const sourceImages = files.filter((file) => {
+    const baseName = file.split(/[\\\\/]/).at(-1);
+    return rasterExtensions.has(extname(file).toLowerCase()) || retinaIconSizes.has(baseName);
+});
 
 if (sourceImages.length === 0) {
     throw new Error('No JPG or PNG images were found in the production build.');

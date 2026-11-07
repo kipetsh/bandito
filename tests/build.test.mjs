@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import sharp from 'sharp';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const buildDirectory = resolve(projectRoot, 'build');
@@ -110,6 +111,29 @@ test('all source images are emitted once as optimized, hashed WebP assets', () =
     }
 
     assert.ok(!references.includes('assets/images/bandito-'), 'Unhashed theme image references remain in built files');
+});
+
+
+test('game mode icons are cropped and emitted as 3x Retina WebP assets', async () => {
+    const expectedIcons = [
+        { source: 'solo-organic-circle.webp', output: 'solo-organic-circle-optimized.webp', width: 120, height: 120 },
+        { source: 'multiplayer-stars.webp', output: 'multiplayer-stars-optimized.webp', width: 156, height: 144 },
+    ];
+    const builtFiles = walkFiles(buildDirectory);
+    const html = readFileSync(resolve(buildDirectory, 'index.html'), 'utf8');
+
+    for (const icon of expectedIcons) {
+        const sourcePath = join(sourceImagesDirectory, icon.source);
+        const outputPath = builtFiles.find((file) => file.endsWith(icon.output));
+        assert.ok(outputPath, `Missing optimized Retina icon: ${icon.output}`);
+
+        const metadata = await sharp(outputPath).metadata();
+        assert.equal(metadata.width, icon.width, `Unexpected width for ${icon.output}`);
+        assert.equal(metadata.height, icon.height, `Unexpected height for ${icon.output}`);
+        assert.ok(statSync(outputPath).size < statSync(sourcePath).size, `Retina icon was not compressed: ${icon.source}`);
+        assert.ok(html.includes(icon.output), `index.html does not reference ${icon.output}`);
+        assert.ok(!html.includes(icon.source), `index.html still references the untrimmed source: ${icon.source}`);
+    }
 });
 
 function walkFiles(directory) {
