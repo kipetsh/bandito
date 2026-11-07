@@ -113,7 +113,7 @@ Production-сборка находится в `build/`. Vite собирает с
 
 ### Публикация
 
-GitHub Actions запускает две независимые jobs параллельно: одна выполняет `npm run check` и `npm run test:source`, вторая — `npm run build` и `npm run test:build`. При любом pull request, независимо от целевой ветки, обе jobs проверяют изменения без публикации. При push в `main` после успешного завершения обеих jobs сборка из `build/` загружается как Pages Artifact и отдельная deploy job публикует её на GitHub Pages. Если любая из jobs завершается ошибкой, деплой не запускается.
+При push в `main` сначала запускается отдельный workflow публикации: `npm ci`, `npm run build`, загрузка Pages Artifact и deploy в GitHub Pages. Он не запускает ESLint, Prettier или тесты и не ждёт их — новая версия сайта публикуется независимо от результата проверок. После завершения публикации автоматически запускается workflow проверок на том же commit SHA: параллельно выполняются `npm run check` + `npm run test:source` и `npm run build` + `npm run test:build`. Отдельно эти же проверки запускаются на pull request с любой целевой веткой. Для ChatGPT без локального клона проверочная ветка `*-chatgpt-check` запускает только `npm run check`; исправления из неё переносятся в `main` после устранения ошибок, что запускает новый цикл публикации и проверок.
 
 ### Где что менять
 

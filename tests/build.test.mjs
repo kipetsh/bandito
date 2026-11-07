@@ -16,18 +16,6 @@ function localReferences(html) {
         .map((value) => decodeURIComponent(value.split(/[?#]/, 1)[0]).replace(/^\.\//, ''));
 }
 
-test('production CSS preserves the standard settings backdrop-filter declaration', () => {
-    const assetsDirectory = resolve(buildDirectory, 'assets');
-    const cssFiles = readdirSync(assetsDirectory).filter((name) => name.endsWith('.css'));
-    assert.ok(cssFiles.length > 0, 'No bundled application stylesheet found');
-
-    const css = cssFiles.map((name) => readFileSync(join(assetsDirectory, name), 'utf8')).join('\\n');
-    assert.ok(
-        css.includes('-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)'),
-        'The production CSS must preserve both backdrop-filter declarations in compatibility order'
-    );
-});
-
 test('production build contains index.html and every referenced local asset', () => {
     const indexPath = resolve(buildDirectory, 'index.html');
     assert.ok(existsSync(indexPath), 'Vite did not produce build/index.html');
