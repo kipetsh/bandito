@@ -317,8 +317,8 @@
     .game__zoom {
         position: absolute;
         z-index: 5;
-        top: var(--space-3);
         right: var(--space-3);
+        bottom: var(--space-3);
         display: flex;
         align-items: center;
         gap: 5px;
@@ -371,8 +371,8 @@
 
     @media (max-width: 760px) {
         .game__zoom {
-            top: var(--space-2);
             right: var(--space-2);
+            bottom: 58px;
         }
 
         .game__camera {
