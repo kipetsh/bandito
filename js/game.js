@@ -199,16 +199,16 @@ const tutorialLevels = [
     {
         start: 75,
         exits: 2,
-        cards: [17, 22, 14, 19, 20, 24, 27, 30, 15, 26, 3, 4, 45, 65],
-        subtitle: 'Уровень 2 · Используй прямые участки, повороты и развилки. Сначала построй маршрут, потом закрой выходы.',
-        status: 'Попробуй разные формы карт: прямые, повороты и развилки. Не замыкай путь слишком рано.',
+        cards: [17, 22, 14, 19, 20, 24, 45, 65],
+        subtitle: 'Уровень 2 · Соедини выходы простым маршрутом из прямых участков и поворотов.',
+        status: 'Начни с простых карт и постепенно соедини оба выхода. Необязательно использовать все карты.',
     },
     {
         start: 75,
         exits: 2,
-        cards: [17, 22, 14, 19, 20, 24, 27, 30, 35, 15, 26, 33, 3, 4, 45, 50, 65, 66],
-        subtitle: 'Уровень 3 · Собери извилистый маршрут из прямых, поворотов и развилок. Закрой выходы, когда путь будет готов.',
-        status: 'Чередуй разные формы карт и соединяй участки по одному. Выходы оставь напоследок.',
+        cards: [17, 22, 14, 19, 20, 24, 27, 30, 15, 26, 3, 4, 45, 65],
+        subtitle: 'Уровень 3 · Построй более сложный маршрут, сочетая прямые участки, повороты и развилки.',
+        status: 'Используй разные формы карт и соединяй участки постепенно. Выходы оставь напоследок.',
     },
 ];
 
@@ -953,7 +953,7 @@ let endScreenDismissed = false;
 function showBoardFromEndScreen(layer) {
     endScreenDismissed = true;
     layer.classList.add('hidden');
-    document.querySelector('[data-end-return]')?.remove();
+    document.querySelectorAll('[data-end-return]').forEach((el) => el.remove());
     const back = document.createElement('button');
     back.type = 'button';
     back.className = 'btn btn--sm game__return';
@@ -965,7 +965,7 @@ function showBoardFromEndScreen(layer) {
         layer.classList.remove('hidden');
         endScreenDismissed = false;
     };
-    $('.game__subtitle-row').append(back);
+    $('.game__boardbox').append(back);
 }
 export function resetEndScreen() {
     endScreenDismissed = false;
