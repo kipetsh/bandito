@@ -217,7 +217,7 @@
         padding: var(--space-4);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-xl);
-        background: var(--color-surface-raised);
+        background: #fff;
         box-shadow: var(--shadow-float);
         transform-origin: top right;
         animation: game-help-in 120ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
@@ -290,20 +290,45 @@
 
     .game__actions {
         display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-2);
+        justify-content: flex-start;
+        min-height: 0;
     }
 
     .game__exchange {
-        flex: 1;
+        flex: none;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(8px);
+        pointer-events: none;
+        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms;
+    }
+
+    .game__exchange.is-visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        pointer-events: auto;
     }
 
     .game__zoom {
-        --btn-icon-size: var(--control-sm);
-
+        position: absolute;
+        z-index: 5;
+        top: var(--space-3);
+        right: var(--space-3);
         display: flex;
-        flex: none;
-        gap: var(--space-1);
+        align-items: center;
+        gap: 5px;
+        padding: 5px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface-raised);
+        box-shadow: var(--shadow-float);
+    }
+
+    .game__zoom-button {
+        --btn-icon-size: 36px;
+        border-radius: 7px;
+        font-size: var(--text-lg);
     }
 
     /* The current zoom, a plain label between the − and + buttons. */
@@ -341,6 +366,11 @@
     }
 
     @media (max-width: 760px) {
+        .game__zoom {
+            top: var(--space-2);
+            right: var(--space-2);
+        }
+
         .game__camera {
             touch-action: pan-x pan-y;
             -webkit-overflow-scrolling: touch;
