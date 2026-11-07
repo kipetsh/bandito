@@ -28,6 +28,7 @@ export const state = {
     placementPreview: null,
     lastPlaced: null,
     animateLastPlacement: false,
+    tutorial: null,
 };
 const defaultStats = { games: 0, wins: 0, losses: 0, best: null };
 let playerStats = {
@@ -57,6 +58,7 @@ function updateStats() {
 function finishGame(won) {
     if (state.finished) return;
     state.finished = true;
+    if (state.tutorial) return;
     playerStats.games++;
     if (won) {
         playerStats.wins++;
@@ -156,6 +158,7 @@ export function opens() {
 }
 async function begin(n) {
     if (!state.all.length) return;
+    state.tutorial = null;
     resetEndScreen();
     // The solo modes stay clickable next to the coop lobby: a solo game leaves the room first,
     // otherwise the room's turn order keeps every card in the hand disabled.
@@ -177,11 +180,77 @@ async function begin(n) {
     $('#menu').classList.add('hidden');
     $('#play').classList.remove('hidden');
     $('#heading').textContent = n === 2 ? 'Bandito · лёгкая партия' : 'Bandito · ' + n + ' выходов';
+    $('.game__subtitle').textContent = 'Выбери карту и нажми на точку нужного поворота.';
     status(chooseCardMessage, '', chooseCardTouchMessage);
     render();
     centerCamera();
     startHand();
 }
+const tutorialLevels = [
+    {
+        start: 75,
+        exits: 2,
+        cards: [45, 65],
+        subtitle: 'Закрой оба выхода: используй Г-образную и прямую карты-закрывашки.',
+        status: 'Поставь две карты так, чтобы закрыть оба выхода.',
+    },
+    {
+        start: 72,
+        exits: 5,
+        cards: [45, 46, 50, 55, 64],
+        subtitle: 'Подбери положение и поворот пяти карт, чтобы закрыть все выходы.',
+        status: 'Закрой пять выходов. Карты можно поворачивать.',
+    },
+    {
+        start: 72,
+        exits: 5,
+        cards: [45, 46, 50, 55, 64, 65, 66, 1, 3, 4, 5, 14, 17, 19, 20, 22, 24, 27, 30, 35, 37],
+        subtitle: 'Небольшая партия: в колоде 21 заранее подобранная карта.',
+        status: 'Сыграй партию и постарайся закрыть все выходы.',
+    },
+];
+
+async function startTutorial(levelNumber) {
+    const level = tutorialLevels[levelNumber - 1];
+    if (!level || !state.all.length) return;
+    resetEndScreen();
+    if (mpRoomCode) await leaveMultiplayer();
+    mpStopTimer();
+    const cardFor = (id) => {
+        const card = state.all.find((item) => item.id === id);
+        return card ? { id: card.id, m: clone(card.matrix) } : null;
+    };
+    const startCard = cardFor(level.start);
+    const cards = level.cards.map(cardFor);
+    if (!startCard || cards.some((card) => !card)) {
+        snackbar('Не удалось загрузить карты обучения.', 'error');
+        return;
+    }
+    state.tutorial = { level: levelNumber };
+    state.exits = level.exits;
+    state.deck = cards.slice(3).reverse();
+    state.hand = cards.slice(0, 3);
+    state.placed = [{ id: startCard.id, x: 0, y: 0, m: startCard.m }];
+    state.lastPlaced = null;
+    state.animateLastPlacement = false;
+    state.selected = -1;
+    state.rotation = 0;
+    state.finished = false;
+    state.turnCount = 0;
+    state.placementPreview = null;
+    $('#menu').classList.add('hidden');
+    $('#mpLobby').classList.add('hidden');
+    $('#play').classList.remove('hidden');
+    $('#heading').textContent = 'Обучение · ' + levelNumber + ' уровень';
+    $('.game__subtitle').textContent = level.subtitle;
+    $('#gameMenu').classList.add('hidden');
+    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+    status(level.status);
+    render();
+    centerCamera();
+    startHand();
+}
+
 function rotated(m, r) {
     let a = clone(m);
     for (let i = 0; i < r; i++) a = rot(a);
@@ -886,6 +955,59 @@ export function showEndScreen(won) {
     const layer = document.createElement('div');
     layer.className = 'end-screen' + (won ? '' : ' end-screen--lose');
     layer.dataset.endScreen = '';
+    if (state.tutorial) {
+        const level = state.tutorial.level;
+        const lastLevel = level === tutorialLevels.length;
+        const title = won ? (lastLevel ? 'Обучение завершено!' : 'Уровень пройден!') : 'Уровень не пройден';
+        const subtitle = won
+            ? lastLevel
+                ? 'Ты освоил основы BANDITO. Теперь можно начинать обычные партии.'
+                : 'Отлично! Все выходы закрыты. Переходим к следующему заданию.'
+            : 'Карты закончились, а выходы ещё остались. Попробуй пройти уровень ещё раз.';
+        const primary = won
+            ? lastLevel
+                ? '<button class="btn btn--lg btn--primary end-screen__action" data-end="tutorial-menu">В меню</button>'
+                : '<button class="btn btn--lg btn--primary end-screen__action" data-end="tutorial-next">Далее</button>'
+            : '<button class="btn btn--lg btn--primary end-screen__action" data-end="tutorial-retry">Повторить уровень</button>';
+        layer.innerHTML =
+            '<div class="end-screen__card"><div class="end-screen__mark">' +
+            (won ? '✓' : '↻') +
+            '</div><h2 class="end-screen__title">' +
+            title +
+            '</h2><p class="end-screen__subtitle">' +
+            subtitle +
+            '</p><div class="end-screen__actions">' +
+            primary +
+            '<button class="btn btn--lg end-screen__action" data-end="view">Посмотреть поле</button>' +
+            '</div></div>';
+        document.body.append(layer);
+        const next = layer.querySelector('[data-end="tutorial-next"]');
+        if (next)
+            next.onclick = () => {
+                layer.remove();
+                startTutorial(level + 1);
+            };
+        const retry = layer.querySelector('[data-end="tutorial-retry"]');
+        if (retry)
+            retry.onclick = () => {
+                layer.remove();
+                startTutorial(level);
+            };
+        const menu = layer.querySelector('[data-end="tutorial-menu"]');
+        if (menu)
+            menu.onclick = () => {
+                state.tutorial = null;
+                layer.remove();
+                $('#leaveLobby').click();
+            };
+        const view = layer.querySelector('[data-end="view"]');
+        if (view)
+            view.onclick = () => {
+                endScreenDismissed = true;
+                layer.remove();
+            };
+        return;
+    }
     const multi = !!mpRoomCode,
         host = multi && mpRoomData?.owner === mpUid;
     const difficulty = mpRoomData?.game?.exits || 6;
@@ -1047,6 +1169,7 @@ $('#newgame').onclick = async () => {
     await begin(state.exits);
 };
 $('#leaveLobby').onclick = async () => {
+    state.tutorial = null;
     $('#gameMenu').classList.add('hidden');
     $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
     state.placementPreview = null;
@@ -1059,6 +1182,37 @@ $('#leaveLobby').onclick = async () => {
 };
 document.querySelectorAll('[data-start]').forEach((b) => (b.onclick = () => begin(+b.dataset.start)));
 updateStats();
+function showWelcomePrompt() {
+    let seen = false;
+    try {
+        seen = localStorage.getItem('banditoTutorialPromptSeen') === '1';
+    } catch {}
+    if (seen) return;
+    const layer = document.createElement('div');
+    layer.className = 'end-screen';
+    layer.dataset.welcomePrompt = '';
+    layer.innerHTML =
+        '<div class="end-screen__card"><div class="end-screen__mark">?</div>' +
+        '<h2 class="end-screen__title">Ты впервые играешь в BANDITO?</h2>' +
+        '<p class="end-screen__subtitle">Хочешь пройти короткое обучение перед первой партией?</p>' +
+        '<div class="end-screen__actions">' +
+        '<button class="btn btn--lg btn--primary end-screen__action" data-welcome="yes">Пройти обучение</button>' +
+        '<button class="btn btn--lg end-screen__action" data-welcome="no">Я уже знаю правила</button>' +
+        '</div></div>';
+    document.body.append(layer);
+    const rememberChoice = () => {
+        try {
+            localStorage.setItem('banditoTutorialPromptSeen', '1');
+        } catch {}
+        layer.remove();
+    };
+    layer.querySelector('[data-welcome="yes"]').onclick = () => {
+        rememberChoice();
+        startTutorial(1);
+    };
+    layer.querySelector('[data-welcome="no"]').onclick = rememberChoice;
+}
+
 fetch('./resources/bandido-matrices/cards.json')
     .then((r) => {
         if (!r.ok) throw Error('Ошибка загрузки колоды');
@@ -1069,6 +1223,7 @@ fetch('./resources/bandido-matrices/cards.json')
         document.querySelectorAll('[data-start]').forEach((b) => (b.disabled = false));
         $('#loadstate').classList.remove('hidden');
         $('#loadstate').textContent = 'Колода загружена. Можно начинать.';
+        showWelcomePrompt();
     })
     .catch((e) => {
         $('#loadstate').classList.remove('hidden');
@@ -1113,6 +1268,10 @@ $('#darkTheme').addEventListener('change', saveSettings);
 $('#resetSettings').onclick = () => {
     localStorage.removeItem('banditoSettings');
     applySettings();
+};
+$('#replayTutorial').onclick = () => {
+    closeSettings();
+    startTutorial(1);
 };
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeSettings();
