@@ -83,6 +83,10 @@
         overflow: auto;
     }
 
+    .modal--welcome {
+        z-index: calc(var(--z-launcher) + 1);
+    }
+
     .modal__dialog--welcome {
         width: min(520px, 100%);
     }
