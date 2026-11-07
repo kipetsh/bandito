@@ -156,6 +156,7 @@ export function opens() {
 }
 async function begin(n) {
     if (!state.all.length) return;
+    resetEndScreen();
     // The solo modes stay clickable next to the coop lobby: a solo game leaves the room first,
     // otherwise the room's turn order keeps every card in the hand disabled.
     if (mpRoomCode) await leaveMultiplayer();
@@ -875,8 +876,13 @@ document.addEventListener('keydown', (e) => {
         cancelSelection();
     }
 });
+let endScreenDismissed = false;
+export function resetEndScreen() {
+    endScreenDismissed = false;
+    document.querySelector('[data-end-screen]')?.remove();
+}
 export function showEndScreen(won) {
-    if (document.querySelector('[data-end-screen]')) return;
+    if (endScreenDismissed || document.querySelector('[data-end-screen]')) return;
     const layer = document.createElement('div');
     layer.className = 'end-screen' + (won ? '' : ' end-screen--lose');
     layer.dataset.endScreen = '';
@@ -901,8 +907,8 @@ export function showEndScreen(won) {
             ? host
                 ? '<button class="btn btn--lg btn--primary end-screen__action" data-end="rematch">Реванш</button>'
                 : '<button class="btn btn--lg btn--primary end-screen__action" disabled>Ждём реванша…</button>'
-            : '<button class="btn btn--lg btn--primary end-screen__action" data-end="menu">В меню</button>' +
-              '<button class="btn btn--lg end-screen__action" data-end="close">Посмотреть поле</button>') +
+            : '<button class="btn btn--lg btn--primary end-screen__action" data-end="menu">В меню</button>') +
+        '<button class="btn btn--lg end-screen__action" data-end="view">Посмотреть поле</button>' +
         (multi ? '<button class="btn btn--lg end-screen__action" data-end="leave">Выйти из комнаты</button>' : '') +
         '</div></div>';
     document.body.append(layer);
@@ -922,8 +928,12 @@ export function showEndScreen(won) {
             $('#newgame').click();
             layer.remove();
         };
-    const close = layer.querySelector('[data-end="close"]');
-    if (close) close.onclick = () => layer.remove();
+    const view = layer.querySelector('[data-end="view"]');
+    if (view)
+        view.onclick = () => {
+            endScreenDismissed = true;
+            layer.remove();
+        };
     const leave = layer.querySelector('[data-end="leave"]');
     if (leave) leave.onclick = () => leaveMultiplayer();
 }

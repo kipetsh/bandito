@@ -12,6 +12,7 @@ import {
     startHand,
     opens,
     render,
+    resetEndScreen,
     showEndScreen,
     shuffle,
     state,
@@ -212,7 +213,7 @@ function mpAttach(code) {
             return;
         }
         if (!room.game.finished) {
-            document.querySelector('[data-end-screen]')?.remove();
+            resetEndScreen();
             mpCelebrated = false;
         }
         // The game screen opening means the game has just started: focus goes to the hand.
