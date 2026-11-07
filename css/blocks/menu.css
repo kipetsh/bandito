@@ -66,7 +66,7 @@
     }
 
     .menu__card-head .heading__icon--multiplayer img {
-        transform: scale(1.4);
+        transform: scale(1);
     }
 
     .menu__card--solo::before {
@@ -154,9 +154,6 @@
             transform: scale(0.9);
         }
 
-        .menu__card-head .heading__icon--multiplayer img {
-            transform: scale(1.4);
-        }
     }
 
     @media (max-width: 360px) {
