@@ -92,10 +92,7 @@ for (const inputPath of sourceImages) {
 }
 
 const replacements = new Map(
-    optimized.map(({ inputPath, outputPath }) => [
-        inputPath.split('/').at(-1),
-        outputPath.split('/').at(-1),
-    ])
+    optimized.map(({ inputPath, outputPath }) => [inputPath.split(/[\\/]/).at(-1), outputPath.split(/[\\/]/).at(-1)])
 );
 
 if (replacements.size > 0) {
