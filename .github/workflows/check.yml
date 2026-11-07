@@ -38,28 +38,11 @@ jobs:
         id: dependencies
         run: npm ci
 
-      - name: Create ChatGPT terminal snapshot
-        if: github.event_name == 'push' && endsWith(github.ref_name, '-chatgpt-check')
-        run: |
-          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/bandito-chatgpt-check-sha"
-          tar -czf "$RUNNER_TEMP/bandito-chatgpt-check.tar.gz" \
-            --exclude='./.git' \
-            --exclude='./.tmp' \
-            --exclude='./build' \
-            -C "$GITHUB_WORKSPACE" . \
-            -C "$RUNNER_TEMP" bandito-chatgpt-check-sha
+      - name: Run npm run check
+        run: npm run check
 
-      - name: Upload ChatGPT terminal snapshot
-        if: steps.dependencies.outcome == 'success' && github.event_name == 'push' && endsWith(github.ref_name, '-chatgpt-check')
-        uses: actions/upload-artifact@v4
-        with:
-          name: bandito-chatgpt-check
-          path: ${{ runner.temp }}/bandito-chatgpt-check.tar.gz
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Run checks and tests
-        run: npm run check && npm run test
+      - name: Run npm run test
+        run: npm run test
 
       - name: Configure GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
