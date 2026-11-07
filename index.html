@@ -303,12 +303,12 @@
                     </div>
                 </header>
                 <div class="game__layout">
+                    <div class="game__subtitle-row">
+                        <p class="heading__subtitle game__subtitle">
+                            Выбери карту и нажми на точку нужного поворота.
+                        </p>
+                    </div>
                     <div class="card game__boardbox">
-                        <div class="game__subtitle-row">
-                            <p class="heading__subtitle game__subtitle">
-                                Выбери карту и нажми на точку нужного поворота.
-                            </p>
-                        </div>
                         <div
                             id="camera"
                             class="game__camera"
@@ -339,7 +339,43 @@
                             <div class="stat"><span>Победы</span><b id="gameWins" class="stat__value">0</b></div>
                         </div>
                         <div class="game__hand-section">
-                            <div class="caption">Карты в руке</div>
+                            <div class="game__hand-heading">
+                                <div class="caption">Карты в руке</div>
+                                <button id="gameHelpToggle" class="btn btn--icon game__help-toggle" type="button" aria-label="Открыть подсказки" aria-expanded="false" aria-controls="gameHelpPanel" title="Подсказки">?</button>
+                            </div>
+                            <div id="gameHelpPanel" class="game-help hidden" role="dialog" aria-modal="false" aria-labelledby="gameHelpTitle">
+                                <header class="game-help__head">
+                                    <h3 id="gameHelpTitle">Подсказки</h3>
+                                    <button id="closeGameHelp" class="btn btn--icon btn--close-icon" type="button" aria-label="Закрыть подсказки"></button>
+                                </header>
+                                <div class="game-help__content">
+                                    <section>
+                                        <h4>Как сделать ход</h4>
+                                        <p>Выбери карту в руке — на поле появятся точки, где её можно разместить. Нажми на точку, чтобы посмотреть предварительный вариант, затем подтверди размещение кнопкой «Поставить». На компьютере щелчок по уже показанному варианту сразу ставит карту.</p>
+                                    </section>
+                                    <section>
+                                        <h4>Правила размещения</h4>
+                                        <p>Новый участок должен соединяться с уже проложенным тоннелем, совпадать с ним по открытым сторонам и не перекрывать другие карты. Если точки не появились, у выбранной карты сейчас нет допустимого размещения.</p>
+                                    </section>
+                                    <section>
+                                        <h4>Если ходов нет</h4>
+                                        <p>Сбросить карты можно только тогда, когда ни одна карта в руке не имеет доступного хода. После сброса ты получишь новые карты из колоды.</p>
+                                    </section>
+                                    <section>
+                                        <h4>Управление</h4>
+                                        <p><strong>Компьютер:</strong> стрелки переключают карты и варианты размещения, Enter подтверждает действие, Esc отменяет выбор. Клавиши 1, 2 и 3 выбирают карту. Масштаб меняется кнопками − и + или сочетанием Ctrl + прокрутка колеса мыши.</p>
+                                        <p><strong>Телефон:</strong> коснись карты, затем нужной точки на поле и нажми «Поставить». Поле можно перемещать пальцем; карты в руке прокручиваются горизонтально.</p>
+                                    </section>
+                                    <section>
+                                        <h4>Мультиплеер</h4>
+                                        <p>Все участники играют на одном общем поле. Размещать карты можно в свой ход; следи за таймером хода. Создатель комнаты управляет началом новой партии и реваншем.</p>
+                                    </section>
+                                    <section>
+                                        <h4>Обучение</h4>
+                                        <p>Основное задание уровня остаётся над полем. Здесь собраны дополнительные правила и управление — их можно открыть в любой момент, не прерывая обучение.</p>
+                                    </section>
+                                </div>
+                            </div>
                             <div id="hand" class="game__hand" role="radiogroup" aria-label="Карты в руке"></div>
                         </div>
                         <div class="game__actions">
@@ -373,7 +409,6 @@
                             Цель: закрой все выходы и закончи игру.
                         </div>
                         <div id="status" class="notice">Загрузка карт…</div>
-                        <p class="note note--sm">Поле можно перемещать мышью или пальцем.</p>
                     </aside>
                 </div>
             </section>
@@ -386,7 +421,7 @@
                         <h2 id="welcomeTitle" class="heading__title">Ты уже играл в BANDITO?</h2>
                         <p class="heading__subtitle">Если правила пока незнакомы, покажем всё на коротких заданиях.</p>
                     </div>
-                    <button id="closeWelcome" class="btn btn--icon" type="button" aria-label="Закрыть">×</button>
+                    <button id="closeWelcome" class="btn btn--icon btn--close-icon" type="button" aria-label="Закрыть"></button>
                 </header>
                 <div class="welcome__actions">
                     <button id="welcomeAlreadyPlayed" class="btn btn--lg welcome__choice" type="button">Да, уже играл</button>
@@ -403,7 +438,7 @@
                             <p class="heading__subtitle">Bandito · персонализация</p>
                         </div>
                     </div>
-                    <button id="closeSettings" class="btn btn--icon" type="button" aria-label="Закрыть">×</button>
+                    <button id="closeSettings" class="btn btn--icon btn--close-icon" type="button" aria-label="Закрыть"></button>
                 </header>
                 <label class="toggle">
                     <span class="item">
