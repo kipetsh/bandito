@@ -18,11 +18,14 @@ function localReferences(html) {
 
 test('production CSS preserves the standard settings backdrop-filter declaration', () => {
     const assetsDirectory = resolve(buildDirectory, 'assets');
-    const cssFiles = readdirSync(assetsDirectory).filter((name) => /^index-[\\w-]+\\.css$/.test(name));
-    assert.equal(cssFiles.length, 1, 'Expected one bundled application stylesheet');
+    const cssFiles = readdirSync(assetsDirectory).filter((name) => name.endsWith('.css'));
+    assert.ok(cssFiles.length > 0, 'No bundled application stylesheet found');
 
-    const css = readFileSync(join(assetsDirectory, cssFiles[0]), 'utf8');
-    assert.match(css, /(?:^|[;{])backdrop-filter:blur\\(4px\\)/);
+    const css = cssFiles.map((name) => readFileSync(join(assetsDirectory, name), 'utf8')).join('\\n');
+    assert.ok(
+        css.includes('-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)'),
+        'The production CSS must preserve both backdrop-filter declarations in compatibility order'
+    );
 });
 
 test('production build contains index.html and every referenced local asset', () => {
