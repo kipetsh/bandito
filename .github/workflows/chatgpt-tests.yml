@@ -3,6 +3,7 @@ name: ChatGPT branch tests
 on:
   push:
     branches:
+      - main
       - '**-chatgpt-check'
   workflow_dispatch:
 
