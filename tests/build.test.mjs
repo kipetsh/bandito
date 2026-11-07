@@ -113,11 +113,20 @@ test('all source images are emitted once as optimized, hashed WebP assets', () =
     assert.ok(!references.includes('assets/images/bandito-'), 'Unhashed theme image references remain in built files');
 });
 
-
 test('game mode icons are cropped and emitted as 3x Retina WebP assets', async () => {
     const expectedIcons = [
-        { source: 'solo-organic-circle.webp', output: 'solo-organic-circle-optimized.webp', width: 120, height: 120 },
-        { source: 'multiplayer-stars.webp', output: 'multiplayer-stars-optimized.webp', width: 156, height: 144 },
+        {
+            source: 'solo-organic-circle.webp',
+            output: 'solo-organic-circle-optimized.webp',
+            width: 120,
+            height: 120,
+        },
+        {
+            source: 'multiplayer-stars.webp',
+            output: 'multiplayer-stars-optimized.webp',
+            width: 156,
+            height: 144,
+        },
     ];
     const builtFiles = walkFiles(buildDirectory);
     const html = readFileSync(resolve(buildDirectory, 'index.html'), 'utf8');
@@ -130,7 +139,10 @@ test('game mode icons are cropped and emitted as 3x Retina WebP assets', async (
         const metadata = await sharp(outputPath).metadata();
         assert.equal(metadata.width, icon.width, `Unexpected width for ${icon.output}`);
         assert.equal(metadata.height, icon.height, `Unexpected height for ${icon.output}`);
-        assert.ok(statSync(outputPath).size < statSync(sourcePath).size, `Retina icon was not compressed: ${icon.source}`);
+        assert.ok(
+            statSync(outputPath).size < statSync(sourcePath).size,
+            `Retina icon was not compressed: ${icon.source}`
+        );
         assert.ok(html.includes(icon.output), `index.html does not reference ${icon.output}`);
         assert.ok(!html.includes(icon.source), `index.html still references the untrimmed source: ${icon.source}`);
     }
