@@ -190,6 +190,7 @@ test('settings modal reveals a static backdrop blur without animating the filter
 
     assert.ok(css.includes('content: "";'));
     assert.ok(css.includes('backdrop-filter: blur(4px);'));
+    assert.ok(css.includes('-webkit-backdrop-filter: blur(4px);'));
     assert.ok(css.includes('settings-backdrop-in 170ms'));
     assert.ok(css.includes('settings-backdrop-out 140ms'));
     assert.ok(css.includes('settings-panel-in 170ms'));
