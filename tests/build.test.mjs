@@ -118,14 +118,14 @@ test('game mode icons are cropped and emitted as 3x Retina WebP assets', async (
         {
             source: 'solo-organic-circle.webp',
             output: 'solo-organic-circle-optimized.webp',
-            width: 168,
-            height: 168,
+            width: 192,
+            height: 192,
         },
         {
             source: 'multiplayer-stars.webp',
             output: 'multiplayer-stars-optimized.webp',
-            width: 168,
-            height: 156,
+            width: 192,
+            height: 178,
         },
     ];
     const builtFiles = walkFiles(buildDirectory);

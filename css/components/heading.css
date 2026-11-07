@@ -14,14 +14,14 @@
         display: grid;
         flex: none;
         place-items: center;
-        width: 56px;
-        height: 56px;
+        width: 64px;
+        height: 64px;
         color: var(--color-icon);
     }
 
     .heading__icon img {
-        width: 56px;
-        height: 56px;
+        width: 64px;
+        height: 64px;
         object-fit: contain;
     }
 
