@@ -43,7 +43,22 @@
     }
 
     .menu__card-head {
+        --heading-gap: var(--space-4);
+
         margin-bottom: var(--space-6);
+    }
+
+    .menu__card-head .heading__icon {
+        flex: 0 0 56px;
+        width: 56px;
+        height: 56px;
+    }
+
+    .menu__card-head .heading__icon img {
+        display: block;
+        width: 56px;
+        height: 56px;
+        object-fit: contain;
     }
 
     .menu__card--solo::before {
