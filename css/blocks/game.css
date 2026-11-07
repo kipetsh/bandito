@@ -9,20 +9,11 @@
         margin-bottom: var(--space-4);
     }
 
-    .game__subtitle-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: var(--space-3);
-        margin-top: var(--space-2);
-    }
-
-    .game__subtitle-row .game__subtitle {
-        margin: 0;
-    }
-
     .game__return {
-        flex: none;
+        position: absolute;
+        z-index: 12;
+        right: 14px;
+        bottom: 14px;
         box-shadow: var(--shadow-float);
     }
 
@@ -204,9 +195,9 @@
     }
 
     @media (max-width: 760px) {
-        .game__subtitle-row {
-            align-items: flex-start;
-            gap: var(--space-2);
+        .game__return {
+            right: 8px;
+            bottom: 8px;
         }
 
         .game__head {
