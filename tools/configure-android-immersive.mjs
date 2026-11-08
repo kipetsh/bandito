@@ -16,7 +16,9 @@ walk(root);
 
 if (matches.length !== 1) {
     throw new Error(
-        'Expected exactly one generated MainActivity.kt; found ' + matches.length + '.'
+        'Expected exactly one generated MainActivity.kt; found ' +
+            matches.length +
+            '.'
     );
 }
 
