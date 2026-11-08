@@ -44,6 +44,9 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Print Prettier-formatted Android helper
+        run: npx prettier tools/configure-android-immersive.mjs
+
       - name: Run code checks
         run: npm run check
 
