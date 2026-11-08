@@ -11,7 +11,6 @@ use std::{
     fs,
     io::{Cursor, Write},
     path::{Component, Path, PathBuf},
-    sync::atomic::{AtomicBool, Ordering},
     time::Duration,
 };
 use http::{header, Response, StatusCode};
@@ -19,7 +18,6 @@ use tauri::{AppHandle, Manager, Runtime};
 use zip::ZipArchive;
 
 static EMBEDDED_ASSETS: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../build");
-static BOOT_CHECKED: AtomicBool = AtomicBool::new(false);
 
 const OTA_RELEASE_BASE: &str =
     "https://github.com/kipetsh/bandito/releases/download/ota-latest";
@@ -149,12 +147,6 @@ pub fn serve_frontend<R: Runtime>(
         return asset_response(StatusCode::BAD_REQUEST, "text/plain; charset=utf-8", b"Invalid path".to_vec());
     };
 
-    if relative == "index.html" && !BOOT_CHECKED.swap(true, Ordering::SeqCst) {
-        if let Ok(root) = ota_root(app) {
-            prepare_protocol_boot(&root);
-        }
-    }
-
     let content_type = mime_guess::from_path(&relative)
         .first_or_octet_stream()
         .essence_str()
@@ -173,27 +165,6 @@ pub fn serve_frontend<R: Runtime>(
     match EMBEDDED_ASSETS.get_file(&relative) {
         Some(file) => asset_response(StatusCode::OK, &content_type, file.contents().to_vec()),
         None => asset_response(StatusCode::NOT_FOUND, "text/plain; charset=utf-8", b"Not found".to_vec()),
-    }
-}
-
-fn prepare_protocol_boot(root: &Path) {
-    let mut state = load_state(root);
-    let Some(pending_version) = state.pending_version.clone() else {
-        return;
-    };
-
-    if state.boot_attempts == 0 {
-        state.boot_attempts = 1;
-        let _ = save_state(root, &state);
-        return;
-    }
-
-    state.active_version = state.previous_version.take();
-    state.pending_version = None;
-    state.boot_attempts = 0;
-    if save_state(root, &state).is_ok() && Version::parse(&pending_version).is_ok() {
-        let failed_directory = root.join("versions").join(pending_version);
-        let _ = fs::remove_dir_all(failed_directory);
     }
 }
 
@@ -291,6 +262,26 @@ fn extract_archive(bytes: &[u8], destination: &Path) -> Result<(), String> {
     Ok(())
 }
 
+fn prepare_launch_state(state: &mut OtaState) -> (bool, Option<String>) {
+    let failed_version = state.pending_version.take();
+    if failed_version.is_some() {
+        state.active_version = state.previous_version.take();
+        state.boot_attempts = 0;
+    }
+
+    let activated = if let Some(staged_version) = state.staged_version.take() {
+        state.previous_version = state.active_version.take();
+        state.active_version = Some(staged_version.clone());
+        state.pending_version = Some(staged_version);
+        state.boot_attempts = 0;
+        true
+    } else {
+        false
+    };
+
+    (activated, failed_version)
+}
+
 #[tauri::command]
 pub fn ota_prepare_launch(app: AppHandle) -> Result<OtaLaunchResult, String> {
     if cfg!(debug_assertions) {
@@ -302,15 +293,14 @@ pub fn ota_prepare_launch(app: AppHandle) -> Result<OtaLaunchResult, String> {
 
     let root = ota_root(&app)?;
     let mut state = load_state(&root);
-    let mut activated = false;
+    let (activated, failed_version) = prepare_launch_state(&mut state);
+    save_state(&root, &state)?;
 
-    if let Some(staged_version) = state.staged_version.take() {
-        state.previous_version = state.active_version.take();
-        state.active_version = Some(staged_version.clone());
-        state.pending_version = Some(staged_version);
-        state.boot_attempts = 1;
-        activated = true;
-        save_state(&root, &state)?;
+    if let Some(version) = failed_version {
+        if Version::parse(&version).is_ok() {
+            let failed_directory = root.join("versions").join(version);
+            let _ = fs::remove_dir_all(failed_directory);
+        }
     }
 
     Ok(OtaLaunchResult {
@@ -494,4 +484,48 @@ pub async fn ota_check_and_install(app: AppHandle) -> Result<OtaUpdateResult, St
         version: Some(version_name),
         notes: manifest.notes,
     })
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn staged_update_activates_without_immediate_rollback() {
+        let mut state = OtaState {
+            active_version: None,
+            previous_version: None,
+            pending_version: None,
+            staged_version: Some("0.1.123".to_owned()),
+            boot_attempts: 0,
+        };
+
+        let (activated, failed) = prepare_launch_state(&mut state);
+
+        assert!(activated);
+        assert_eq!(failed, None);
+        assert_eq!(state.active_version.as_deref(), Some("0.1.123"));
+        assert_eq!(state.pending_version.as_deref(), Some("0.1.123"));
+        assert_eq!(state.staged_version, None);
+    }
+
+    #[test]
+    fn interrupted_update_rolls_back_on_the_next_launch() {
+        let mut state = OtaState {
+            active_version: Some("0.1.123".to_owned()),
+            previous_version: Some("0.1.100".to_owned()),
+            pending_version: Some("0.1.123".to_owned()),
+            staged_version: None,
+            boot_attempts: 0,
+        };
+
+        let (activated, failed) = prepare_launch_state(&mut state);
+
+        assert!(!activated);
+        assert_eq!(failed.as_deref(), Some("0.1.123"));
+        assert_eq!(state.active_version.as_deref(), Some("0.1.100"));
+        assert_eq!(state.previous_version, None);
+        assert_eq!(state.pending_version, None);
+    }
 }

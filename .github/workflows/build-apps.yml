@@ -206,8 +206,6 @@ jobs:
     name: Publish signed frontend OTA
     needs:
       - quality
-      - desktop
-      - android
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -240,7 +238,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$OTA_SIGNING_PRIVATE_KEY" ]; then
-            echo "OTA_SIGNING_PRIVATE_KEY is not configured; skipping OTA publication."
+            echo "::warning::OTA_SIGNING_PRIVATE_KEY is not configured; OTA publication is skipped. Add the repository secret to enable updates."
             exit 0
           fi
           node tools/publish-ota.mjs
