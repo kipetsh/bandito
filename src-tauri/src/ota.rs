@@ -363,6 +363,11 @@ pub fn ota_mark_boot_success(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn ota_restart_app(app: AppHandle) -> ! {
+    app.restart()
+}
+
+#[tauri::command]
 pub async fn ota_check_and_install(app: AppHandle) -> Result<OtaUpdateResult, String> {
     if cfg!(debug_assertions) {
         return Ok(OtaUpdateResult {
