@@ -23,9 +23,7 @@ const current = readFileSync(path, 'utf8');
 const packageLine = current.match(/^package [^\r\n]+/m)?.[0];
 
 if (!packageLine || !/class MainActivity\s*:\s*TauriActivity/.test(current)) {
-    throw new Error(
-        'Unexpected Tauri MainActivity.kt template; refusing to overwrite it.'
-    );
+    throw new Error('Unexpected Tauri MainActivity.kt template; refusing to overwrite it.');
 }
 
 const updated = [
