@@ -433,6 +433,7 @@ pub async fn ota_check_and_install(app: AppHandle) -> Result<OtaUpdateResult, St
         if app_version > max_app_version {
             return Ok(OtaUpdateResult {
                 staged: false,
+                restart_required: false,
                 version: None,
                 notes: None,
             });
