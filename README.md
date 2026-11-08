@@ -152,4 +152,18 @@ Android-проект создаётся командой `npm run app:android:in
 
 Workflow `Build Bandito apps` запускается при push в `main-tauri` и вручную из GitHub Actions. Он собирает отдельные установочные артефакты для macOS Apple Silicon, macOS Intel, Windows x64 и Android APK. Артефакты доступны в разделе Artifacts соответствующего запуска и хранятся 14 дней.
 
-Сборки пока не подписаны сертификатами разработчика. Для публичного распространения macOS и Windows понадобятся подпись и, для macOS, notarization; для публикации Android в Google Play потребуется настроить ключ подписи релизов.
+Android APK подписывается постоянным release-ключом. Перед первой Android-сборкой нужно один раз создать keystore локально и сохранить его в GitHub Actions Secrets — сам файл keystore нельзя добавлять в репозиторий:
+
+```bash
+keytool -genkeypair -v -keystore bandito-release.jks -alias bandito -keyalg RSA -keysize 2048 -validity 10000
+base64 -i bandito-release.jks | pbcopy
+```
+
+В GitHub открой Settings → Secrets and variables → Actions → New repository secret и добавь три секрета:
+- `ANDROID_KEY_BASE64` — вставь содержимое буфера обмена после команды base64.
+- `ANDROID_KEY_PASSWORD` — пароль, заданный при создании keystore.
+- `ANDROID_KEY_ALIAS` — `bandito`.
+
+Workflow восстанавливает keystore во временной папке runner, настраивает Gradle release signing и собирает подписанный APK. Не публикуй keystore и не передавай пароль в чат. Сохрани keystore и пароль в надёжном месте: для всех будущих обновлений Android необходимо использовать тот же ключ. Если потерять его, обновить уже установленную сборку поверх старой не получится.
+
+Сборки macOS и Windows пока не подписаны сертификатами разработчика. Для распространения macOS вне локального тестирования понадобятся подпись и notarization.
