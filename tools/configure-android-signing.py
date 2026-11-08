@@ -22,7 +22,7 @@ if "import java.io.FileInputStream" not in source:
         raise SystemExit("Could not locate Properties import.")
     source = source.replace(
         properties_import,
-        properties_import + "\\nimport java.io.FileInputStream",
+        properties_import + "\nimport java.io.FileInputStream",
         1,
     )
 
@@ -52,7 +52,7 @@ if source.count(release_block) != 1:
 
 source = source.replace(
     release_block,
-    release_block + '\\n            signingConfig = signingConfigs.getByName("release")',
+    release_block + '\n            signingConfig = signingConfigs.getByName("release")',
     1,
 )
 
