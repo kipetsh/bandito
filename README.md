@@ -148,7 +148,7 @@ Bandito можно запускать как отдельное приложен
 
 Android-проект создаётся командой `npm run app:android:init`; сгенерированная папка `src-tauri/gen/` не хранится в Git и создаётся заново в CI. Для работы Android Gradle/Rust-плагина также обязателен скрипт `tauri` в `package.json`: сгенерированный Gradle-проект вызывает его через `npm run tauri`, передавая аргументы сборки. Не удаляй этот скрипт и сохраняй его вызов через закреплённую версию Tauri CLI.
 
-### Автоматическая сборка
+### Сборка приложений вручную
 
 Workflow `Build Bandito apps` запускается при push в `main` для проверок frontend и публикации OTA. Дорогие нативные сборки не запускаются автоматически: desktop и Android jobs выполняются только при ручном запуске workflow через **Actions → Build Bandito apps → Run workflow**. Ручной запуск собирает macOS Apple Silicon, macOS Intel, Windows x64 и Android APK, а затем создаёт общий ZIP. Артефакты доступны в разделе Artifacts соответствующего запуска и хранятся 14 дней.
 
