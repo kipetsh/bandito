@@ -11,6 +11,7 @@ use std::{
     fs,
     io::{Cursor, Write},
     path::{Component, Path, PathBuf},
+    sync::atomic::{AtomicBool, Ordering},
     time::Duration,
 };
 use http::{header, Response, StatusCode};
@@ -29,6 +30,10 @@ const MAX_ARCHIVE_BYTES: usize = 80 * 1024 * 1024;
 const MAX_EXTRACTED_BYTES: u64 = 160 * 1024 * 1024;
 const MAX_FILES: usize = 2_000;
 const MAX_FILE_BYTES: u64 = 32 * 1024 * 1024;
+
+// A WebView reload is not a new native-app launch. Prepare/rollback OTA state
+// only once per process so the reload after activation cannot undo that activation.
+static OTA_LAUNCH_PREPARED: AtomicBool = AtomicBool::new(false);
 
 const CONTENT_SECURITY_POLICY: &str = concat!(
     "default-src 'self' customprotocol: asset: bandito:; ",
@@ -262,7 +267,11 @@ fn extract_archive(bytes: &[u8], destination: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn prepare_launch_state(state: &mut OtaState) -> (bool, Option<String>) {
+fn prepare_launch_state(state: &mut OtaState, already_prepared: bool) -> (bool, Option<String>) {
+    if already_prepared {
+        return (false, None);
+    }
+
     let failed_version = state.pending_version.take();
     if failed_version.is_some() {
         state.active_version = state.previous_version.take();
@@ -291,22 +300,42 @@ pub fn ota_prepare_launch(app: AppHandle) -> Result<OtaLaunchResult, String> {
         });
     }
 
-    let root = ota_root(&app)?;
-    let mut state = load_state(&root);
-    let (activated, failed_version) = prepare_launch_state(&mut state);
-    save_state(&root, &state)?;
-
-    if let Some(version) = failed_version {
-        if Version::parse(&version).is_ok() {
-            let failed_directory = root.join("versions").join(version);
-            let _ = fs::remove_dir_all(failed_directory);
-        }
+    if OTA_LAUNCH_PREPARED
+        .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+        .is_err()
+    {
+        let root = ota_root(&app)?;
+        let state = load_state(&root);
+        return Ok(OtaLaunchResult {
+            activated: false,
+            active_version: state.active_version,
+        });
     }
 
-    Ok(OtaLaunchResult {
-        activated,
-        active_version: state.active_version,
-    })
+    let result = (|| {
+        let root = ota_root(&app)?;
+        let mut state = load_state(&root);
+        let (activated, failed_version) = prepare_launch_state(&mut state, false);
+        save_state(&root, &state)?;
+
+        if let Some(version) = failed_version {
+            if Version::parse(&version).is_ok() {
+                let failed_directory = root.join("versions").join(version);
+                let _ = fs::remove_dir_all(failed_directory);
+            }
+        }
+
+        Ok(OtaLaunchResult {
+            activated,
+            active_version: state.active_version,
+        })
+    })();
+
+    if result.is_err() {
+        OTA_LAUNCH_PREPARED.store(false, Ordering::Release);
+    }
+
+    result
 }
 
 #[tauri::command]
@@ -501,13 +530,21 @@ mod tests {
             boot_attempts: 0,
         };
 
-        let (activated, failed) = prepare_launch_state(&mut state);
+        let (activated, failed) = prepare_launch_state(&mut state, false);
 
         assert!(activated);
         assert_eq!(failed, None);
         assert_eq!(state.active_version.as_deref(), Some("0.1.123"));
         assert_eq!(state.pending_version.as_deref(), Some("0.1.123"));
         assert_eq!(state.staged_version, None);
+
+        // The JS reload happens in the same native process. It must not run
+        // launch preparation again or interpret this pending version as failed.
+        let (reloaded, reload_failure) = prepare_launch_state(&mut state, true);
+        assert!(!reloaded);
+        assert_eq!(reload_failure, None);
+        assert_eq!(state.active_version.as_deref(), Some("0.1.123"));
+        assert_eq!(state.pending_version.as_deref(), Some("0.1.123"));
     }
 
     #[test]
@@ -520,7 +557,7 @@ mod tests {
             boot_attempts: 0,
         };
 
-        let (activated, failed) = prepare_launch_state(&mut state);
+        let (activated, failed) = prepare_launch_state(&mut state, false);
 
         assert!(!activated);
         assert_eq!(failed.as_deref(), Some("0.1.123"));
