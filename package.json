@@ -28,6 +28,7 @@
     "postinstall": "node tools/install-hooks.mjs",
     "dev:local": "vite --host 127.0.0.1 --strictPort",
     "dev:tauri": "vite --host 127.0.0.1 --strictPort",
+    "tauri": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri",
     "app:icons": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri icon src-tauri/icons/source.svg --output src-tauri/icons",
     "app:dev": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri dev",
     "app:build": "npm run app:icons && npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri build",

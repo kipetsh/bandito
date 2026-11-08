@@ -146,7 +146,7 @@ Bandito можно запускать как отдельное приложен
 - Для Windows — Microsoft C++ Build Tools и WebView2.
 - Для Android — Android Studio, JDK 17, Android SDK, Build Tools и NDK.
 
-Android-проект создаётся командой `npm run app:android:init`; сгенерированная папка `src-tauri/gen/` не хранится в Git и создаётся заново в CI.
+Android-проект создаётся командой `npm run app:android:init`; сгенерированная папка `src-tauri/gen/` не хранится в Git и создаётся заново в CI. Для работы Android Gradle/Rust-плагина также обязателен скрипт `tauri` в `package.json`: сгенерированный Gradle-проект вызывает его через `npm run tauri`, передавая аргументы сборки. Не удаляй этот скрипт и сохраняй его вызов через закреплённую версию Tauri CLI.
 
 ### Автоматическая сборка
 
