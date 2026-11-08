@@ -30,11 +30,6 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Format README for diff
-        run: |
-          npx prettier --write README.md
-          git --no-pager diff -- README.md
-
       - name: Run code checks
         run: npm run check
 
@@ -42,7 +37,6 @@ jobs:
         run: npm test
 
   desktop:
-    if: ${{ !contains(github.event.head_commit.message, '[format-readme]') }}
     name: Build ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -91,7 +85,6 @@ jobs:
           retention-days: 14
 
   android:
-    if: ${{ !contains(github.event.head_commit.message, '[format-readme]') }}
     name: Build Android APK
     runs-on: ubuntu-latest
     steps:
