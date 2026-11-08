@@ -15,11 +15,7 @@ function walk(directory) {
 walk(root);
 
 if (matches.length !== 1) {
-    throw new Error(
-        'Expected exactly one generated MainActivity.kt; found ' +
-            matches.length +
-            '.'
-    );
+    throw new Error('Expected exactly one generated MainActivity.kt; found ' + matches.length + '.');
 }
 
 const path = matches[0];
