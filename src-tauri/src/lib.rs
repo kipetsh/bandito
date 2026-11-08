@@ -9,7 +9,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             ota::ota_prepare_launch,
             ota::ota_mark_boot_success,
-            ota::ota_check_and_install
+            ota::ota_check_and_install,
+            ota::ota_restart_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running Bandito");
