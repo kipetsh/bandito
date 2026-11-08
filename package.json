@@ -1,6 +1,6 @@
 {
   "name": "bandito",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "imports": {
@@ -26,7 +26,14 @@
     "check": "node tools/check.mjs",
     "check:fix": "npm run lint:fix && npm run format",
     "postinstall": "node tools/install-hooks.mjs",
-    "dev:local": "vite --host 127.0.0.1 --strictPort"
+    "dev:local": "vite --host 127.0.0.1 --strictPort",
+    "dev:tauri": "vite --host 127.0.0.1 --strictPort",
+    "tauri": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri",
+    "app:icons": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri icon src-tauri/icons/source.svg --output src-tauri/icons",
+    "app:dev": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri dev",
+    "app:build": "npm run app:icons && npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri build",
+    "app:android:init": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri android init --ci && npm run app:icons",
+    "app:android:build": "npm run app:icons && npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri android build --apk"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",

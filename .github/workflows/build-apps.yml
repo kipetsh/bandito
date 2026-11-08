@@ -1,0 +1,262 @@
+name: Build Bandito apps
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-apps-v6-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    name: Check frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run code checks
+        run: npm run check
+
+      - name: Run tests and production build
+        run: npm test
+
+  desktop:
+    if: github.event_name == 'workflow_dispatch'
+    name: Build ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS Apple Silicon
+            os: macos-latest
+          - name: macOS Intel
+            os: macos-15-intel
+          - name: Windows x64
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Generate app icons
+        run: npm run app:icons
+
+      - name: Build desktop app
+        run: npm run app:build
+
+      - name: Upload desktop installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bandito-${{ matrix.name }}
+          path: src-tauri/target/release/bundle/
+          if-no-files-found: error
+          retention-days: 14
+
+  android:
+    if: github.event_name == 'workflow_dispatch'
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android SDK and NDK
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+
+      - name: Setup Rust Android targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Initialize Android project
+        run: npm run app:android:init
+
+      - name: Cache Gradle files
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper/dists
+          key: gradle-${{ runner.os }}-${{ hashFiles('src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Increase Gradle wrapper download timeout
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          wrapper = Path("src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties")
+          lines = [line for line in wrapper.read_text().splitlines() if not line.startswith("networkTimeout=")]
+          lines.append("networkTimeout=120000")
+          wrapper.write_text("\n".join(lines) + "\n")
+          PY
+
+      - name: Configure Android release signing
+        env:
+          ANDROID_KEY_BASE64: ${{ secrets.ANDROID_KEY_BASE64 }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEY_BASE64" || (echo "::error::Missing GitHub Actions secret ANDROID_KEY_BASE64" && exit 1)
+          test -n "$ANDROID_KEY_PASSWORD" || (echo "::error::Missing GitHub Actions secret ANDROID_KEY_PASSWORD" && exit 1)
+          test -n "$ANDROID_KEY_ALIAS" || (echo "::error::Missing GitHub Actions secret ANDROID_KEY_ALIAS" && exit 1)
+          printf '%s' "$ANDROID_KEY_BASE64" | base64 --decode > "$RUNNER_TEMP/bandito-release.jks"
+          {
+            printf 'storePassword=%s\n' "$ANDROID_KEY_PASSWORD"
+            printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
+            printf 'keyAlias=%s\n' "$ANDROID_KEY_ALIAS"
+            printf 'storeFile=%s\n' "$RUNNER_TEMP/bandito-release.jks"
+          } > src-tauri/gen/android/keystore.properties
+          python3 tools/configure-android-signing.py
+
+      - name: Build Android APK
+        run: npm run app:android:build
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bandito-Android-APK
+          path: src-tauri/gen/android/app/build/outputs/**/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  package:
+    if: github.event_name == 'workflow_dispatch'
+    name: Package all platforms
+    needs:
+      - desktop
+      - android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download platform builds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: Bandito-*
+          path: dist
+
+      - name: Create combined ZIP
+        run: zip -r Bandito-All-Platforms.zip dist
+
+      - name: Upload combined package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bandito-All-Platforms
+          path: Bandito-All-Platforms.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-ota:
+    if: github.event_name == 'push'
+    name: Publish signed frontend OTA
+    needs:
+      - quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Package frontend assets
+        run: |
+          cd build
+          zip -qr "$GITHUB_WORKSPACE/web-assets.zip" .
+
+      - name: Sign OTA manifest
+        id: sign
+        env:
+          OTA_SIGNING_PRIVATE_KEY: ${{ secrets.OTA_SIGNING_PRIVATE_KEY }}
+          OTA_VERSION: 0.1.${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          if [ -z "$OTA_SIGNING_PRIVATE_KEY" ]; then
+            echo "::warning::OTA_SIGNING_PRIVATE_KEY is not configured; OTA publication is skipped. Add the repository secret to enable updates."
+            exit 0
+          fi
+          node tools/publish-ota.mjs
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publish OTA release assets
+        if: steps.sign.outputs.signed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view ota-latest >/dev/null 2>&1 || \
+            gh release create ota-latest --target "$GITHUB_SHA" --title "Bandito OTA updates" \
+              --notes "Signed frontend updates for Bandito native apps." --prerelease
+          gh release upload ota-latest web-assets.zip manifest.json manifest.sig --clobber

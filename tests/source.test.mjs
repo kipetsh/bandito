@@ -132,7 +132,10 @@ test('the entry point loads every application module without runtime errors', as
         requestAnimationFrame: () => 0,
         addEventListener: () => {},
     };
-    await withGlobals({ ...globals, window: globals }, () => import(moduleUrl('js/main.js')));
+    await withGlobals({ ...globals, window: globals }, async () => {
+        const { appReady } = await import(moduleUrl('js/main.js'));
+        await appReady;
+    });
 });
 
 test('all game scripts pass the JavaScript parser', () => {

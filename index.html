@@ -29,6 +29,7 @@
         <link rel="stylesheet" href="css/components/notice.css" />
         <link rel="stylesheet" href="css/components/note.css" />
         <link rel="stylesheet" href="css/components/snackbar.css" />
+        <link rel="stylesheet" href="css/components/ota-update.css" />
         <link rel="stylesheet" href="css/components/mode-list.css" />
         <link rel="stylesheet" href="css/components/mode-option.css" />
         <link rel="stylesheet" href="css/blocks/page.css" />
@@ -446,6 +447,13 @@
         <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+        <aside id="otaUpdateBanner" class="ota-update-banner" role="status" aria-live="polite" hidden>
+            <div class="ota-update-banner__copy">
+                <strong>Обновление готово</strong>
+                <span>Перезапусти Bandito, чтобы применить его.</span>
+            </div>
+            <button id="otaRestartButton" class="btn btn--sm btn--primary" type="button">Перезапустить</button>
+        </aside>
         <div id="snackbar" class="snackbar" role="status" aria-live="polite" aria-atomic="true"></div>
         <script type="module" src="js/main.js"></script>
     </body>
