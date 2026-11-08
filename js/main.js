@@ -19,7 +19,7 @@ function showOtaRestartNotice(update) {
             button.disabled = false;
             button.textContent = 'Перезапустить';
         }
-    }, { once: true });
+    });
 }
 
 async function startApplication() {
