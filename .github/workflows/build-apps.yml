@@ -14,6 +14,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  quality:
+    name: Check frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run code checks
+        run: npm run check
+
+      - name: Run tests and production build
+        run: npm test
+
   desktop:
     name: Build ${{ matrix.name }}
     strategy:
@@ -158,3 +180,57 @@ jobs:
           path: Bandito-All-Platforms.zip
           if-no-files-found: error
           retention-days: 14
+
+  publish-ota:
+    name: Publish signed frontend OTA
+    needs:
+      - quality
+      - desktop
+      - android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Package frontend assets
+        run: |
+          cd build
+          zip -qr "$GITHUB_WORKSPACE/web-assets.zip" .
+
+      - name: Sign OTA manifest
+        id: sign
+        env:
+          OTA_SIGNING_PRIVATE_KEY: ${{ secrets.OTA_SIGNING_PRIVATE_KEY }}
+          OTA_VERSION: 0.1.${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          if [ -z "$OTA_SIGNING_PRIVATE_KEY" ]; then
+            echo "OTA_SIGNING_PRIVATE_KEY is not configured; skipping OTA publication."
+            exit 0
+          fi
+          node tools/publish-ota.mjs
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publish OTA release assets
+        if: steps.sign.outputs.signed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view ota-latest >/dev/null 2>&1 || \
+            gh release create ota-latest --target "$GITHUB_SHA" --title "Bandito OTA updates" \
+              --notes "Signed frontend updates for Bandito native apps." --prerelease
+          gh release upload ota-latest web-assets.zip manifest.json manifest.sig --clobber

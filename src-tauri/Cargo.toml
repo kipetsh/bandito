@@ -14,4 +14,16 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.7.4" }
 
 [dependencies]
+base64 = "0.22.1"
+ed25519-dalek = "2.1.1"
+http = "1.2.0"
+include_dir = "0.7.4"
+mime_guess = "2.0.5"
+percent-encoding = "2.3.1"
+reqwest = { version = "0.12.9", default-features = false, features = ["rustls-tls"] }
+semver = "1.0.24"
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0.138"
+sha2 = "0.10.8"
 tauri = { version = "2.12.5" }
+zip = { version = "2.2.2", default-features = false, features = ["deflate"] }

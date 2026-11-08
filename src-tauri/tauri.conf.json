@@ -7,9 +7,10 @@
     "beforeDevCommand": "npm run dev:tauri",
     "devUrl": "http://127.0.0.1:3000",
     "beforeBuildCommand": "npm run build",
-    "frontendDist": "../build"
+    "frontendDist": "bandito://localhost"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "label": "main",
@@ -27,7 +28,8 @@
         "default-src": [
           "'self'",
           "customprotocol:",
-          "asset:"
+          "asset:",
+          "bandito:"
         ],
         "script-src": [
           "'self'",

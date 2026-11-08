@@ -1,5 +1,42 @@
 /* Application entry point: the only script loaded by index.html. */
-import '#js/settings.js';
-import '#js/snackbar.js';
-import '#js/game.js';
-import '#js/multiplayer.js';
+const tauriInvoke =
+    typeof window !== 'undefined' && Object.hasOwn(window, '__TAURI__')
+        ? window.__TAURI__?.core?.invoke
+        : null;
+
+async function startApplication() {
+    if (tauriInvoke) {
+        try {
+            const launch = await tauriInvoke('ota_prepare_launch');
+            if (launch.activated) {
+                window.location.reload();
+                return;
+            }
+        } catch {
+            // The bundled frontend remains available if OTA state cannot be read.
+        }
+    }
+
+    await import('#js/settings.js');
+    await import('#js/snackbar.js');
+    await import('#js/game.js');
+    await import('#js/multiplayer.js');
+
+    if (!tauriInvoke) return;
+
+    await new Promise((resolve) => window.setTimeout(resolve, 3000));
+
+    try {
+        await tauriInvoke('ota_mark_boot_success');
+    } catch {
+        // Keep the current frontend if the OTA state cannot be finalized.
+    }
+
+    try {
+        await tauriInvoke('ota_check_and_install');
+    } catch {
+        // An unavailable update server must never block the game from starting.
+    }
+}
+
+export const appReady = startApplication();
