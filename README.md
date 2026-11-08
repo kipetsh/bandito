@@ -130,13 +130,13 @@ Bandito можно запускать как отдельное приложен
 
 ### Команды
 
-| Команда | Назначение |
-| --- | --- |
-| `npm run app:dev` | Запуск приложения в режиме разработки |
-| `npm run app:build` | Сборка приложения для текущей платформы |
-| `npm run app:icons` | Генерация системных иконок из `src-tauri/icons/source.svg` |
-| `npm run app:android:init` | Первичная генерация Android-проекта |
-| `npm run app:android:build` | Сборка Android APK |
+| Команда                     | Назначение                                                 |
+| --------------------------- | ---------------------------------------------------------- |
+| `npm run app:dev`           | Запуск приложения в режиме разработки                      |
+| `npm run app:build`         | Сборка приложения для текущей платформы                    |
+| `npm run app:icons`         | Генерация системных иконок из `src-tauri/icons/source.svg` |
+| `npm run app:android:init`  | Первичная генерация Android-проекта                        |
+| `npm run app:android:build` | Сборка Android APK                                         |
 
 ### Требования
 
@@ -160,6 +160,7 @@ base64 -i bandito-release.jks | pbcopy
 ```
 
 В GitHub открой Settings → Secrets and variables → Actions → New repository secret и добавь три секрета:
+
 - `ANDROID_KEY_BASE64` — вставь содержимое буфера обмена после команды base64.
 - `ANDROID_KEY_PASSWORD` — пароль, заданный при создании keystore.
 - `ANDROID_KEY_ALIAS` — `bandito`.
@@ -167,7 +168,6 @@ base64 -i bandito-release.jks | pbcopy
 Workflow восстанавливает keystore во временной папке runner, настраивает Gradle release signing и собирает подписанный APK. Не публикуй keystore и не передавай пароль в чат. Сохрани keystore и пароль в надёжном месте: для всех будущих обновлений Android необходимо использовать тот же ключ. Если потерять его, обновить уже установленную сборку поверх старой не получится.
 
 Сборки macOS и Windows пока не подписаны сертификатами разработчика. Для распространения macOS вне локального тестирования понадобятся подпись и notarization.
-
 
 ### Как работают приложения и обновления
 

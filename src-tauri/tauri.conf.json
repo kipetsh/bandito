@@ -25,33 +25,11 @@
     ],
     "security": {
       "csp": {
-        "default-src": [
-          "'self'",
-          "customprotocol:",
-          "asset:",
-          "bandito:"
-        ],
-        "script-src": [
-          "'self'",
-          "https://www.gstatic.com"
-        ],
-        "style-src": [
-          "'self'",
-          "'unsafe-inline'",
-          "https://fonts.googleapis.com"
-        ],
-        "font-src": [
-          "'self'",
-          "https://fonts.gstatic.com",
-          "data:"
-        ],
-        "img-src": [
-          "'self'",
-          "asset:",
-          "data:",
-          "blob:",
-          "https:"
-        ],
+        "default-src": ["'self'", "customprotocol:", "asset:", "bandito:"],
+        "script-src": ["'self'", "https://www.gstatic.com"],
+        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
+        "img-src": ["'self'", "asset:", "data:", "blob:", "https:"],
         "connect-src": [
           "'self'",
           "ipc:",
@@ -63,16 +41,9 @@
           "https://www.googleapis.com",
           "https://bandito-83823.firebaseapp.com"
         ],
-        "object-src": [
-          "'none'"
-        ],
-        "base-uri": [
-          "'self'"
-        ],
-        "frame-src": [
-          "'self'",
-          "https://bandito-83823.firebaseapp.com"
-        ]
+        "object-src": ["'none'"],
+        "base-uri": ["'self'"],
+        "frame-src": ["'self'", "https://bandito-83823.firebaseapp.com"]
       }
     }
   },
@@ -82,13 +53,7 @@
     "category": "Game",
     "shortDescription": "Карточная игра Bandito",
     "longDescription": "Одиночная и кооперативная карточная игра Bandito.",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "android": {
       "minSdkVersion": 24
     }

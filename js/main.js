@@ -1,8 +1,6 @@
 /* Application entry point: the only script loaded by index.html. */
 const tauriInvoke =
-    typeof window !== 'undefined' && Object.hasOwn(window, '__TAURI__')
-        ? window.__TAURI__?.core?.invoke
-        : null;
+    typeof window !== 'undefined' && Object.hasOwn(window, '__TAURI__') ? window.__TAURI__?.core?.invoke : null;
 
 async function startApplication() {
     if (tauriInvoke) {
