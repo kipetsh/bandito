@@ -31,7 +31,6 @@ const updated = [
     '',
     'import android.os.Bundle',
     'import android.view.View',
-    'import app.tauri.TauriActivity',
     '',
     'class MainActivity : TauriActivity() {',
     '    override fun onCreate(savedInstanceState: Bundle?) {',
