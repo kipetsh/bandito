@@ -206,6 +206,7 @@ jobs:
           retention-days: 14
 
   publish-ota:
+    if: github.event_name == 'push'
     name: Publish signed frontend OTA
     needs:
       - quality
