@@ -8,6 +8,17 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      build_apps:
+        description: Build Windows, macOS, and Android installers
+        required: true
+        type: boolean
+        default: true
+      publish_ota:
+        description: Publish a signed frontend OTA update
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -40,7 +51,7 @@ jobs:
         run: npm test
 
   desktop:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.build_apps == true
     name: Build ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -89,7 +100,7 @@ jobs:
           retention-days: 14
 
   android:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.build_apps == true
     name: Build Android APK
     runs-on: ubuntu-latest
     steps:
@@ -184,7 +195,7 @@ jobs:
           retention-days: 14
 
   package:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.build_apps == true
     name: Package all platforms
     needs:
       - desktop
@@ -209,7 +220,7 @@ jobs:
           retention-days: 14
 
   publish-ota:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_ota == true)
     name: Publish signed frontend OTA
     needs:
       - quality
