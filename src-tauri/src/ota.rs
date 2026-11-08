@@ -72,6 +72,7 @@ struct OtaManifest {
 #[derive(Serialize)]
 pub struct OtaUpdateResult {
     staged: bool,
+    restart_required: bool,
     version: Option<String>,
     notes: Option<String>,
 }
@@ -366,6 +367,7 @@ pub async fn ota_check_and_install(app: AppHandle) -> Result<OtaUpdateResult, St
     if cfg!(debug_assertions) {
         return Ok(OtaUpdateResult {
             staged: false,
+            restart_required: false,
             version: None,
             notes: None,
         });
@@ -447,10 +449,12 @@ pub async fn ota_check_and_install(app: AppHandle) -> Result<OtaUpdateResult, St
     let current_version = active_version.max(staged_version);
 
     if ota_version <= current_version {
+        let pending_version = state.staged_version.clone();
         return Ok(OtaUpdateResult {
             staged: false,
-            version: None,
-            notes: None,
+            restart_required: pending_version.is_some(),
+            version: pending_version,
+            notes: manifest.notes,
         });
     }
 
@@ -510,6 +514,7 @@ pub async fn ota_check_and_install(app: AppHandle) -> Result<OtaUpdateResult, St
 
     Ok(OtaUpdateResult {
         staged: true,
+        restart_required: true,
         version: Some(version_name),
         notes: manifest.notes,
     })
