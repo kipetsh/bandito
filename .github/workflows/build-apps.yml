@@ -3,14 +3,14 @@ name: Build Bandito apps
 on:
   push:
     branches:
-      - main-tauri
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: build-apps-v5-${{ github.ref }}
+  group: build-apps-v6-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -37,6 +37,7 @@ jobs:
         run: npm test
 
   desktop:
+    if: github.event_name == 'workflow_dispatch'
     name: Build ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -85,6 +86,7 @@ jobs:
           retention-days: 14
 
   android:
+    if: github.event_name == 'workflow_dispatch'
     name: Build Android APK
     runs-on: ubuntu-latest
     steps:
@@ -179,6 +181,7 @@ jobs:
           retention-days: 14
 
   package:
+    if: github.event_name == 'workflow_dispatch'
     name: Package all platforms
     needs:
       - desktop
