@@ -33,7 +33,7 @@
     "app:dev": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri dev",
     "app:build": "npm run app:icons && npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri build",
     "app:android:init": "npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri android init --ci && npm run app:icons",
-    "app:android:build": "npm run app:icons && npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri android build --apk"
+    "app:android:build": "npm run app:icons && node tools/configure-android-immersive.mjs && npm exec --yes --package @tauri-apps/cli@2.12.4 -- tauri android build --apk"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
