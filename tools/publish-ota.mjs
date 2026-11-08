@@ -17,7 +17,7 @@ const privateKey = createPrivateKey(Buffer.from(privateKeyBase64, 'base64').toSt
 const manifest = {
     schema_version: 1,
     version,
-    min_app_version: '0.1.0',
+    min_app_version: '0.1.1',
     archive_name: 'web-assets.zip',
     archive_sha256: createHash('sha256').update(archive).digest('hex'),
     notes: 'Обновление интерфейса Bandito',
