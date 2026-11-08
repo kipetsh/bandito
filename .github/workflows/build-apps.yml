@@ -117,10 +117,10 @@ jobs:
           test -n "$ANDROID_KEY_ALIAS" || (echo "::error::Missing GitHub Actions secret ANDROID_KEY_ALIAS" && exit 1)
           printf '%s' "$ANDROID_KEY_BASE64" | base64 --decode > "$RUNNER_TEMP/bandito-release.jks"
           {
-            printf 'storePassword=%s\\n' "$ANDROID_KEY_PASSWORD"
-            printf 'keyPassword=%s\\n' "$ANDROID_KEY_PASSWORD"
-            printf 'keyAlias=%s\\n' "$ANDROID_KEY_ALIAS"
-            printf 'storeFile=%s\\n' "$RUNNER_TEMP/bandito-release.jks"
+            printf 'storePassword=%s\n' "$ANDROID_KEY_PASSWORD"
+            printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
+            printf 'keyAlias=%s\n' "$ANDROID_KEY_ALIAS"
+            printf 'storeFile=%s\n' "$RUNNER_TEMP/bandito-release.jks"
           } > src-tauri/gen/android/keystore.properties
           python3 tools/configure-android-signing.py
 
