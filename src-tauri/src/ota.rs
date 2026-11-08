@@ -363,8 +363,8 @@ pub fn ota_mark_boot_success(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn ota_restart_app(app: AppHandle) -> ! {
-    app.restart()
+pub fn ota_restart_app(app: AppHandle) {
+    app.restart();
 }
 
 #[tauri::command]
