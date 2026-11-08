@@ -2,6 +2,26 @@
 const tauriInvoke =
     typeof window !== 'undefined' && Object.hasOwn(window, '__TAURI__') ? window.__TAURI__?.core?.invoke : null;
 
+function showOtaRestartNotice(update) {
+    if (!update?.restart_required) return;
+
+    const banner = document.getElementById('otaUpdateBanner');
+    const button = document.getElementById('otaRestartButton');
+    if (!banner || !button) return;
+
+    banner.hidden = false;
+    button.addEventListener('click', async () => {
+        button.disabled = true;
+        button.textContent = 'Перезапуск…';
+        try {
+            await tauriInvoke('ota_restart_app');
+        } catch {
+            button.disabled = false;
+            button.textContent = 'Перезапустить';
+        }
+    }, { once: true });
+}
+
 async function startApplication() {
     if (tauriInvoke) {
         try {
@@ -31,7 +51,8 @@ async function startApplication() {
     }
 
     try {
-        await tauriInvoke('ota_check_and_install');
+        const update = await tauriInvoke('ota_check_and_install');
+        showOtaRestartNotice(update);
     } catch {
         // An unavailable update server must never block the game from starting.
     }
