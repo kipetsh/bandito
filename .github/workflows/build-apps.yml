@@ -14,6 +14,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  format-snapshot:
+    name: Export Prettier-formatted files
+    if: ${{ contains(github.event.head_commit.message, '[format-snapshot]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Format files
+        run: |
+          npx prettier --write css/blocks/end-screen.css js/main.js package.json README.md src-tauri/capabilities/default.json src-tauri/tauri.conf.json
+
+      - name: Upload formatted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: prettier-formatted-files
+          path: |
+            css/blocks/end-screen.css
+            js/main.js
+            package.json
+            README.md
+            src-tauri/capabilities/default.json
+            src-tauri/tauri.conf.json
+          if-no-files-found: error
+          retention-days: 3
+
   quality:
     name: Check frontend
     runs-on: ubuntu-latest
@@ -37,6 +72,7 @@ jobs:
         run: npm test
 
   desktop:
+    if: ${{ !contains(github.event.head_commit.message, '[format-snapshot]') }}
     name: Build ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -85,6 +121,7 @@ jobs:
           retention-days: 14
 
   android:
+    if: ${{ !contains(github.event.head_commit.message, '[format-snapshot]') }}
     name: Build Android APK
     runs-on: ubuntu-latest
     steps:
