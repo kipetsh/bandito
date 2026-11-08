@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       build_apps:
-        description: Build Windows, macOS, and Android installers
+        description: Build macOS and Android installers
         required: true
         type: boolean
         default: true
@@ -61,8 +61,6 @@ jobs:
             os: macos-latest
           - name: macOS Intel
             os: macos-15-intel
-          - name: Windows x64
-            os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
