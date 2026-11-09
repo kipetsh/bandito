@@ -615,6 +615,10 @@ const isPreviewed = (t) => {
 };
 // Shows a placement of the selected card: its ghost, its pin enlarged and the «Отмена» / «Поставить» buttons.
 // Only the board pieces change, so a hover does not re-render the board.
+export function shouldClearPlacementPreview(event, target) {
+    return event.pointerType === 'mouse' && event.buttons === 0 && !target;
+}
+
 function setPreview(target) {
     const { x, y, r } = target;
     state.rotation = r;
@@ -645,7 +649,7 @@ boardEl.addEventListener('pointermove', (e) => {
     boardPointer = position;
     boardEl.classList.toggle('board--pointing', !!target);
     if (target && moved && !isPreviewed(target)) setPreview(target);
-    else if (!target && e.pointerType === 'mouse') clearPlacementPreview();
+    else if (shouldClearPlacementPreview(e, target)) clearPlacementPreview();
 });
 boardEl.addEventListener('pointerleave', (e) => {
     boardEl.classList.remove('board--pointing');

@@ -160,6 +160,16 @@ test('the entry point loads every application module without runtime errors', as
     });
 });
 
+test('a pressed mouse pointer does not clear the placement preview', async () => {
+    const { shouldClearPlacementPreview } = await import(moduleUrl('js/game.js'));
+    const mouseHover = { pointerType: 'mouse', buttons: 0 };
+
+    assert.equal(shouldClearPlacementPreview(mouseHover, null), true);
+    assert.equal(shouldClearPlacementPreview({ ...mouseHover, buttons: 1 }, null), false);
+    assert.equal(shouldClearPlacementPreview(mouseHover, {}), false);
+    assert.equal(shouldClearPlacementPreview({ ...mouseHover, pointerType: 'pen' }, null), false);
+});
+
 test('all game scripts pass the JavaScript parser', () => {
     const scriptsDirectory = resolve(projectRoot, 'js');
     const scripts = readdirSync(scriptsDirectory).filter((name) => name.endsWith('.js'));
