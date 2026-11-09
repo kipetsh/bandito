@@ -1,3 +1,5 @@
+import { getRoomCodeFromPath } from '#js/room-url.js';
+
 /* Application entry point: the only script loaded by index.html. */
 const tauriInvoke =
     typeof window !== 'undefined' && Object.hasOwn(window, '__TAURI__') ? window.__TAURI__?.core?.invoke : null;
@@ -38,9 +40,13 @@ async function startApplication() {
     await import('#js/settings.js');
     await import('#js/snackbar.js');
     await import('#js/game.js');
-    await import('#js/multiplayer.js');
+    const multiplayer = await import('#js/multiplayer.js');
 
-    if (!tauriInvoke) return;
+    if (!tauriInvoke) {
+        const roomCode = getRoomCodeFromPath(window.location.pathname);
+        if (roomCode) await multiplayer.mpJoin(roomCode);
+        return;
+    }
 
     await new Promise((resolve) => window.setTimeout(resolve, 3000));
 

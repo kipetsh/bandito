@@ -28,6 +28,22 @@ test('production build contains index.html and every referenced local asset', ()
     }
 });
 
+test('GitHub Pages room links serve the same app shell without redirecting', () => {
+    const fallbackPath = resolve(buildDirectory, '404.html');
+    assert.ok(existsSync(fallbackPath), 'GitHub Pages room-route fallback is missing');
+
+    const html = readFileSync(fallbackPath, 'utf8');
+    assert.ok(html.includes('<title>Bandito — карточная игра</title>'));
+    assert.ok(html.includes('window.location.pathname'));
+    assert.ok(html.includes('document.head.prepend(base)'));
+    assert.ok(!html.includes('window.location.replace('));
+    assert.ok(!html.includes('window.location.assign('));
+
+    for (const reference of localReferences(html)) {
+        assert.ok(existsSync(resolve(buildDirectory, reference)), `Fallback build is missing: ${reference}`);
+    }
+});
+
 test('the application is bundled into one script and card data is copied for runtime fetch', () => {
     const html = readFileSync(resolve(buildDirectory, 'index.html'), 'utf8');
     const localScripts = [...html.matchAll(/<script[^>]*src="([^":]+)"/g)].map((match) => match[1]);

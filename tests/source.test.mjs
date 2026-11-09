@@ -44,6 +44,26 @@ register('data:text/javascript,' + encodeURIComponent(imageImportHooks));
 
 const moduleUrl = (path) => pathToFileURL(resolve(projectRoot, path)).href;
 
+test('room URLs preserve the GitHub Pages project path and support root hosting', async () => {
+    const { getAppBasePath, getRoomCodeFromPath, getRoomPath, getRoomUrl } = await import(moduleUrl('js/room-url.js'));
+
+    assert.equal(getRoomCodeFromPath('/bandito/K3F9QX'), 'K3F9QX');
+    assert.equal(getRoomCodeFromPath('/bandito/k3f9qx/'), 'K3F9QX');
+    assert.equal(getRoomCodeFromPath('/bandito/'), null);
+    assert.equal(getAppBasePath('/bandito/K3F9QX'), '/bandito/');
+    assert.equal(getRoomPath('K3F9QX', '/bandito/'), '/bandito/K3F9QX');
+    assert.equal(getRoomPath(null, '/bandito/K3F9QX'), '/bandito/');
+    assert.equal(getRoomPath('K3F9QX', '/'), '/K3F9QX');
+    assert.equal(
+        getRoomUrl('K3F9QX', { protocol: 'https:', origin: 'https://kipetsh.github.io', pathname: '/bandito/' }),
+        'https://kipetsh.github.io/bandito/K3F9QX'
+    );
+    assert.equal(
+        getRoomUrl('K3F9QX', { protocol: 'bandito:', origin: 'bandito://localhost', pathname: '/' }),
+        'https://kipetsh.github.io/bandito/K3F9QX'
+    );
+});
+
 function createStorage() {
     const storage = new Map();
     return {
@@ -127,6 +147,8 @@ test('the entry point loads every application module without runtime errors', as
         document: createStub(),
         firebase: createStub(),
         localStorage,
+        location: { pathname: '/bandito/', protocol: 'https:', origin: 'https://kipetsh.github.io' },
+        history: { state: null, replaceState: () => {} },
         matchMedia: () => ({ matches: false }),
         fetch: () => new Promise(() => {}),
         requestAnimationFrame: () => 0,

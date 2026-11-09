@@ -1,6 +1,7 @@
 /* Firebase, lobby UI, room presence, and cooperative game flow. */
 import { $ } from '#js/dom.js';
 import { snackbar } from '#js/snackbar.js';
+import { getRoomPath, getRoomUrl } from '#js/room-url.js';
 import {
     canPlayAny,
     chooseCardMessage,
@@ -43,6 +44,10 @@ export let mpUid = null,
     mpRoomCode = null,
     mpRoomData = null;
 const mpReadyMessage = 'Кооператив готов. Создай комнату или введи код.';
+function updateRoomUrl(code = null) {
+    if (!['http:', 'https:'].includes(window.location.protocol)) return;
+    window.history.replaceState(window.history.state, '', getRoomPath(code, window.location.pathname));
+}
 function mpMessage(t) {
     const e = $('#mpMessage');
     if (e) {
@@ -197,6 +202,7 @@ function mpShowLobby(room) {
 }
 function mpAttach(code) {
     mpRoomCode = code;
+    updateRoomUrl(code);
     mpRoomRef = mpDb.ref('rooms/' + code);
     if (mpRoomListener) mpRoomRef.off('value', mpRoomListener);
     mpRoomListener = (s) => {
@@ -405,9 +411,9 @@ async function mpCreate() {
         mpBusy = false;
     }
 }
-async function mpJoin() {
+export async function mpJoin(codeOverride = null) {
     if (mpBusy) return;
-    const code = $('#mpCode').value.trim().toUpperCase();
+    const code = String(codeOverride ?? $('#mpCode').value).trim().toUpperCase();
     if (!/^[A-Z0-9]{6}$/.test(code)) {
         snackbar('Введи шестизначный код комнаты, например 779742', 'error');
         return;
@@ -427,6 +433,7 @@ async function mpJoin() {
             await roomRef.child('players/' + mpUid).remove();
             added = false;
             mpMessage(mpReadyMessage);
+            if (codeOverride !== null) updateRoomUrl(null);
             snackbar(
                 'Комната ' + code + ' не найдена. Проверь код или попроси создателя прислать его ещё раз',
                 'error'
@@ -438,6 +445,7 @@ async function mpJoin() {
             await roomRef.child('players/' + mpUid).remove();
             added = false;
             mpMessage(mpReadyMessage);
+            if (codeOverride !== null) updateRoomUrl(null);
             snackbar('В комнате уже максимальное количество игроков', 'error');
             return;
         }
@@ -445,6 +453,7 @@ async function mpJoin() {
             await roomRef.child('players/' + mpUid).remove();
             added = false;
             mpMessage(mpReadyMessage);
+            if (codeOverride !== null) updateRoomUrl(null);
             snackbar('В этой комнате уже идёт партия. Подключиться можно после её завершения', 'error');
             return;
         }
@@ -647,6 +656,7 @@ export async function leaveMultiplayer(showMenu = true) {
     mpRoomRef = null;
     mpRoomListener = null;
     mpRoomCode = null;
+    updateRoomUrl(null);
     mpRoomData = null;
     mpCelebrated = false;
     state.hand = [];
@@ -660,26 +670,27 @@ export async function leaveMultiplayer(showMenu = true) {
     if (showMenu) snackbar('Ты вышел из комнаты');
 }
 $('#mpCreate').onclick = mpCreate;
-$('#mpJoin').onclick = mpJoin;
+$('#mpJoin').onclick = () => mpJoin();
 $('#mpStart').onclick = mpStart;
 $('#mpLeave').onclick = () => leaveMultiplayer();
 $('#mpCopyCode').onclick = async () => {
     if (!mpRoomCode) return;
+    const inviteUrl = getRoomUrl(mpRoomCode, window.location);
     try {
-        await navigator.clipboard.writeText(mpRoomCode);
-        snackbar('Код комнаты скопирован');
+        await navigator.clipboard.writeText(inviteUrl);
+        snackbar('Ссылка на комнату скопирована');
     } catch {
         const field = document.createElement('textarea');
-        field.value = mpRoomCode;
+        field.value = inviteUrl;
         field.style.position = 'fixed';
         field.style.opacity = '0';
         document.body.append(field);
         field.select();
         try {
             document.execCommand('copy');
-            snackbar('Код комнаты скопирован');
+            snackbar('Ссылка на комнату скопирована');
         } catch {
-            snackbar('Не удалось скопировать код. Выдели его вручную', 'error');
+            snackbar('Не удалось скопировать ссылку. Выдели её вручную', 'error');
         }
         field.remove();
     }
