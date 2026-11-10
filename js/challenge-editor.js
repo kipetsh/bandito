@@ -963,43 +963,43 @@ function renderLibrary() {
 function editChallenge(id) {
     const challenge = library.find((item) => item.id === id);
     if (!challenge || !ownsPublicChallenge(challenge)) return;
-    const exits = Number(challenge.exits);
-    if (
-        !START_CARDS[exits] ||
-        !Array.isArray(challenge.board) ||
-        !Array.isArray(challenge.hand) ||
-        challenge.hand.length > 3 ||
-        !Array.isArray(challenge.deck)
-    ) {
-        snackbar('Не удалось открыть испытание: данные повреждены.', 'error');
+    const exits = START_CARDS[Number(challenge.exits)] ? Number(challenge.exits) : 5;
+    if (!Array.isArray(challenge.board) || !Array.isArray(challenge.hand) || !Array.isArray(challenge.deck)) {
+        snackbar('Не удалось открыть испытание: структура данных повреждена.', 'error');
         return;
     }
-    const board = challenge.board.map((piece) => {
-        const card = cardById(piece.id);
-        const rotation = Number(piece.rotation || 0);
-        if (!card || !Number.isInteger(rotation) || rotation < 0 || rotation > 3) return null;
-        return {
-            id: card.id,
-            x: Number(piece.x),
-            y: Number(piece.y),
-            rotation,
-            m: rotateMatrix(card.matrix, rotation),
-        };
-    });
-    const hand = challenge.hand.map(Number);
-    const deck = challenge.deck.map(Number);
-    const allIds = [...board.map((piece) => piece?.id), ...hand, ...deck];
+
+    // Editing must remain possible even when the published layout violates game rules.
+    // Normalize recoverable fields instead of rejecting the entire challenge.
+    const startCard = cardById(START_CARDS[exits]);
     const tunnelIds = new Set(tunnelCards().map((card) => card.id));
-    if (
-        board.some((piece) => !piece) ||
-        board.some((piece) => !Number.isInteger(piece.x) || !Number.isInteger(piece.y)) ||
-        board.some((piece, index) => (index === 0 ? piece.id !== START_CARDS[exits] : !tunnelIds.has(piece.id))) ||
-        hand.concat(deck).some((id) => !tunnelIds.has(id)) ||
-        allIds.some((id) => !Number.isInteger(id))
-    ) {
-        snackbar('Не удалось открыть испытание: данные повреждены.', 'error');
-        return;
-    }
+    const pieces = challenge.board
+        .map((piece) => {
+            const card = cardById(piece?.id);
+            if (!card || (card.kind !== 'start' && !tunnelIds.has(card.id))) return null;
+            const x = Number(piece.x);
+            const y = Number(piece.y);
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+            const rawRotation = Number(piece.rotation || 0);
+            const rotation = Number.isFinite(rawRotation) ? ((Math.trunc(rawRotation) % 4) + 4) % 4 : 0;
+            return {
+                id: card.id,
+                x: Math.round(x),
+                y: Math.round(y),
+                rotation,
+                m: rotateMatrix(card.matrix, rotation),
+            };
+        })
+        .filter(Boolean);
+    const startIndex = pieces.findIndex((piece) => piece.id === startCard.id);
+    const board =
+        startIndex >= 0
+            ? [pieces[startIndex], ...pieces.filter((_, index) => index !== startIndex && pieces[index].id !== startCard.id)]
+            : [{ id: startCard.id, x: 0, y: 0, rotation: 0, m: clone(startCard.matrix) }, ...pieces.filter((piece) => piece.id !== startCard.id)];
+
+    const hand = [...new Set(challenge.hand.map(Number).filter((id) => tunnelIds.has(id)))].slice(0, 3);
+    const usedIds = new Set([...board.map((piece) => piece.id), ...hand]);
+    const deck = [...new Set(challenge.deck.map(Number).filter((id) => tunnelIds.has(id) && !usedIds.has(id)))];
     draft = createDraft();
     draft.challengeId = challenge.id;
     draft.title = String(challenge.title || '').slice(0, 60);
