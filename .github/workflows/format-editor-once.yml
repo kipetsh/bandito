@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Format changed files
-        run: npx prettier --write js/challenge-editor.js README.md AGENTS.md
+        run: npx prettier --write js/challenge-editor.js README.md AGENTS.md .github/workflows/format-editor-once.yml
       - name: Check formatting
         run: npm run format:check
       - name: Check lint
@@ -37,7 +37,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const paths = ['js/challenge-editor.js', 'README.md', 'AGENTS.md'];
+            const paths = ['js/challenge-editor.js', 'README.md', 'AGENTS.md', '.github/workflows/format-editor-once.yml'];
             const ref = await github.rest.git.getRef({ owner: context.repo.owner, repo: context.repo.repo, ref: 'heads/main' });
             const parent = ref.data.object.sha;
             const commit = await github.rest.git.getCommit({ owner: context.repo.owner, repo: context.repo.repo, commit_sha: parent });
