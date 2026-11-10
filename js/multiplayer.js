@@ -401,8 +401,7 @@ export async function loadPublicChallenges() {
         .map(([id, challenge]) => ({ ...challenge, id }))
         .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
 }
-export async function savePublicChallenge(challenge) {
-    await mpEnsureAuth();
+function createPublicChallengeRecord(challenge, createdAt = Date.now()) {
     if (!challenge || !Array.isArray(challenge.board) || !Array.isArray(challenge.hand) || !Array.isArray(challenge.deck)) {
         throw new Error('Некорректные данные испытания.');
     }
@@ -421,14 +420,48 @@ export async function savePublicChallenge(challenge) {
         deck: challenge.deck.map(Number),
         ownerUid: mpUid,
         authorName: mpName(),
-        createdAt: Date.now(),
+        createdAt,
     };
-    if (!record.title || ![2, 5, 6].includes(record.exits) || record.hand.length !== 3) {
-        throw new Error('Заполни название, сложность и три карты стартовой руки.');
+    if (!record.title || ![2, 5, 6].includes(record.exits) || record.hand.length > 3) {
+        throw new Error('Укажи название, сложность и не более трёх карт стартовой руки.');
     }
+    return record;
+}
+export function ownsPublicChallenge(challenge) {
+    return Boolean(mpUid && challenge && challenge.ownerUid === mpUid);
+}
+export async function savePublicChallenge(challenge) {
+    await mpEnsureAuth();
+    const record = createPublicChallengeRecord(challenge);
     const ref = mpDb.ref('challenges').push();
     await ref.set(record);
     return { ...record, id: ref.key };
+}
+export async function updatePublicChallenge(id, challenge) {
+    await mpEnsureAuth();
+    if (!id) throw new Error('Не указан идентификатор испытания.');
+    const ref = mpDb.ref('challenges/' + id);
+    const snapshot = await ref.once('value');
+    const existing = snapshot.val();
+    if (!existing || existing.ownerUid !== mpUid) {
+        throw new Error('Редактировать можно только собственные испытания.');
+    }
+    const record = createPublicChallengeRecord(challenge, Number(existing.createdAt) || Date.now());
+    record.authorName = existing.authorName || record.authorName;
+    await ref.update(record);
+    return { ...record, id: String(id) };
+}
+export async function deletePublicChallenge(id) {
+    await mpEnsureAuth();
+    if (!id) throw new Error('Не указан идентификатор испытания.');
+    const ref = mpDb.ref('challenges/' + id);
+    const snapshot = await ref.once('value');
+    const existing = snapshot.val();
+    if (!existing || existing.ownerUid !== mpUid) {
+        throw new Error('Удалить можно только собственные испытания.');
+    }
+    await ref.remove();
+    return String(id);
 }
 async function mpCreate() {
     // Prevent an underlying create-room action if a modal is open.

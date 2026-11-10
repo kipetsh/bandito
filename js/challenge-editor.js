@@ -1,5 +1,11 @@
 import { beginChallenge, clone, rotateMatrix, state, validOnBoard } from '#js/game.js';
-import { loadPublicChallenges, savePublicChallenge } from '#js/multiplayer.js';
+import {
+    deletePublicChallenge,
+    loadPublicChallenges,
+    ownsPublicChallenge,
+    savePublicChallenge,
+    updatePublicChallenge,
+} from '#js/multiplayer.js';
 import { snackbar } from '#js/snackbar.js';
 
 const START_CARDS = { 2: 75, 5: 72, 6: 71 };
@@ -31,6 +37,7 @@ function tunnelCards() {
 function createDraft() {
     const start = cardById(START_CARDS[5]);
     return {
+        challengeId: null,
         title: '',
         description: '',
         exits: 5,
@@ -92,11 +99,8 @@ function initChallengeEditor() {
         '<div class="challenge-editor__content">' +
         '<section class="challenge-editor__panel challenge-editor__board-panel" data-panel="board">' +
         '<aside class="challenge-editor__tools">' +
-        '<p class="note">Выбери карту в каталоге. На поле появятся цветные точки — каждая показывает допустимое место и поворот. Нажми точку, проверь превью и выбери «Поставить».</p>' +
+        '<p class="note">Выбери карту в каталоге. На поле появятся цветные точки — каждая показывает допустимое место и поворот. Нажми точку, чтобы сразу поставить карту.</p>' +
         '<button class="btn btn--primary" type="button" data-picker-open="board">＋ Добавить карту</button>' +
-        '<div class="challenge-editor__placement-actions" data-placement-actions hidden>' +
-        '<button class="btn" type="button" data-place-cancel>Отмена</button>' +
-        '<button class="btn btn--primary" type="button" data-place-confirm>Поставить</button></div>' +
         '<button class="btn" type="button" data-remove-piece disabled>Удалить выбранную</button>' +
         '<p class="challenge-editor__selection" data-board-selection>Стартовая карта уже на поле.</p>' +
         '<p class="caption">Стартовая карта закреплена. Выбери карту на поле, чтобы увидеть доступные повороты и удалить её.</p>' +
@@ -105,7 +109,7 @@ function initChallengeEditor() {
         '<div class="challenge-editor__canvas" data-board-canvas></div></div></section>' +
         '<section class="challenge-editor__panel" data-panel="hand" hidden>' +
         '<div class="challenge-editor__section-head"><div><h3>Карты в начале партии</h3>' +
-        '<p class="note">Выбери ровно три карты, с которыми игрок начнёт испытание.</p></div>' +
+        '<p class="note">Выбери до трёх карт, с которыми игрок начнёт испытание. Пустые слоты останутся пустыми.</p></div>' +
         '<button class="btn btn--primary" type="button" data-picker-open="hand">＋ Выбрать карту</button></div>' +
         '<div class="challenge-editor__hand-slots" data-hand-slots></div></section>' +
         '<section class="challenge-editor__panel" data-panel="deck" hidden>' +
@@ -223,15 +227,7 @@ function handleRootClick(event) {
     }
     const placement = target.closest?.('[data-placement-index]');
     if (placement) {
-        showPlacementPreview(Number(placement.dataset.placementIndex));
-        return;
-    }
-    if (target.closest?.('[data-place-confirm]')) {
-        confirmPendingPlacement();
-        return;
-    }
-    if (target.closest?.('[data-place-cancel]')) {
-        cancelPendingPlacement();
+        confirmPendingPlacement(Number(placement.dataset.placementIndex));
         return;
     }
     const piece = target.closest?.('[data-piece-index]');
@@ -278,6 +274,16 @@ function handleRootClick(event) {
         draft = createDraft();
         boardCentered = false;
         setTab('board');
+        return;
+    }
+    const edit = target.closest?.('[data-edit-challenge]');
+    if (edit) {
+        editChallenge(edit.dataset.editChallenge);
+        return;
+    }
+    const removeChallenge = target.closest?.('[data-delete-challenge]');
+    if (removeChallenge) {
+        deleteChallenge(removeChallenge.dataset.deleteChallenge);
         return;
     }
     const play = target.closest?.('[data-play-challenge]');
@@ -472,10 +478,6 @@ function renderBoard() {
     });
 
     if (draft.pendingCard !== null) {
-        const ghost = document.createElement('div');
-        ghost.className = 'board__piece board__piece--ghost challenge-editor__ghost hidden';
-        ghost.dataset.editorGhost = '';
-        canvas.append(ghost);
         const options = editorPlacementOptions();
         options.forEach((option, index) => {
             const pin = document.createElement('button');
@@ -524,25 +526,6 @@ function renderBoard() {
         }
     }
 
-    if (draft.placementPreview !== null && draft.availablePlacements[draft.placementPreview]) {
-        const option = draft.availablePlacements[draft.placementPreview];
-        const ghost = canvas.querySelector('[data-editor-ghost]');
-        ghost.style.left = (option.x + BOARD_OFFSET_X) * CELL_SIZE + 'px';
-        ghost.style.top = (option.y + BOARD_OFFSET_Y) * CELL_SIZE + 'px';
-        ghost.style.width = option.matrix[0].length * CELL_SIZE + 'px';
-        ghost.style.height = option.matrix.length * CELL_SIZE + 'px';
-        ghost.style.gridTemplateColumns = 'repeat(' + option.matrix[0].length + ',' + CELL_SIZE + 'px)';
-        ghost.style.gridTemplateRows = 'repeat(' + option.matrix.length + ',' + CELL_SIZE + 'px)';
-        option.matrix.flat().forEach((value) => {
-            const cell = document.createElement('i');
-            cell.className = 'board__cell' + (value ? '' : ' board__cell--wall');
-            ghost.append(cell);
-        });
-        ghost.classList.remove('hidden');
-        canvas.querySelectorAll('[data-placement-index]').forEach((pin, index) => {
-            pin.classList.toggle('board__pin--preview', index === draft.placementPreview);
-        });
-    }
     viewport.scrollLeft = scrollLeft;
     viewport.scrollTop = scrollTop;
     if (!boardCentered) {
@@ -558,20 +541,15 @@ function renderBoard() {
 function renderBoardControls() {
     const remove = root.querySelector('[data-remove-piece]');
     const selection = root.querySelector('[data-board-selection]');
-    const actions = root.querySelector('[data-placement-actions]');
     const selected = draft.selectedPiece === null ? null : draft.board[draft.selectedPiece];
     const pending = draft.pendingCard !== null;
     remove.disabled = !selected || draft.selectedPiece === 0 || pending;
-    actions.hidden = !pending;
     selection.replaceChildren();
     if (pending) {
         const card = cardById(draft.pendingCard);
         selection.append(createCardPreview(rotateMatrix(card.matrix, 0)));
         const label = document.createElement('span');
-        label.textContent =
-            draft.placementPreview === null
-                ? 'Выбери цветную точку на поле.'
-                : 'Поворот ' + draft.availablePlacements[draft.placementPreview].rotation * 90 + '°. Проверь превью.';
+        label.textContent = 'Нажми цветную точку на поле, чтобы сразу поставить карту.';
         selection.append(label);
     } else if (selected) {
         const card = cardById(selected.id);
@@ -586,28 +564,11 @@ function renderBoardControls() {
     } else selection.textContent = 'Выбери карту на поле или добавь новую.';
 }
 
-function showPlacementPreview(index) {
-    if (draft.pendingCard === null || !draft.availablePlacements[index]) return;
-    draft.placementPreview = index;
-    renderBoard();
-}
-
-function cancelPendingPlacement() {
-    draft.pendingCard = null;
-    draft.pendingRotation = 0;
-    draft.placementPreview = null;
-    renderBoard();
-}
-
-function confirmPendingPlacement() {
-    if (draft.pendingCard === null || draft.placementPreview === null) {
-        snackbar('Сначала выбери одну из цветных точек на поле.', 'error');
-        return;
-    }
-    const option = draft.availablePlacements[draft.placementPreview];
+function confirmPendingPlacement(index) {
+    if (draft.pendingCard === null) return;
+    const option = draft.availablePlacements[index];
     if (!option || !validOnBoard(draft.board, option.matrix, option.x, option.y)) {
         snackbar('Это положение больше недоступно. Выбери другую точку.', 'error');
-        draft.placementPreview = null;
         renderBoard();
         return;
     }
@@ -851,7 +812,11 @@ function updateSaveButton() {
     const issues = challengeValidationIssues();
     const button = root.querySelector('[data-save]');
     button.disabled = false;
-    button.textContent = issues.length ? 'Укажи название' : 'Опубликовать испытание';
+    button.textContent = issues.length
+        ? 'Укажи название'
+        : draft.challengeId
+          ? 'Сохранить изменения'
+          : 'Опубликовать испытание';
     const status = root.querySelector('[data-editor-status]');
     status.textContent = issues.length
         ? 'Для публикации достаточно указать название.'
@@ -861,7 +826,7 @@ function updateSaveButton() {
 function challengeAccessError(error) {
     const message = String(error?.message || error || 'Неизвестная ошибка');
     if (/permission_denied|permission denied/i.test(message)) {
-        return 'Firebase запретил доступ к /challenges. В Realtime Database Rules нужно разрешить чтение для auth != null и создание записей только с ownerUid = auth.uid.';
+        return 'Firebase запретил доступ к /challenges. Проверь правила чтения и запись владельцем (ownerUid = auth.uid) в Realtime Database Rules.';
     }
     return message;
 }
@@ -883,18 +848,10 @@ async function saveChallenge() {
         updateSaveButton();
         return;
     }
+    const editing = Boolean(draft.challengeId);
     button.disabled = true;
-    button.textContent = 'Публикую…';
-    const hand = draft.hand.slice();
-    const usedIds = new Set([...draft.board.map((piece) => piece.id), ...hand.filter((id) => id !== null)]);
-    const availableCards = tunnelCards()
-        .map((card) => card.id)
-        .filter((id) => !usedIds.has(id));
-    hand.forEach((id, index) => {
-        if (id !== null || !availableCards.length) return;
-        const randomIndex = Math.floor(Math.random() * availableCards.length);
-        hand[index] = availableCards.splice(randomIndex, 1)[0];
-    });
+    button.textContent = editing ? 'Сохраняю…' : 'Публикую…';
+    const hand = draft.hand.filter((id) => id !== null);
     const challenge = {
         title: draft.title.trim(),
         description: draft.description.trim(),
@@ -904,15 +861,17 @@ async function saveChallenge() {
         deck: [...draft.deck].filter((id) => !hand.includes(id)),
     };
     try {
-        const saved = await savePublicChallenge(challenge);
+        const saved = editing
+            ? await updatePublicChallenge(draft.challengeId, challenge)
+            : await savePublicChallenge(challenge);
         library = [saved, ...library.filter((item) => item.id !== saved.id)];
         libraryStatus = 'ready';
         draft.tab = 'library';
         closePicker();
         render();
-        snackbar('Испытание опубликовано в общей библиотеке.');
+        snackbar(editing ? 'Изменения сохранены.' : 'Испытание опубликовано в общей библиотеке.');
     } catch (error) {
-        snackbar('Не удалось опубликовать испытание: ' + challengeAccessError(error), 'error');
+        snackbar('Не удалось сохранить испытание: ' + challengeAccessError(error), 'error');
         updateSaveButton();
     }
 }
@@ -981,8 +940,102 @@ function renderLibrary() {
         play.dataset.playChallenge = String(challenge.id);
         play.textContent = 'Играть';
         card.append(title, description, meta, play);
+        if (ownsPublicChallenge(challenge)) {
+            const actions = document.createElement('div');
+            actions.className = 'challenge-editor__library-actions';
+            const edit = document.createElement('button');
+            edit.type = 'button';
+            edit.className = 'btn';
+            edit.dataset.editChallenge = String(challenge.id);
+            edit.textContent = 'Редактировать';
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn';
+            remove.dataset.deleteChallenge = String(challenge.id);
+            remove.textContent = 'Удалить';
+            actions.append(edit, remove);
+            card.append(actions);
+        }
         list.append(card);
     });
+}
+
+function editChallenge(id) {
+    const challenge = library.find((item) => item.id === id);
+    if (!challenge || !ownsPublicChallenge(challenge)) return;
+    const exits = Number(challenge.exits);
+    if (
+        !START_CARDS[exits] ||
+        !Array.isArray(challenge.board) ||
+        !Array.isArray(challenge.hand) ||
+        challenge.hand.length > 3 ||
+        !Array.isArray(challenge.deck)
+    ) {
+        snackbar('Не удалось открыть испытание: данные повреждены.', 'error');
+        return;
+    }
+    const board = challenge.board.map((piece) => {
+        const card = cardById(piece.id);
+        const rotation = Number(piece.rotation || 0);
+        if (!card || !Number.isInteger(rotation) || rotation < 0 || rotation > 3) return null;
+        return {
+            id: card.id,
+            x: Number(piece.x),
+            y: Number(piece.y),
+            rotation,
+            m: rotateMatrix(card.matrix, rotation),
+        };
+    });
+    const hand = challenge.hand.map(Number);
+    const deck = challenge.deck.map(Number);
+    const allIds = [...board.map((piece) => piece?.id), ...hand, ...deck];
+    const tunnelIds = new Set(tunnelCards().map((card) => card.id));
+    if (
+        board.some((piece) => !piece) ||
+        board.some((piece) => !Number.isInteger(piece.x) || !Number.isInteger(piece.y)) ||
+        board[0]?.id !== START_CARDS[exits] ||
+        board.slice(1).some((piece) => !tunnelIds.has(piece.id)) ||
+        hand.concat(deck).some((id) => !tunnelIds.has(id)) ||
+        allIds.some((id) => !Number.isInteger(id)) ||
+        new Set(allIds).size !== allIds.length
+    ) {
+        snackbar('Не удалось открыть испытание: данные повреждены.', 'error');
+        return;
+    }
+    draft = createDraft();
+    draft.challengeId = challenge.id;
+    draft.title = String(challenge.title || '').slice(0, 60);
+    draft.description = String(challenge.description || '').slice(0, 240);
+    draft.exits = exits;
+    draft.board = board;
+    draft.hand = [...hand, null, null].slice(0, 3);
+    draft.deck = new Set(deck);
+    if (!isBoardValid()) {
+        draft = createDraft();
+        snackbar('Не удалось открыть испытание: раскладка поля недопустима.', 'error');
+        return;
+    }
+    draft.tab = 'board';
+    draft.pendingCard = null;
+    draft.selectedPiece = null;
+    draft.placementPreview = null;
+    boardCentered = false;
+    closePicker();
+    render();
+}
+
+async function deleteChallenge(id) {
+    const challenge = library.find((item) => item.id === id);
+    if (!challenge || !ownsPublicChallenge(challenge)) return;
+    if (!window.confirm('Удалить испытание «' + String(challenge.title || 'Без названия') + '»?')) return;
+    try {
+        await deletePublicChallenge(id);
+        library = library.filter((item) => item.id !== id);
+        renderLibrary();
+        snackbar('Испытание удалено.');
+    } catch (error) {
+        snackbar('Не удалось удалить испытание: ' + challengeAccessError(error), 'error');
+    }
 }
 
 async function playChallenge(id) {
