@@ -1007,7 +1007,10 @@ function editChallenge(id) {
     const board =
         startIndex >= 0
             ? [pieces[startIndex], ...pieces.filter((_, index) => index !== startIndex && pieces[index].id !== startCard.id)]
-            : [{ id: startCard.id, x: 0, y: 0, rotation: 0, m: clone(startCard.matrix) }, ...pieces.filter((piece) => piece.id !== startCard.id)];
+            : [
+                  { id: startCard.id, x: 0, y: 0, rotation: 0, m: clone(startCard.matrix) },
+                  ...pieces.filter((piece) => piece.id !== startCard.id),
+              ];
 
     const hand = [...new Set(handData.map(Number).filter((id) => tunnelIds.has(id)))].slice(0, 3);
     const usedIds = new Set([...board.map((piece) => piece.id), ...hand]);
