@@ -154,6 +154,9 @@
         border: 1px solid var(--color-border);
         border-radius: var(--radius-lg);
         background: var(--color-surface-sunken);
+    }
+
+    .challenge-editor__viewport.game__boardbox {
         height: 100%;
         min-height: 0;
     }
