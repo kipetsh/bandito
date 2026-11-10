@@ -1,4 +1,0 @@
-AGENTS.md
-js/challenge-editor.js
-lint-report.json
-README.md

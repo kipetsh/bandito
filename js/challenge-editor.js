@@ -169,7 +169,8 @@ function initChallengeEditor() {
     });
     boardCamera.addEventListener('pointermove', (event) => {
         if (!editorPan || editorPan.id !== event.pointerId) return;
-        const dx = event.clientX - editorPan.x, dy = event.clientY - editorPan.y;
+        const dx = event.clientX - editorPan.x,
+            dy = event.clientY - editorPan.y;
         if (!editorPan.moved && Math.hypot(dx, dy) > 5) {
             editorPan.moved = true;
             boardCamera.classList.add('game__camera--dragging');
@@ -187,11 +188,15 @@ function initChallengeEditor() {
     };
     boardCamera.addEventListener('pointerup', endEditorPan);
     boardCamera.addEventListener('pointercancel', endEditorPan);
-    boardCamera.addEventListener('wheel', (event) => {
-        if (!event.ctrlKey && !event.metaKey) return;
-        event.preventDefault();
-        setEditorZoom(editorCellSize + (event.deltaY < 0 ? 2 : -2));
-    }, { passive: false });
+    boardCamera.addEventListener(
+        'wheel',
+        (event) => {
+            if (!event.ctrlKey && !event.metaKey) return;
+            event.preventDefault();
+            setEditorZoom(editorCellSize + (event.deltaY < 0 ? 2 : -2));
+        },
+        { passive: false }
+    );
     root.addEventListener('click', handleRootClick);
     root.addEventListener('input', handleRootInput);
     window.addEventListener('keydown', handleEditorKeydown);
@@ -524,12 +529,14 @@ function renderBoard() {
     const margin = 9;
     const minX = Math.min(...draft.board.map((piece) => piece.x)) - margin;
     const minY = Math.min(...draft.board.map((piece) => piece.y)) - margin;
-    const maxX = Math.max(
-        ...draft.board.map((piece) => piece.x + rotateMatrix(cardById(piece.id).matrix, piece.rotation)[0].length)
-    ) + margin;
-    const maxY = Math.max(
-        ...draft.board.map((piece) => piece.y + rotateMatrix(cardById(piece.id).matrix, piece.rotation).length)
-    ) + margin;
+    const maxX =
+        Math.max(
+            ...draft.board.map((piece) => piece.x + rotateMatrix(cardById(piece.id).matrix, piece.rotation)[0].length)
+        ) + margin;
+    const maxY =
+        Math.max(
+            ...draft.board.map((piece) => piece.y + rotateMatrix(cardById(piece.id).matrix, piece.rotation).length)
+        ) + margin;
     const cell = editorCellSize;
     const boardWidth = (maxX - minX) * cell;
     const boardHeight = (maxY - minY) * cell;
@@ -589,7 +596,12 @@ function renderBoard() {
         if (selected && draft.selectedPiece > 0) {
             const card = cardById(selected.id);
             const pinOffset = Math.round((cell * 22) / 24);
-            const offsets = [[0, -pinOffset], [pinOffset, 0], [0, pinOffset], [-pinOffset, 0]];
+            const offsets = [
+                [0, -pinOffset],
+                [pinOffset, 0],
+                [0, pinOffset],
+                [-pinOffset, 0],
+            ];
             for (let rotation = 0; rotation < 4; rotation++) {
                 const matrix = rotateMatrix(card.matrix, rotation);
                 const candidate = { ...selected, rotation, m: matrix };
