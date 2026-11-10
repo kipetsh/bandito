@@ -517,7 +517,9 @@ function renderBoard() {
     const maxX = Math.max(
         ...draft.board.map((piece) => piece.x + rotateMatrix(cardById(piece.id).matrix, piece.rotation)[0].length)
     ) + margin;
-    const maxY = Math.max(...draft.board.map((piece) => piece.y + rotateMatrix(cardById(piece.id).matrix, piece.rotation).length)) + margin;
+    const maxY = Math.max(
+        ...draft.board.map((piece) => piece.y + rotateMatrix(cardById(piece.id).matrix, piece.rotation).length)
+    ) + margin;
     const cell = editorCellSize;
     const boardWidth = (maxX - minX) * cell;
     const boardHeight = (maxY - minY) * cell;
@@ -586,8 +588,10 @@ function renderBoard() {
                 pin.className = 'board__pin board__pin--' + rotation + ' challenge-editor__pin';
                 pin.dataset.pieceRotation = String(rotation);
                 pin.setAttribute('aria-label', 'Повернуть карту на ' + rotation * 90 + ' градусов');
-                pin.style.left = offsetX + (selected.x - minX + matrix[0].length / 2) * cell - 20 + offsets[rotation][0] + 'px';
-                pin.style.top = offsetY + (selected.y - minY + matrix.length / 2) * cell - 20 + offsets[rotation][1] + 'px';
+                pin.style.left =
+                    offsetX + (selected.x - minX + matrix[0].length / 2) * cell - 20 + offsets[rotation][0] + 'px';
+                pin.style.top =
+                    offsetY + (selected.y - minY + matrix.length / 2) * cell - 20 + offsets[rotation][1] + 'px';
                 canvas.append(pin);
             }
         }
