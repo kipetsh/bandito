@@ -164,7 +164,9 @@ function createEditorChrome() {
     hideGameElement(side.querySelector('#mpTimer'));
     hideGameElement(side.querySelector('#tutorialGoal'));
     hideGameElement(side.querySelector('#status'));
-    hideGameElement(play.querySelector('#placementPreview'));
+    const placementPreview = play.querySelector('#placementPreview');
+    placementPreview.classList.add('challenge-editor__placement-preview');
+    hideGameElement(placementPreview);
 
     editorHeaderActions = document.createElement('div');
     editorHeaderActions.className = 'challenge-editor__header-actions';
@@ -274,6 +276,7 @@ function restoreGameChrome() {
     play.querySelector('.game__layout').classList.remove('challenge-editor__layout');
     play.querySelector('.game__boardbox').classList.remove('challenge-editor__boardbox');
     play.querySelector('.game__side').classList.remove('challenge-editor__side');
+    play.querySelector('#placementPreview').classList.remove('challenge-editor__placement-preview');
     for (const { element, wasHidden } of hiddenGameElements) {
         element.classList.toggle('hidden', wasHidden);
     }

@@ -316,6 +316,10 @@
         min-height: 420px;
     }
 
+    .challenge-editor__placement-preview {
+        display: none;
+    }
+
     .challenge-editor__side {
         min-height: 0;
         max-height: calc(100svh - 140px);
