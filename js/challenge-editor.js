@@ -1147,7 +1147,8 @@ async function refreshDailyChallenge() {
     if (!dailyButton) return;
     try {
         dailyChallenge = await loadDailyChallenge(localDateKey());
-        dailyButton.querySelector('[data-daily-title]').textContent = dailyChallenge?.title || 'На сегодня не назначено';
+        dailyButton.querySelector('[data-daily-title]').textContent =
+            dailyChallenge?.title || 'На сегодня не назначено';
     } catch {
         dailyChallenge = null;
         dailyButton.querySelector('[data-daily-title]').textContent = 'Пока недоступно';
