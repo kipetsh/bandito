@@ -218,30 +218,39 @@ async function begin(n) {
     centerCamera();
     startHand();
 }
+export function normalizeChallengeArray(value) {
+    if (Array.isArray(value)) return value;
+    if (!value || typeof value !== 'object') return [];
+    return Object.keys(value)
+        .filter((key) => /^(0|[1-9]\d*)$/.test(key))
+        .sort((a, b) => Number(a) - Number(b))
+        .map((key) => value[key]);
+}
 export async function beginChallenge(challenge) {
-    if (!state.all.length || !challenge || !Array.isArray(challenge.board)) return false;
+    if (!state.all.length || !challenge) return false;
+    const boardData = normalizeChallengeArray(challenge.board);
+    const handData = normalizeChallengeArray(challenge.hand);
+    const deckData = normalizeChallengeArray(challenge.deck);
     const exits = Number(challenge.exits),
         startId = { 2: 75, 5: 72, 6: 71 }[exits],
         start = state.all.find((card) => card.id === startId),
         cardById = new Map(state.all.filter((card) => card.kind === 'tunnel').map((card) => [card.id, card]));
-    if (!start || challenge.board.length < 1 || challenge.board.length > 73) {
+    if (!start || boardData.length < 1 || boardData.length > 73) {
         snackbar('В испытании повреждена стартовая раскладка.', 'error');
         return false;
     }
     if (
-        !Array.isArray(challenge.hand) ||
-        challenge.hand.length > 3 ||
-        challenge.hand.some((id) => !cardById.has(Number(id))) ||
-        !Array.isArray(challenge.deck) ||
-        challenge.deck.length > 72 ||
-        challenge.deck.some((id) => !cardById.has(Number(id)))
+        handData.length > 3 ||
+        handData.some((id) => !cardById.has(Number(id))) ||
+        deckData.length > 72 ||
+        deckData.some((id) => !cardById.has(Number(id)))
     ) {
         snackbar('В испытании повреждены стартовая рука или колода добора.', 'error');
         return false;
     }
     const placed = [];
-    for (let index = 0; index < challenge.board.length; index++) {
-        const piece = challenge.board[index];
+    for (let index = 0; index < boardData.length; index++) {
+        const piece = boardData[index];
         if (!piece || typeof piece !== 'object') {
             snackbar('В испытании повреждена раскладка поля.', 'error');
             return false;
@@ -277,7 +286,7 @@ export async function beginChallenge(challenge) {
         placed.push({ id: card.id, x, y, m: matrix });
     }
     const usedIds = new Set(placed.map((piece) => piece.id));
-    for (const id of challenge.hand.concat(challenge.deck)) {
+    for (const id of handData.concat(deckData)) {
         const cardId = Number(id);
         if (!cardById.has(cardId) || usedIds.has(cardId)) {
             snackbar('В испытании одна и та же карта указана в нескольких местах.', 'error');
@@ -285,11 +294,11 @@ export async function beginChallenge(challenge) {
         }
         usedIds.add(cardId);
     }
-    const hand = challenge.hand.map((id) => {
+    const hand = handData.map((id) => {
         const card = cardById.get(Number(id));
         return { id: card.id, m: clone(card.matrix) };
     });
-    const deck = challenge.deck.map((id) => {
+    const deck = deckData.map((id) => {
         const card = cardById.get(Number(id));
         return { id: card.id, m: clone(card.matrix) };
     });
@@ -302,14 +311,14 @@ export async function beginChallenge(challenge) {
         title: String(challenge.title || 'Пользовательское испытание').slice(0, 60),
         description: String(challenge.description || '').slice(0, 240),
         exits,
-        board: challenge.board.map((piece) => ({
+        board: boardData.map((piece) => ({
             id: Number(piece.id),
             x: Number(piece.x),
             y: Number(piece.y),
             rotation: Number(piece.rotation || 0),
         })),
-        hand: challenge.hand.map(Number),
-        deck: challenge.deck.map(Number),
+        hand: handData.map(Number),
+        deck: deckData.map(Number),
     };
     state.exits = exits;
     state.deck = shuffle(deck);
@@ -1337,9 +1346,10 @@ function play(x, y, m, keepSelection = true) {
     if (state.finished || state.selected < 0 || !valid(m, x, y)) return;
     const index = state.selected,
         card = state.hand[index];
-    // The drawn card takes the place of the played one, so the other cards stay where they were.
+    // Keep the played card's slot stable, then top the hand back up to three cards when possible.
     if (state.deck.length) state.hand[index] = state.deck.pop();
     else state.hand.splice(index, 1);
+    draw();
     const newPiece = { id: card.id, x, y, m };
     state.placed.push(newPiece);
     state.lastPlaced = newPiece;

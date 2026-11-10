@@ -1,4 +1,4 @@
-import { beginChallenge, clone, rotateMatrix, state, validOnBoard } from '#js/game.js';
+import { beginChallenge, clone, normalizeChallengeArray, rotateMatrix, state, validOnBoard } from '#js/game.js';
 import {
     deletePublicChallenge,
     loadPublicChallenges,
@@ -9,7 +9,7 @@ import {
 import { snackbar } from '#js/snackbar.js';
 
 const START_CARDS = { 2: 75, 5: 72, 6: 71 };
-const CELL_SIZE = 18;
+const CELL_SIZE = 24;
 const BOARD_COLUMNS = 100;
 const BOARD_ROWS = 60;
 const BOARD_OFFSET_X = 48;
@@ -17,6 +17,8 @@ const BOARD_OFFSET_Y = 28;
 
 let root = null;
 let launchButton = null;
+let libraryButton = null;
+let activeView = 'editor';
 let draft = null;
 let pickerMode = null;
 let pickerSlot = 0;
@@ -49,7 +51,6 @@ function createDraft() {
         selectedPiece: null,
         placementPreview: null,
         activeHandSlot: 0,
-        tab: 'board',
     };
 }
 
@@ -57,15 +58,27 @@ function initChallengeEditor() {
     const menu = document.querySelector('#menu');
     if (!menu) return;
 
+    const launchGroup = document.createElement('div');
+    launchGroup.className = 'challenge-editor-launches';
+
     launchButton = document.createElement('button');
     launchButton.type = 'button';
     launchButton.className = 'btn btn--soft challenge-editor-launch';
     launchButton.textContent = 'Создать испытание';
     launchButton.disabled = true;
     launchButton.addEventListener('click', openEditor);
+
+    libraryButton = document.createElement('button');
+    libraryButton.type = 'button';
+    libraryButton.className = 'btn challenge-editor-launch';
+    libraryButton.textContent = 'Библиотека испытаний';
+    libraryButton.disabled = true;
+    libraryButton.addEventListener('click', openLibrary);
+
+    launchGroup.append(launchButton, libraryButton);
     const menuGrid = menu.querySelector('.menu__grid');
-    if (menuGrid) menuGrid.after(launchButton);
-    else menu.append(launchButton);
+    if (menuGrid) menuGrid.after(launchGroup);
+    else menu.append(launchGroup);
 
     root = document.createElement('div');
     root.className = 'challenge-editor hidden';
@@ -75,7 +88,7 @@ function initChallengeEditor() {
         '<section class="challenge-editor__dialog" role="dialog" aria-modal="true" aria-labelledby="challengeEditorTitle">' +
         '<header class="challenge-editor__header">' +
         '<div><p class="challenge-editor__eyebrow">BANDITO · СООБЩЕСТВО</p>' +
-        '<h2 id="challengeEditorTitle">Редактор испытаний</h2></div>' +
+        '<h2 id="challengeEditorTitle" data-dialog-title>Редактор испытаний</h2></div>' +
         '<button class="btn btn--icon btn--close-icon" type="button" data-editor-close aria-label="Закрыть"></button>' +
         '</header>' +
         '<div class="challenge-editor__meta" data-editor-meta>' +
@@ -90,46 +103,39 @@ function initChallengeEditor() {
         '<button class="lobby__difficulty-option is-active" type="button" data-editor-exits="5" aria-pressed="true">Стандартная</button>' +
         '<button class="lobby__difficulty-option" type="button" data-editor-exits="6" aria-pressed="false">Сложная</button>' +
         '</div></div></div>' +
-        '<nav class="challenge-editor__tabs" aria-label="Разделы редактора">' +
-        '<button class="challenge-editor__tab is-active" type="button" data-tab="board">Поле</button>' +
-        '<button class="challenge-editor__tab" type="button" data-tab="hand">Стартовая рука</button>' +
-        '<button class="challenge-editor__tab" type="button" data-tab="deck">Колода добора</button>' +
-        '<button class="challenge-editor__tab" type="button" data-tab="library">Библиотека</button>' +
-        '</nav>' +
         '<div class="challenge-editor__content">' +
-        '<section class="challenge-editor__panel challenge-editor__board-panel" data-panel="board">' +
+        '<section class="challenge-editor__workspace" data-editor-screen>' +
+        '<div class="challenge-editor__viewport" data-board-viewport aria-label="Поле редактора">' +
+        '<div class="challenge-editor__canvas" data-board-canvas></div></div>' +
         '<aside class="challenge-editor__tools">' +
-        '<p class="note">Выбери карту в каталоге. На поле появятся цветные точки — каждая показывает допустимое место и поворот. Нажми точку, чтобы сразу поставить карту.</p>' +
+        '<section class="challenge-editor__tool-group">' +
+        '<h3>Поле</h3>' +
+        '<p class="note">Выбери карту в каталоге, затем нажми цветную точку на поле. Карта установится сразу.</p>' +
         '<button class="btn btn--primary" type="button" data-picker-open="board">＋ Добавить карту</button>' +
         '<button class="btn" type="button" data-remove-piece disabled>Удалить выбранную</button>' +
         '<p class="challenge-editor__selection" data-board-selection>Стартовая карта уже на поле.</p>' +
-        '<p class="caption">Стартовая карта закреплена. Выбери карту на поле, чтобы увидеть доступные повороты и удалить её.</p>' +
-        '</aside>' +
-        '<div class="challenge-editor__viewport" data-board-viewport aria-label="Поле редактора">' +
-        '<div class="challenge-editor__canvas" data-board-canvas></div></div></section>' +
-        '<section class="challenge-editor__panel" data-panel="hand" hidden>' +
-        '<div class="challenge-editor__section-head"><div><h3>Карты в начале партии</h3>' +
-        '<p class="note">Выбери до трёх карт, с которыми игрок начнёт испытание. Пустые слоты останутся пустыми.</p></div>' +
-        '<button class="btn btn--primary" type="button" data-picker-open="hand">＋ Выбрать карту</button></div>' +
-        '<div class="challenge-editor__hand-slots" data-hand-slots></div></section>' +
-        '<section class="challenge-editor__panel" data-panel="deck" hidden>' +
-        '<div class="challenge-editor__section-head"><div><h3>Карты для добора</h3>' +
-        '<p class="note">Это набор карт, которые могут прийти после хода. В начале испытания они перемешиваются.</p></div>' +
-        '<div class="challenge-editor__library-actions">' +
-        '<button class="btn btn--primary" type="button" data-picker-open="deck">＋ Настроить колоду</button>' +
-        '<button class="btn" type="button" data-deck-clear disabled>Очистить колоду</button></div></div>' +
+        '</section>' +
+        '<section class="challenge-editor__tool-group">' +
+        '<div class="challenge-editor__tools-heading"><h3>Стартовая рука</h3><span class="caption">До 3 карт</span></div>' +
+        '<div class="challenge-editor__hand-slots" data-hand-slots></div>' +
+        '</section>' +
+        '<section class="challenge-editor__tool-group">' +
+        '<div class="challenge-editor__tools-heading"><h3>Колода добора</h3><button class="btn btn--sm" type="button" data-picker-open="deck">Настроить</button></div>' +
         '<p class="challenge-editor__deck-count" data-deck-count>В колоде: 0 карт</p>' +
-        '<div class="challenge-editor__deck-list" data-deck-list></div></section>' +
-        '<section class="challenge-editor__panel" data-panel="library" hidden>' +
+        '<div class="challenge-editor__deck-list" data-deck-list></div>' +
+        '<button class="btn btn--sm" type="button" data-deck-clear disabled>Очистить колоду</button>' +
+        '</section>' +
+        '</aside></section>' +
+        '<section class="challenge-editor__library-screen" data-library-screen hidden>' +
         '<div class="challenge-editor__section-head"><div><h3>Общая библиотека</h3>' +
-        '<p class="note">Испытания других игроков доступны всем. Новые испытания публикуются сразу после сохранения.</p></div>' +
+        '<p class="note">Играй в испытания других игроков или редактируй свои публикации.</p></div>' +
         '<div class="challenge-editor__library-actions">' +
         '<button class="btn btn--primary" type="button" data-new-challenge>＋ Новое испытание</button>' +
         '<button class="btn" type="button" data-library-refresh>Обновить</button></div></div>' +
         '<div class="challenge-editor__library-list" data-library-list></div></section>' +
         '</div>' +
         '<footer class="challenge-editor__footer" data-editor-footer>' +
-        '<p class="note" data-editor-status>Заполни поле, стартовую руку и колоду добора.</p>' +
+        '<p class="note" data-editor-status>Укажи название, собери поле и настрой карты.</p>' +
         '<button class="btn btn--primary" type="button" data-save disabled>Опубликовать испытание</button></footer>' +
         '<section class="challenge-editor__picker hidden" data-picker aria-label="Каталог карт">' +
         '<header class="challenge-editor__picker-head"><div><h3 data-picker-title>Выбери карту</h3>' +
@@ -152,6 +158,15 @@ function initChallengeEditor() {
 
 function updateAvailability() {
     if (launchButton) launchButton.disabled = !state.all.length;
+    if (libraryButton) libraryButton.disabled = !state.all.length;
+}
+
+function showEditor() {
+    activeView = 'editor';
+    root.classList.remove('hidden');
+    root.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('challenge-editor-open');
+    render();
 }
 
 function openEditor() {
@@ -160,12 +175,19 @@ function openEditor() {
         snackbar('Колода ещё загружается. Попробуй через несколько секунд.');
         return;
     }
-    if (!draft) draft = createDraft();
+    draft = createDraft();
+    boardCentered = false;
+    showEditor();
+}
+
+function openLibrary() {
+    if (!window.matchMedia('(min-width: 761px)').matches) return;
+    activeView = 'library';
     root.classList.remove('hidden');
     root.setAttribute('aria-hidden', 'false');
     document.body.classList.add('challenge-editor-open');
     render();
-    if (draft.tab === 'library') loadLibrary();
+    loadLibrary();
 }
 
 function closeEditor() {
@@ -199,11 +221,6 @@ function handleRootClick(event) {
     }
     if (target.closest?.('[data-editor-close]')) {
         closeEditor();
-        return;
-    }
-    const tab = target.closest?.('[data-tab]');
-    if (tab) {
-        setTab(tab.dataset.tab);
         return;
     }
     const exits = target.closest?.('[data-editor-exits]');
@@ -273,7 +290,7 @@ function handleRootClick(event) {
     if (target.closest?.('[data-new-challenge]')) {
         draft = createDraft();
         boardCentered = false;
-        setTab('board');
+        showEditor();
         return;
     }
     const edit = target.closest?.('[data-edit-challenge]');
@@ -292,14 +309,6 @@ function handleRootClick(event) {
         return;
     }
     if (target.closest?.('[data-save]')) saveChallenge();
-}
-
-function setTab(tab) {
-    if (!['board', 'hand', 'deck', 'library'].includes(tab)) return;
-    draft.tab = tab;
-    closePicker();
-    render();
-    if (tab === 'library' && libraryStatus === 'idle') loadLibrary();
 }
 
 function changeDifficulty(exits) {
@@ -354,7 +363,18 @@ function isBoardValid(board = draft.board) {
 }
 
 function render() {
-    if (!draft || !root) return;
+    if (!root) return;
+    const isEditor = activeView === 'editor';
+    root.querySelector('[data-dialog-title]').textContent = isEditor ? 'Редактор испытания' : 'Библиотека испытаний';
+    root.querySelector('[data-editor-meta]').hidden = !isEditor;
+    root.querySelector('[data-editor-footer]').hidden = !isEditor;
+    root.querySelector('[data-editor-screen]').hidden = !isEditor;
+    root.querySelector('[data-library-screen]').hidden = isEditor;
+    if (!isEditor) {
+        renderLibrary();
+        return;
+    }
+    if (!draft) return;
     const title = root.querySelector('[data-field="title"]');
     const description = root.querySelector('[data-field="description"]');
     if (document.activeElement !== title) title.value = draft.title;
@@ -367,20 +387,9 @@ function render() {
         button.classList.toggle('is-active', active);
         button.setAttribute('aria-pressed', String(active));
     });
-    root.querySelectorAll('[data-tab]').forEach((button) => {
-        const active = button.dataset.tab === draft.tab;
-        button.classList.toggle('is-active', active);
-        button.setAttribute('aria-pressed', String(active));
-    });
-    root.querySelectorAll('[data-panel]').forEach((panel) => {
-        panel.hidden = panel.dataset.panel !== draft.tab;
-    });
-    root.querySelector('[data-editor-meta]').hidden = draft.tab === 'library';
-    root.querySelector('[data-editor-footer]').hidden = draft.tab === 'library';
-    if (draft.tab === 'board') renderBoard();
-    if (draft.tab === 'hand') renderHandSlots();
-    if (draft.tab === 'deck') renderDeck();
-    if (draft.tab === 'library') renderLibrary();
+    renderBoard();
+    renderHandSlots();
+    renderDeck();
     updateSaveButton();
 }
 
@@ -866,7 +875,7 @@ async function saveChallenge() {
             : await savePublicChallenge(challenge);
         library = [saved, ...library.filter((item) => item.id !== saved.id)];
         libraryStatus = 'ready';
-        draft.tab = 'library';
+        activeView = 'library';
         closePicker();
         render();
         snackbar(editing ? 'Изменения сохранены.' : 'Испытание опубликовано в общей библиотеке.');
@@ -964,8 +973,11 @@ function editChallenge(id) {
     const challenge = library.find((item) => item.id === id);
     if (!challenge || !ownsPublicChallenge(challenge)) return;
     const exits = START_CARDS[Number(challenge.exits)] ? Number(challenge.exits) : 5;
-    if (!Array.isArray(challenge.board) || !Array.isArray(challenge.hand) || !Array.isArray(challenge.deck)) {
-        snackbar('Не удалось открыть испытание: структура данных повреждена.', 'error');
+    const boardData = normalizeChallengeArray(challenge.board);
+    const handData = normalizeChallengeArray(challenge.hand);
+    const deckData = normalizeChallengeArray(challenge.deck);
+    if (!boardData.length) {
+        snackbar('Не удалось открыть испытание: поле пустое или повреждено.', 'error');
         return;
     }
 
@@ -973,7 +985,7 @@ function editChallenge(id) {
     // Normalize recoverable fields instead of rejecting the entire challenge.
     const startCard = cardById(START_CARDS[exits]);
     const tunnelIds = new Set(tunnelCards().map((card) => card.id));
-    const pieces = challenge.board
+    const pieces = boardData
         .map((piece) => {
             const card = cardById(piece?.id);
             if (!card || (card.kind !== 'start' && !tunnelIds.has(card.id))) return null;
@@ -997,9 +1009,9 @@ function editChallenge(id) {
             ? [pieces[startIndex], ...pieces.filter((_, index) => index !== startIndex && pieces[index].id !== startCard.id)]
             : [{ id: startCard.id, x: 0, y: 0, rotation: 0, m: clone(startCard.matrix) }, ...pieces.filter((piece) => piece.id !== startCard.id)];
 
-    const hand = [...new Set(challenge.hand.map(Number).filter((id) => tunnelIds.has(id)))].slice(0, 3);
+    const hand = [...new Set(handData.map(Number).filter((id) => tunnelIds.has(id)))].slice(0, 3);
     const usedIds = new Set([...board.map((piece) => piece.id), ...hand]);
-    const deck = [...new Set(challenge.deck.map(Number).filter((id) => tunnelIds.has(id) && !usedIds.has(id)))];
+    const deck = [...new Set(deckData.map(Number).filter((id) => tunnelIds.has(id) && !usedIds.has(id)))];
     draft = createDraft();
     draft.challengeId = challenge.id;
     draft.title = String(challenge.title || '').slice(0, 60);
@@ -1008,13 +1020,12 @@ function editChallenge(id) {
     draft.board = board;
     draft.hand = [...hand, null, null].slice(0, 3);
     draft.deck = new Set(deck);
-    draft.tab = 'board';
     draft.pendingCard = null;
     draft.selectedPiece = null;
     draft.placementPreview = null;
     boardCentered = false;
     closePicker();
-    render();
+    showEditor();
 }
 
 async function deleteChallenge(id) {

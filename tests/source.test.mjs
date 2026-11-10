@@ -181,6 +181,15 @@ test('challenge placement validation reuses the game rules for connections and o
     assert.deepEqual(rotateMatrix([[1, 0]], 1), [[1], [0]]);
 });
 
+test('Firebase challenge arrays normalize empty and numeric-key object values', async () => {
+    const { normalizeChallengeArray } = await import(moduleUrl('js/game.js'));
+
+    assert.deepEqual(normalizeChallengeArray(null), []);
+    assert.deepEqual(normalizeChallengeArray([]), []);
+    assert.deepEqual(normalizeChallengeArray({ 1: 'second', 0: 'first' }), ['first', 'second']);
+    assert.deepEqual(normalizeChallengeArray({ invalid: 'ignored' }), []);
+});
+
 test('all game scripts pass the JavaScript parser', () => {
     const scriptsDirectory = resolve(projectRoot, 'js');
     const scripts = readdirSync(scriptsDirectory).filter((name) => name.endsWith('.js'));
