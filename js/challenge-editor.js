@@ -514,7 +514,9 @@ function renderBoard() {
     const margin = 9;
     const minX = Math.min(...draft.board.map((piece) => piece.x)) - margin;
     const minY = Math.min(...draft.board.map((piece) => piece.y)) - margin;
-    const maxX = Math.max(...draft.board.map((piece) => piece.x + rotateMatrix(cardById(piece.id).matrix, piece.rotation)[0].length) ) + margin;
+    const maxX = Math.max(
+        ...draft.board.map((piece) => piece.x + rotateMatrix(cardById(piece.id).matrix, piece.rotation)[0].length)
+    ) + margin;
     const maxY = Math.max(...draft.board.map((piece) => piece.y + rotateMatrix(cardById(piece.id).matrix, piece.rotation).length)) + margin;
     const cell = editorCellSize;
     const boardWidth = (maxX - minX) * cell;
