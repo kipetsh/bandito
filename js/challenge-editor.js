@@ -993,11 +993,9 @@ function editChallenge(id) {
     if (
         board.some((piece) => !piece) ||
         board.some((piece) => !Number.isInteger(piece.x) || !Number.isInteger(piece.y)) ||
-        board[0]?.id !== START_CARDS[exits] ||
-        board.slice(1).some((piece) => !tunnelIds.has(piece.id)) ||
+        board.some((piece, index) => (index === 0 ? piece.id !== START_CARDS[exits] : !tunnelIds.has(piece.id))) ||
         hand.concat(deck).some((id) => !tunnelIds.has(id)) ||
-        allIds.some((id) => !Number.isInteger(id)) ||
-        new Set(allIds).size !== allIds.length
+        allIds.some((id) => !Number.isInteger(id))
     ) {
         snackbar('Не удалось открыть испытание: данные повреждены.', 'error');
         return;
@@ -1010,11 +1008,6 @@ function editChallenge(id) {
     draft.board = board;
     draft.hand = [...hand, null, null].slice(0, 3);
     draft.deck = new Set(deck);
-    if (!isBoardValid()) {
-        draft = createDraft();
-        snackbar('Не удалось открыть испытание: раскладка поля недопустима.', 'error');
-        return;
-    }
     draft.tab = 'board';
     draft.pendingCard = null;
     draft.selectedPiece = null;
