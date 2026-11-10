@@ -547,7 +547,8 @@ function renderBoard() {
         const matrix = rotateMatrix(card.matrix, piece.rotation);
         const element = document.createElement('button');
         element.type = 'button';
-        element.className = 'board__piece challenge-editor__piece' +
+        element.className =
+            'board__piece challenge-editor__piece' +
             (draft.selectedPiece === index ? ' challenge-editor__piece--selected' : '');
         element.dataset.pieceIndex = String(index);
         element.setAttribute('aria-label', 'Выбрать карту ' + piece.id + (index === 0 ? ', стартовая' : ''));
