@@ -465,7 +465,7 @@ function renderBoard() {
     if (draft.pendingCard !== null) {
         const ghost = document.createElement('div');
         ghost.className = 'board__piece board__piece--ghost challenge-editor__ghost hidden';
-        ghost.dataset-editor-ghost = '';
+        ghost.dataset.editorGhost = '';
         canvas.append(ghost);
         const options = editorPlacementOptions();
         options.forEach((option, index) => {

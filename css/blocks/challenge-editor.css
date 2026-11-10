@@ -226,7 +226,7 @@
         outline-offset: 2px;
     }
 
-    .challenge-editor__pin {
+    .board__pin.challenge-editor__pin {
         z-index: 8;
         padding: 0;
         border: 0;
