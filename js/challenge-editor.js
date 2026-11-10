@@ -9,6 +9,10 @@ import {
 import { snackbar } from '#js/snackbar.js';
 
 const START_CARDS = { 2: 75, 5: 72, 6: 71 };
+const BOARD_COLUMNS = 100;
+const BOARD_ROWS = 60;
+const BOARD_OFFSET_X = 48;
+const BOARD_OFFSET_Y = 28;
 const MIN_EDITOR_CELL = 12;
 const MAX_EDITOR_CELL = 36;
 let editorCellSize = 24;
