@@ -1,0 +1,1 @@
+[[31merror[39m] Cannot use --check and --list-different together.
