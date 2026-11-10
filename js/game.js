@@ -230,7 +230,7 @@ export async function beginChallenge(challenge) {
     }
     if (
         !Array.isArray(challenge.hand) ||
-        challenge.hand.length !== 3 ||
+        challenge.hand.length > 3 ||
         challenge.hand.some((id) => !cardById.has(Number(id))) ||
         !Array.isArray(challenge.deck) ||
         challenge.deck.length > 72 ||
