@@ -10,13 +10,19 @@ import {
     validOnBoard,
 } from '#js/game.js';
 import {
+    deleteDailyChallenge,
     deletePublicChallenge,
+    getCurrentUserUid,
+    isCurrentUserAdmin,
+    loadDailyChallenge,
     loadPublicChallenges,
     ownsPublicChallenge,
+    saveDailyChallenge,
     savePublicChallenge,
     updatePublicChallenge,
 } from '#js/multiplayer.js';
 import { snackbar } from '#js/snackbar.js';
+import { localDateKey } from '#js/challenge-utils.js';
 
 const START_CARDS = { 2: 75, 5: 72, 6: 71 };
 const BOARD_COLUMNS = 100;
@@ -28,7 +34,13 @@ let root = null;
 let launchButton = null;
 let libraryButton = null;
 let editorHeaderActions = null;
+let editorMetadata = null;
 let editorPanel = null;
+let dailyButton = null;
+let adminButton = null;
+let dailyChallenge = null;
+let adminAccess = false;
+let adminScreenOpen = false;
 let hiddenGameElements = [];
 let gameSnapshot = null;
 let editorMode = false;
@@ -88,10 +100,31 @@ function initChallengeEditor() {
     libraryButton.disabled = true;
     libraryButton.addEventListener('click', openLibrary);
 
-    launchGroup.append(launchButton, libraryButton);
+    const dailyGroup = document.createElement('div');
+    dailyGroup.className = 'challenge-daily-launches';
+
+    dailyButton = document.createElement('button');
+    dailyButton.type = 'button';
+    dailyButton.className = 'btn btn--primary challenge-daily-launch';
+    dailyButton.innerHTML = '<span>Испытание дня</span><small data-daily-title>Проверяем расписание…</small>';
+    dailyButton.disabled = true;
+    dailyButton.addEventListener('click', playDailyChallenge);
+    dailyGroup.append(dailyButton);
+
+    adminButton = document.createElement('button');
+    adminButton.type = 'button';
+    adminButton.className = 'btn challenge-editor-launch';
+    adminButton.textContent = 'Админ-панель';
+    adminButton.addEventListener('click', openAdminPanel);
+
+    launchGroup.append(launchButton, libraryButton, adminButton);
     const menuGrid = menu.querySelector('.menu__grid');
-    if (menuGrid) menuGrid.after(launchGroup);
-    else menu.append(launchGroup);
+    if (menuGrid) {
+        menuGrid.after(dailyGroup);
+        dailyGroup.after(launchGroup);
+    } else {
+        menu.append(dailyGroup, launchGroup);
+    }
 
     root = document.createElement('div');
     root.className = 'challenge-editor hidden';
@@ -105,12 +138,38 @@ function initChallengeEditor() {
         '<button class="btn btn--icon btn--close-icon" type="button" data-editor-close aria-label="Закрыть"></button>' +
         '</header>' +
         '<div class="challenge-editor__content">' +
-        '<section class="challenge-editor__library-screen">' +
+        '<section class="challenge-editor__library-screen" data-library-screen>' +
         '<div class="challenge-editor__section-head">' +
         '<div class="challenge-editor__library-actions">' +
         '<button class="btn btn--primary" type="button" data-new-challenge>＋ Новое испытание</button>' +
         '<button class="btn" type="button" data-library-refresh>Обновить</button></div></div>' +
         '<div class="challenge-editor__library-list" data-library-list></div></section>' +
+        '<section class="challenge-editor__admin-screen hidden" data-admin-screen>' +
+        '<header class="challenge-editor__admin-header"><h3>Админ-панель</h3>' +
+        '<button class="btn btn--sm" type="button" data-admin-back>К библиотеке</button></header>' +
+        '<section class="challenge-editor__admin-gate hidden" data-admin-gate>' +
+        '<p data-admin-gate-message>Проверяем права администратора…</p>' +
+        '<div class="challenge-editor__admin-uid-row"><code data-admin-uid></code>' +
+        '<button class="btn btn--sm" type="button" data-copy-admin-uid>Скопировать UID</button></div>' +
+        '<p>В Firebase Console добавь запись <code>admins / твой UID = true</code> в Realtime Database → Data. ' +
+        'В Rules добавь защищённые правила из README. Затем нажми «Проверить доступ».</p>' +
+        '<button class="btn btn--primary" type="button" data-admin-refresh>Проверить доступ</button></section>' +
+        '<div class="challenge-editor__admin-content hidden" data-admin-content>' +
+        '<section class="challenge-editor__admin-section">' +
+        '<header class="challenge-editor__admin-section-head"><h3>Испытание дня</h3>' +
+        '<p class="caption" data-daily-status>Выбери дату и опубликованное испытание.</p></header>' +
+        '<div class="challenge-editor__admin-fields">' +
+        '<label class="challenge-editor__admin-field"><span>Дата</span>' +
+        '<input class="input" type="date" data-daily-date></label>' +
+        '<label class="challenge-editor__admin-field"><span>Испытание</span>' +
+        '<select class="input" data-daily-select></select></label></div>' +
+        '<div class="challenge-editor__admin-actions">' +
+        '<button class="btn btn--primary" type="button" data-daily-save>Назначить на дату</button>' +
+        '<button class="btn" type="button" data-daily-clear>Снять</button></div>' +
+        '<p class="note">Для каждой даты сохраняется отдельная копия испытания.</p></section>' +
+        '<section class="challenge-editor__admin-section"><h3>Модерация библиотеки</h3>' +
+        '<div class="challenge-editor__admin-list" data-admin-list></div></section>' +
+        '</div></section>' +
         '</div></section>' +
         '<section class="challenge-editor__picker hidden" data-picker role="dialog" aria-modal="true" aria-label="Каталог карт">' +
         '<header class="challenge-editor__picker-head"><h3 data-picker-title>Выбери карту</h3>' +
@@ -122,6 +181,7 @@ function initChallengeEditor() {
     document.body.append(root);
 
     root.addEventListener('click', handleRootClick);
+    root.addEventListener('change', handleRootChange);
     play.addEventListener('click', handleRootClick);
     play.addEventListener('input', handleRootInput);
     window.addEventListener('keydown', handleEditorKeydown);
@@ -132,11 +192,13 @@ function initChallengeEditor() {
     window.addEventListener('bandito:editor-placement', handleEditorPlacement);
     window.addEventListener('bandito:editor-select-piece', handleEditorSelectPiece);
     updateAvailability();
+    refreshDailyChallenge();
 }
 
 function updateAvailability() {
     if (launchButton) launchButton.disabled = !state.all.length;
     if (libraryButton) libraryButton.disabled = !state.all.length;
+    if (dailyButton) dailyButton.disabled = !dailyChallenge || !state.all.length;
 }
 
 function hideGameElement(element) {
@@ -200,22 +262,24 @@ function createEditorChrome() {
         '<p class="challenge-editor__deck-count" data-deck-count>В колоде: 0 карт</p></div>' +
         '</section>' +
         '<button class="btn challenge-editor__clear-board" type="button" data-clear-board>♧ Очистить поле</button>' +
-        '<details class="challenge-editor__metadata">' +
-        '<summary>Данные испытания</summary>' +
-        '<div class="challenge-editor__metadata-fields">' +
-        '<label class="challenge-editor__field"><span>Название</span>' +
-        '<input class="input" type="text" maxlength="60" data-field="title"></label>' +
+        '<p class="note challenge-editor__status" data-editor-status>Укажи название испытания, чтобы сохранить его.</p>';
+    side.append(editorPanel);
+
+    editorMetadata = document.createElement('section');
+    editorMetadata.className = 'challenge-editor__metadata-bar';
+    editorMetadata.innerHTML =
+        '<label class="challenge-editor__field"><span>Название испытания</span>' +
+        '<input class="input" type="text" maxlength="60" placeholder="Например, узкий тоннель" data-field="title"></label>' +
         '<label class="challenge-editor__field"><span>Описание</span>' +
-        '<textarea class="input" maxlength="240" rows="2" data-field="description"></textarea></label>' +
+        '<textarea class="input" rows="1" maxlength="240" placeholder="Кратко опиши задачу" data-field="description"></textarea></label>' +
         '<div class="challenge-editor__difficulty-wrap"><span class="caption">Сложность</span>' +
         '<div class="lobby__difficulty challenge-editor__difficulty" role="group" aria-label="Сложность испытания">' +
         '<span class="lobby__difficulty-bubble" aria-hidden="true"></span>' +
         '<button class="lobby__difficulty-option" type="button" data-editor-exits="2" aria-pressed="false">Лёгкая</button>' +
         '<button class="lobby__difficulty-option is-active" type="button" data-editor-exits="5" aria-pressed="true">Стандартная</button>' +
         '<button class="lobby__difficulty-option" type="button" data-editor-exits="6" aria-pressed="false">Сложная</button>' +
-        '</div></div></div></details>' +
-        '<p class="note challenge-editor__status" data-editor-status>Укажи название испытания, чтобы сохранить его.</p>';
-    side.append(editorPanel);
+        '</div></div>';
+    play.insertBefore(editorMetadata, play.querySelector('.game__layout'));
 }
 
 function showEditor() {
@@ -253,15 +317,58 @@ function openEditor() {
     showEditor();
 }
 
+function showLibraryScreen() {
+    adminScreenOpen = false;
+    root.querySelector('[data-admin-screen]').classList.add('hidden');
+    root.querySelector('[data-library-screen]').classList.remove('hidden');
+    root.querySelector('#challengeLibraryTitle').textContent = 'Библиотека испытаний';
+    renderLibrary();
+}
+
 function openLibrary() {
     if (!window.matchMedia('(min-width: 761px)').matches || editorMode) return;
     root.classList.remove('hidden');
     root.classList.remove('challenge-editor--picker-layer');
     root.setAttribute('aria-hidden', 'false');
     document.body.classList.add('challenge-editor-open');
+    showLibraryScreen();
     if (libraryStatus === 'idle') libraryStatus = 'loading';
     renderLibrary();
     loadLibrary();
+}
+
+async function openAdminPanel() {
+    if (editorMode) return;
+    root.classList.remove('hidden');
+    root.classList.remove('challenge-editor--picker-layer');
+    root.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('challenge-editor-open');
+    root.querySelector('[data-library-screen]').classList.add('hidden');
+    root.querySelector('[data-admin-screen]').classList.remove('hidden');
+    root.querySelector('#challengeLibraryTitle').textContent = 'Админ-панель';
+    adminScreenOpen = true;
+    adminAccess = false;
+    const gate = root.querySelector('[data-admin-gate]');
+    const content = root.querySelector('[data-admin-content]');
+    const message = root.querySelector('[data-admin-gate-message]');
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+    message.textContent = 'Проверяем права администратора…';
+    try {
+        const uid = await getCurrentUserUid();
+        root.querySelector('[data-admin-uid]').textContent = uid;
+        adminAccess = await isCurrentUserAdmin();
+        if (!adminAccess) {
+            message.textContent = 'У этого аккаунта пока нет прав администратора.';
+            return;
+        }
+        gate.classList.add('hidden');
+        content.classList.remove('hidden');
+        await loadLibrary(true);
+        await renderAdminPanel();
+    } catch (error) {
+        message.textContent = 'Не удалось проверить права: ' + challengeAccessError(error);
+    }
 }
 
 function restoreGameChrome() {
@@ -276,8 +383,10 @@ function restoreGameChrome() {
     }
     hiddenGameElements = [];
     editorHeaderActions?.remove();
+    editorMetadata?.remove();
     editorPanel?.remove();
     editorHeaderActions = null;
+    editorMetadata = null;
     editorPanel = null;
 }
 
@@ -301,7 +410,7 @@ function exitEditorScreen(showLibrary = false) {
         root.classList.remove('hidden');
         root.setAttribute('aria-hidden', 'false');
         document.body.classList.add('challenge-editor-open');
-        renderLibrary();
+        showLibraryScreen();
     } else {
         root.classList.add('hidden');
         root.setAttribute('aria-hidden', 'true');
@@ -344,6 +453,10 @@ function handleRootInput(event) {
     updateSaveButton();
 }
 
+function handleRootChange(event) {
+    if (event.target.matches('[data-daily-date]')) loadAdminDailyAssignment();
+}
+
 function handleRootClick(event) {
     const target = event.target;
     if (target === root || target.classList?.contains('challenge-editor__backdrop')) {
@@ -366,6 +479,26 @@ function handleRootClick(event) {
     }
     if (target.closest?.('[data-picker-close]')) {
         closePicker();
+        return;
+    }
+    if (target.closest?.('[data-admin-back]')) {
+        showLibraryScreen();
+        return;
+    }
+    if (target.closest?.('[data-admin-refresh]')) {
+        openAdminPanel();
+        return;
+    }
+    if (target.closest?.('[data-copy-admin-uid]')) {
+        copyAdminUid();
+        return;
+    }
+    if (target.closest?.('[data-daily-save]')) {
+        assignDailyChallenge();
+        return;
+    }
+    if (target.closest?.('[data-daily-clear]')) {
+        clearDailyChallengeAssignment();
         return;
     }
     const exits = target.closest?.('[data-editor-exits]');
@@ -782,7 +915,7 @@ function updateSaveButton() {
     if (issues.length) {
         status.textContent =
             issues.length === 1 && !draft.title.trim()
-                ? 'Открой «Данные испытания» и укажи название.'
+                ? 'Добавь название испытания в панели под заголовком.'
                 : 'Заверши размещение карты и укажи название.';
     }
 }
@@ -790,7 +923,7 @@ function updateSaveButton() {
 function challengeAccessError(error) {
     const message = String(error?.message || error || 'Неизвестная ошибка');
     if (/permission_denied|permission denied/i.test(message)) {
-        return 'Firebase запретил доступ к /challenges. Проверь правила чтения и запись владельцем (ownerUid = auth.uid) в Realtime Database Rules.';
+        return 'Firebase запретил операцию. Проверь правила /challenges, /dailyChallenges и /admins в Realtime Database Rules.';
     }
     return message;
 }
@@ -846,6 +979,11 @@ async function loadLibrary(force = false) {
     renderLibrary();
     try {
         library = await loadPublicChallenges();
+        try {
+            adminAccess = await isCurrentUserAdmin();
+        } catch {
+            adminAccess = false;
+        }
         libraryStatus = 'ready';
     } catch (error) {
         libraryStatus = 'error';
@@ -902,7 +1040,7 @@ function renderLibrary() {
         play.dataset.playChallenge = String(challenge.id);
         play.textContent = 'Играть';
         card.append(title, description, meta, play);
-        if (ownsPublicChallenge(challenge)) {
+        if (ownsPublicChallenge(challenge) || adminAccess) {
             const actions = document.createElement('div');
             actions.className = 'challenge-editor__library-actions';
             const edit = document.createElement('button');
@@ -924,7 +1062,7 @@ function renderLibrary() {
 
 function editChallenge(id) {
     const challenge = library.find((item) => item.id === id);
-    if (!challenge || !ownsPublicChallenge(challenge)) return;
+    if (!challenge || (!ownsPublicChallenge(challenge) && !adminAccess)) return;
     const exits = START_CARDS[Number(challenge.exits)] ? Number(challenge.exits) : 5;
     const boardData = normalizeChallengeArray(challenge.board);
     const handData = normalizeChallengeArray(challenge.hand);
@@ -986,12 +1124,13 @@ function editChallenge(id) {
 
 async function deleteChallenge(id) {
     const challenge = library.find((item) => item.id === id);
-    if (!challenge || !ownsPublicChallenge(challenge)) return;
+    if (!challenge || (!ownsPublicChallenge(challenge) && !adminAccess)) return;
     if (!window.confirm('Удалить испытание «' + String(challenge.title || 'Без названия') + '»?')) return;
     try {
         await deletePublicChallenge(id);
         library = library.filter((item) => item.id !== id);
         renderLibrary();
+        if (adminScreenOpen) renderAdminModeration();
         snackbar('Испытание удалено.');
     } catch (error) {
         snackbar('Не удалось удалить испытание: ' + challengeAccessError(error), 'error');
@@ -1002,6 +1141,192 @@ async function playChallenge(id) {
     const challenge = library.find((item) => item.id === id);
     if (!challenge) return;
     if (await beginChallenge(challenge)) closeEditor();
+}
+
+async function refreshDailyChallenge() {
+    if (!dailyButton) return;
+    try {
+        dailyChallenge = await loadDailyChallenge(localDateKey());
+        dailyButton.querySelector('[data-daily-title]').textContent = dailyChallenge?.title || 'На сегодня не назначено';
+    } catch {
+        dailyChallenge = null;
+        dailyButton.querySelector('[data-daily-title]').textContent = 'Пока недоступно';
+    }
+    updateAvailability();
+}
+
+async function playDailyChallenge() {
+    if (!state.all.length) {
+        snackbar('Колода ещё загружается. Попробуй через несколько секунд.');
+        return;
+    }
+    try {
+        const challenge = await loadDailyChallenge(localDateKey());
+        if (!challenge) {
+            snackbar('На сегодня ещё не назначено испытание дня.');
+            await refreshDailyChallenge();
+            return;
+        }
+        if (await beginChallenge(challenge)) {
+            root.classList.add('hidden');
+            root.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('challenge-editor-open');
+        }
+    } catch (error) {
+        snackbar('Не удалось загрузить испытание дня: ' + challengeAccessError(error), 'error');
+    }
+}
+
+async function copyAdminUid() {
+    const uid = root.querySelector('[data-admin-uid]').textContent;
+    if (!uid) return;
+    try {
+        await navigator.clipboard.writeText(uid);
+        snackbar('UID скопирован');
+    } catch {
+        const field = document.createElement('textarea');
+        field.value = uid;
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.append(field);
+        field.select();
+        try {
+            document.execCommand('copy');
+            snackbar('UID скопирован');
+        } catch {
+            snackbar('Не удалось скопировать UID. Выдели его вручную', 'error');
+        }
+        field.remove();
+    }
+}
+
+async function renderAdminPanel() {
+    const dateInput = root.querySelector('[data-daily-date]');
+    const select = root.querySelector('[data-daily-select]');
+    select.replaceChildren();
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Выбери испытание';
+    select.append(placeholder);
+    library.forEach((challenge) => {
+        const option = document.createElement('option');
+        option.value = String(challenge.id);
+        option.textContent = String(challenge.title || 'Без названия');
+        select.append(option);
+    });
+    if (!dateInput.value) dateInput.value = localDateKey();
+    await loadAdminDailyAssignment();
+    renderAdminModeration();
+}
+
+async function loadAdminDailyAssignment() {
+    if (!adminAccess || !adminScreenOpen) return;
+    const dateKey = root.querySelector('[data-daily-date]').value;
+    const select = root.querySelector('[data-daily-select]');
+    const status = root.querySelector('[data-daily-status]');
+    const clear = root.querySelector('[data-daily-clear]');
+    try {
+        const challenge = await loadDailyChallenge(dateKey);
+        select.value = challenge?.id || '';
+        status.textContent = challenge ? 'Назначено: ' + challenge.title : 'На эту дату испытание ещё не назначено.';
+        clear.disabled = !challenge;
+    } catch (error) {
+        status.textContent = 'Не удалось загрузить назначение: ' + challengeAccessError(error);
+        clear.disabled = true;
+    }
+}
+
+async function assignDailyChallenge() {
+    const dateKey = root.querySelector('[data-daily-date]').value;
+    const id = root.querySelector('[data-daily-select]').value;
+    const challenge = library.find((item) => String(item.id) === id);
+    if (!challenge) {
+        snackbar('Сначала выбери испытание из списка.', 'error');
+        return;
+    }
+    const button = root.querySelector('[data-daily-save]');
+    button.disabled = true;
+    try {
+        await saveDailyChallenge(dateKey, challenge);
+        snackbar('Испытание назначено на выбранную дату');
+        await loadAdminDailyAssignment();
+        await refreshDailyChallenge();
+    } catch (error) {
+        snackbar('Не удалось назначить испытание: ' + challengeAccessError(error), 'error');
+    } finally {
+        button.disabled = false;
+    }
+}
+
+async function clearDailyChallengeAssignment() {
+    const dateKey = root.querySelector('[data-daily-date]').value;
+    const button = root.querySelector('[data-daily-clear]');
+    button.disabled = true;
+    try {
+        await deleteDailyChallenge(dateKey);
+        root.querySelector('[data-daily-select]').value = '';
+        root.querySelector('[data-daily-status]').textContent = 'Назначение снято.';
+        snackbar('Испытание дня снято с выбранной даты');
+        await refreshDailyChallenge();
+    } catch (error) {
+        snackbar('Не удалось снять назначение: ' + challengeAccessError(error), 'error');
+    } finally {
+        button.disabled = false;
+    }
+}
+
+function renderAdminModeration() {
+    const list = root.querySelector('[data-admin-list]');
+    if (!list) return;
+    list.replaceChildren();
+    if (libraryStatus === 'loading' || libraryLoading) {
+        const message = document.createElement('p');
+        message.className = 'note';
+        message.textContent = 'Загружаю испытания…';
+        list.append(message);
+        return;
+    }
+    if (libraryStatus === 'error') {
+        const message = document.createElement('p');
+        message.className = 'note';
+        message.textContent = 'Не удалось загрузить библиотеку: ' + libraryError;
+        list.append(message);
+        return;
+    }
+    if (!library.length) {
+        const message = document.createElement('p');
+        message.className = 'note';
+        message.textContent = 'В библиотеке пока нет опубликованных испытаний.';
+        list.append(message);
+        return;
+    }
+    library.forEach((challenge) => {
+        const item = document.createElement('article');
+        item.className = 'challenge-editor__admin-item';
+        const copy = document.createElement('div');
+        copy.className = 'challenge-editor__admin-item-copy';
+        const title = document.createElement('strong');
+        title.textContent = String(challenge.title || 'Без названия');
+        const meta = document.createElement('span');
+        meta.className = 'caption';
+        meta.textContent = String(challenge.authorName || 'Игрок') + ' · ' + Number(challenge.exits || 5) + ' выходов';
+        copy.append(title, meta);
+        const actions = document.createElement('div');
+        actions.className = 'challenge-editor__admin-item-actions';
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'btn btn--sm';
+        edit.dataset.editChallenge = String(challenge.id);
+        edit.textContent = 'Изменить';
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn btn--sm';
+        remove.dataset.deleteChallenge = String(challenge.id);
+        remove.textContent = 'Удалить';
+        actions.append(edit, remove);
+        item.append(copy, actions);
+        list.append(item);
+    });
 }
 
 initChallengeEditor();

@@ -44,6 +44,16 @@ register('data:text/javascript,' + encodeURIComponent(imageImportHooks));
 
 const moduleUrl = (path) => pathToFileURL(resolve(projectRoot, path)).href;
 
+test('daily challenge date keys use local calendar dates and reject invalid dates', async () => {
+    const { isValidDateKey, localDateKey } = await import(moduleUrl('js/challenge-utils.js'));
+
+    assert.equal(localDateKey(new Date(2026, 10, 10, 12, 0, 0)), '2026-11-10');
+    assert.equal(isValidDateKey('2026-11-10'), true);
+    assert.equal(isValidDateKey('2026-02-29'), false);
+    assert.equal(isValidDateKey('2026-13-01'), false);
+    assert.equal(isValidDateKey('10-11-2026'), false);
+});
+
 test('room URLs preserve the GitHub Pages project path and support root hosting', async () => {
     const { getAppBasePath, getRoomCodeFromPath, getRoomPath, getRoomUrl } = await import(moduleUrl('js/room-url.js'));
 
