@@ -151,8 +151,9 @@ function initChallengeEditor() {
         '<p data-admin-gate-message>Проверяем права администратора…</p>' +
         '<div class="challenge-editor__admin-uid-row"><code data-admin-uid></code>' +
         '<button class="btn btn--sm" type="button" data-copy-admin-uid>Скопировать UID</button></div>' +
-        '<p>В Firebase Console добавь запись <code>admins / твой UID = true</code> в Realtime Database → Data. ' +
-        'В Rules добавь защищённые правила из README. Затем нажми «Проверить доступ».</p>' +
+        '<p>Сначала в Firebase Console → Realtime Database → Rules добавь защищённые правила из README. ' +
+        'Затем в Realtime Database → Data добавь запись <code>admins / твой UID = true</code>. ' +
+        'После этого нажми «Проверить доступ».</p>' +
         '<button class="btn btn--primary" type="button" data-admin-refresh>Проверить доступ</button></section>' +
         '<div class="challenge-editor__admin-content hidden" data-admin-content>' +
         '<section class="challenge-editor__admin-section">' +
