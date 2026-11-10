@@ -154,8 +154,14 @@ function initChallengeEditor() {
     const boardCamera = root.querySelector('[data-board-camera]');
     boardCamera.addEventListener('pointerdown', (event) => {
         if (event.pointerType !== 'mouse' || event.button !== 0 || event.target.closest('button')) return;
-        editorPan = { id: event.pointerId, x: event.clientX, y: event.clientY,
-            left: boardCamera.scrollLeft, top: boardCamera.scrollTop, moved: false };
+        editorPan = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            left: boardCamera.scrollLeft,
+            top: boardCamera.scrollTop,
+            moved: false,
+        };
     });
     boardCamera.addEventListener('pointermove', (event) => {
         if (!editorPan || editorPan.id !== event.pointerId) return;
