@@ -1018,7 +1018,7 @@ function editChallenge(id) {
     draft.description = String(challenge.description || '').slice(0, 240);
     draft.exits = exits;
     draft.board = board;
-    draft.hand = [...hand, null, null].slice(0, 3);
+    draft.hand = Array.from({ length: 3 }, (_, index) => hand[index] ?? null);
     draft.deck = new Set(deck);
     draft.pendingCard = null;
     draft.selectedPiece = null;
