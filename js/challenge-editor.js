@@ -566,8 +566,7 @@ function renderPicker() {
         const selected = draft.deck.has(card.id);
         const button = document.createElement('button');
         button.type = 'button';
-        button.className =
-            'challenge-editor__catalog-card' + (pickerMode === 'deck' && selected ? ' is-selected' : '');
+        button.className = 'challenge-editor__catalog-card' + (pickerMode === 'deck' && selected ? ' is-selected' : '');
         button.dataset.cardId = String(card.id);
         button.append(createCardPreview(card.matrix));
         const info = document.createElement('span');
@@ -635,8 +634,7 @@ function renderHandSlots() {
         slot.className = 'challenge-editor__hand-slot-wrap';
         const button = document.createElement('button');
         button.type = 'button';
-        button.className =
-            'challenge-editor__hand-slot' + (draft.activeHandSlot === index ? ' is-active' : '');
+        button.className = 'challenge-editor__hand-slot' + (draft.activeHandSlot === index ? ' is-active' : '');
         button.dataset.handSlot = String(index);
         if (id === null) {
             button.textContent = '＋ Выбрать карту';
