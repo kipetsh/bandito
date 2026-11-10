@@ -107,19 +107,17 @@ function initChallengeEditor() {
         '</header>' +
         '<div class="challenge-editor__content">' +
         '<section class="challenge-editor__library-screen">' +
-        '<div class="challenge-editor__section-head"><div><h3>Общая библиотека</h3>' +
-        '<p class="note">Играй в испытания других игроков или редактируй свои публикации.</p></div>' +
+        '<div class="challenge-editor__section-head">' +
         '<div class="challenge-editor__library-actions">' +
         '<button class="btn btn--primary" type="button" data-new-challenge>＋ Новое испытание</button>' +
         '<button class="btn" type="button" data-library-refresh>Обновить</button></div></div>' +
         '<div class="challenge-editor__library-list" data-library-list></div></section>' +
         '</div></section>' +
         '<section class="challenge-editor__picker hidden" data-picker role="dialog" aria-modal="true" aria-label="Каталог карт">' +
-        '<header class="challenge-editor__picker-head"><div><h3 data-picker-title>Выбери карту</h3>' +
-        '<p class="caption" data-picker-hint>Карты показаны по две в ряд.</p></div>' +
+        '<header class="challenge-editor__picker-head"><h3 data-picker-title>Выбери карту</h3>' +
         '<button class="btn btn--icon btn--close-icon" type="button" data-picker-close aria-label="Закрыть каталог"></button></header>' +
         '<div class="challenge-editor__picker-grid" data-picker-grid></div>' +
-        '<footer class="challenge-editor__picker-footer"><span class="caption">Каталог карт</span>' +
+        '<footer class="challenge-editor__picker-footer">' +
         '<button class="btn btn--sm" type="button" data-picker-close>Готово</button></footer></section>';
     document.body.append(root);
 
@@ -158,6 +156,7 @@ function createEditorChrome() {
     side.classList.add('challenge-editor__side');
 
     hideGameElement(menu);
+    hideGameElement(play.querySelector('.game__subtitle'));
     hideGameElement(side.querySelector('.game__metrics'));
     hideGameElement(side.querySelector('.game__hand-section'));
     hideGameElement(side.querySelector('.game__actions'));
@@ -191,11 +190,11 @@ function createEditorChrome() {
         '<span class="challenge-editor__tool-icon" aria-hidden="true">⌫</span><small>Удалить</small></button>' +
         '</div></section>' +
         '<section class="challenge-editor__tool-group">' +
-        '<div class="challenge-editor__tools-heading"><h3>Карты</h3><span class="caption" data-selected-card-label>Не выбрана</span></div>' +
-        '<div class="challenge-editor__selected-card" data-selected-card><span class="note">Выбери карту на поле.</span></div>' +
+        '<div class="challenge-editor__tools-heading"><h3>Карты</h3></div>' +
+        '<div class="challenge-editor__selected-card hidden" data-selected-card></div>' +
         '</section>' +
         '<section class="challenge-editor__tool-group">' +
-        '<div class="challenge-editor__tools-heading"><h3>Стартовая рука</h3><span class="caption">До 3 карт</span></div>' +
+        '<div class="challenge-editor__tools-heading"><h3>Стартовая рука</h3></div>' +
         '<div class="challenge-editor__hand-slots" data-hand-slots></div>' +
         '</section>' +
         '<section class="challenge-editor__tool-group">' +
@@ -209,9 +208,9 @@ function createEditorChrome() {
         '<summary>Данные испытания</summary>' +
         '<div class="challenge-editor__metadata-fields">' +
         '<label class="challenge-editor__field"><span>Название</span>' +
-        '<input class="input" type="text" maxlength="60" placeholder="Например, Узкий тоннель" data-field="title"></label>' +
+        '<input class="input" type="text" maxlength="60" data-field="title"></label>' +
         '<label class="challenge-editor__field"><span>Описание</span>' +
-        '<textarea class="input" maxlength="240" rows="2" placeholder="Кратко опиши задачу" data-field="description"></textarea></label>' +
+        '<textarea class="input" maxlength="240" rows="2" data-field="description"></textarea></label>' +
         '<div class="challenge-editor__difficulty-wrap"><span class="caption">Сложность</span>' +
         '<div class="lobby__difficulty challenge-editor__difficulty" role="group" aria-label="Сложность испытания">' +
         '<span class="lobby__difficulty-bubble" aria-hidden="true"></span>' +
@@ -239,7 +238,6 @@ function showEditor() {
     createEditorChrome();
 
     document.querySelector('#heading').textContent = 'Bandito · редактор испытаний';
-    play.querySelector('.game__subtitle').textContent = 'Разместите карты на поле и настройте раскладку.';
     document.querySelector('#gameMenu').classList.add('hidden');
     document.querySelector('#gameMenuToggle').setAttribute('aria-expanded', 'false');
 
@@ -557,29 +555,22 @@ function renderBoardControls() {
     const pending = draft.pendingCard === null ? null : cardById(draft.pendingCard);
     const card = pending || (selected ? cardById(selected.id) : null);
     const preview = document.querySelector('#play [data-selected-card]');
-    const label = document.querySelector('#play [data-selected-card-label]');
     const rotate = document.querySelector('#play [data-tool="rotate"]');
     const remove = document.querySelector('#play [data-tool="delete"]');
     preview.replaceChildren();
+    preview.classList.toggle('hidden', !card);
     if (card) {
         const matrix = pending ? card.matrix : rotateMatrix(card.matrix, selected.rotation);
         preview.append(createCardPreview(matrix));
         const info = document.createElement('span');
         info.className = 'challenge-editor__selected-card-info';
         info.textContent = pending
-            ? 'Карта #' + card.id + ' · выбери точку на поле'
+            ? 'Карта #' + card.id
             : (draft.selectedPiece === 0 ? 'Стартовая карта' : 'Карта #' + card.id) +
               ' · ' +
               selected.rotation * 90 +
               '°';
         preview.append(info);
-        label.textContent = pending ? 'Добавление' : 'Выбрана';
-    } else {
-        const empty = document.createElement('span');
-        empty.className = 'note';
-        empty.textContent = 'Выбери карту на поле.';
-        preview.append(empty);
-        label.textContent = 'Не выбрана';
     }
     const canEdit = Boolean(selected && draft.selectedPiece > 0 && !pending);
     rotate.disabled = !canEdit;
@@ -693,10 +684,6 @@ function openPicker(mode) {
         deck: 'Настроить колоду добора',
     };
     root.querySelector('[data-picker-title]').textContent = pickerTitles[mode];
-    root.querySelector('[data-picker-hint]').textContent =
-        mode === 'deck'
-            ? 'Нажимай на карты, чтобы добавить их в колоду или убрать из неё.'
-            : 'Карты показаны по две в ряд.';
     picker.classList.remove('hidden');
     if (editorMode) {
         root.classList.add('challenge-editor--picker-layer');
@@ -736,10 +723,7 @@ function renderPicker() {
         info.className = 'challenge-editor__catalog-info';
         const title = document.createElement('strong');
         title.textContent = 'Карта #' + card.id;
-        const note = document.createElement('small');
-        note.textContent =
-            pickerMode === 'deck' ? (selected ? 'В колоде добора' : 'Не входит в колоду') : 'Выбрать карту';
-        info.append(title, note);
+        info.append(title);
         button.append(info);
         if (pickerMode === 'deck') {
             const mark = document.createElement('span');
@@ -860,11 +844,13 @@ function updateSaveButton() {
     if (!button || !status) return;
     button.disabled = issues.length > 0;
     button.textContent = 'Сохранить';
-    status.textContent = issues.length
-        ? issues.length === 1 && !draft.title.trim()
-            ? 'Открой «Данные испытания» и укажи название.'
-            : 'Заверши размещение карты и укажи название.'
-        : 'Испытание готово к сохранению.';
+    status.hidden = issues.length === 0;
+    if (issues.length) {
+        status.textContent =
+            issues.length === 1 && !draft.title.trim()
+                ? 'Открой «Данные испытания» и укажи название.'
+                : 'Заверши размещение карты и укажи название.';
+    }
 }
 
 function challengeAccessError(error) {

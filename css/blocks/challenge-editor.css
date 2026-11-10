@@ -109,11 +109,8 @@
 
     .challenge-editor__section-head {
         flex: none;
+        justify-content: flex-end;
         margin-bottom: var(--space-4);
-    }
-
-    .challenge-editor__section-head .note {
-        margin: 5px 0 0;
     }
 
     .challenge-editor__library-actions {
@@ -187,10 +184,6 @@
         border-bottom: 1px solid var(--color-border);
     }
 
-    .challenge-editor__picker-head .caption {
-        margin-top: 4px;
-    }
-
     .challenge-editor__picker-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -233,11 +226,6 @@
     .challenge-editor__catalog-info strong {
         color: var(--color-text-strong);
         font-size: var(--text-sm);
-    }
-
-    .challenge-editor__catalog-info small {
-        color: var(--color-text-muted);
-        font-size: var(--text-xs);
     }
 
     .challenge-editor__catalog-mark {
