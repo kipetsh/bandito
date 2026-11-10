@@ -278,11 +278,6 @@
         background: var(--color-tile-wall);
     }
 
-    .challenge-editor__preview--deck {
-        transform: scale(0.82);
-        transform-origin: left center;
-    }
-
     body.challenge-editor-open,
     body.challenge-editor-mode {
         overflow: hidden;

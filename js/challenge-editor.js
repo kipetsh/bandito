@@ -668,7 +668,7 @@ function renderPicker() {
         button.type = 'button';
         button.className = 'challenge-editor__catalog-card' + (pickerMode === 'deck' && selected ? ' is-selected' : '');
         button.dataset.cardId = String(card.id);
-        button.append(createCardPreview(card.matrix, 'challenge-editor__catalog-preview', 10));
+        button.append(createCardPreview(card.matrix, 'challenge-editor__catalog-preview', 20));
         button.setAttribute('aria-label', pickerMode === 'deck' ? 'Изменить состав колоды' : 'Добавить карту');
         if (pickerMode === 'deck') {
             const mark = document.createElement('span');
@@ -760,7 +760,7 @@ function renderDeck() {
     clearButton.disabled = ids.length === 0;
     if (!ids.length) return;
     const card = cardById(ids[0]);
-    preview.append(createCardPreview(card.matrix, 'challenge-editor__preview--deck'));
+    preview.append(createCardPreview(card.matrix, 'challenge-editor__preview--deck', 14));
 }
 
 function challengeValidationIssues() {
