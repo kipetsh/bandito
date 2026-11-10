@@ -404,13 +404,16 @@ function editorPlacementOptions() {
             for (let py = 0; py < piece.m.length; py++) {
                 for (let px = 0; px < piece.m[py].length; px++) {
                     if (piece.m[py][px] !== 1) continue;
-                    for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+                    for (const [dx, dy] of [
+                        [0, -1],
+                        [0, 1],
+                        [-1, 0],
+                        [1, 0],
+                    ]) {
                         for (let y = 0; y < matrix.length; y++) {
                             for (let x = 0; x < matrix[y].length; x++) {
                                 if (matrix[y][x] === 1) {
-                                    candidates.add(
-                                        piece.x + px + dx - x + ',' + (piece.y + py + dy - y)
-                                    );
+                                    candidates.add(piece.x + px + dx - x + ',' + (piece.y + py + dy - y));
                                 }
                             }
                         }
@@ -479,14 +482,9 @@ function renderBoard() {
             pin.type = 'button';
             pin.className = 'board__pin board__pin--' + option.rotation + ' challenge-editor__pin';
             pin.dataset.placementIndex = String(index);
-            pin.setAttribute(
-                'aria-label',
-                'Поворот ' + option.rotation * 90 + ' градусов, позиция ' + (index + 1)
-            );
-            pin.style.left =
-                (option.x + BOARD_OFFSET_X + option.matrix[0].length / 2) * CELL_SIZE - 20 + 'px';
-            pin.style.top =
-                (option.y + BOARD_OFFSET_Y + option.matrix.length / 2) * CELL_SIZE - 20 + 'px';
+            pin.setAttribute('aria-label', 'Поворот ' + option.rotation * 90 + ' градусов, позиция ' + (index + 1));
+            pin.style.left = (option.x + BOARD_OFFSET_X + option.matrix[0].length / 2) * CELL_SIZE - 20 + 'px';
+            pin.style.top = (option.y + BOARD_OFFSET_Y + option.matrix.length / 2) * CELL_SIZE - 20 + 'px';
             canvas.append(pin);
         });
         draft.availablePlacements = options;
@@ -518,15 +516,9 @@ function renderBoard() {
                 pin.dataset.pieceRotation = String(rotation);
                 pin.setAttribute('aria-label', 'Повернуть карту на ' + rotation * 90 + ' градусов');
                 pin.style.left =
-                    (selected.x + BOARD_OFFSET_X + matrix[0].length / 2) * CELL_SIZE -
-                    20 +
-                    offsets[rotation][0] +
-                    'px';
+                    (selected.x + BOARD_OFFSET_X + matrix[0].length / 2) * CELL_SIZE - 20 + offsets[rotation][0] + 'px';
                 pin.style.top =
-                    (selected.y + BOARD_OFFSET_Y + matrix.length / 2) * CELL_SIZE -
-                    20 +
-                    offsets[rotation][1] +
-                    'px';
+                    (selected.y + BOARD_OFFSET_Y + matrix.length / 2) * CELL_SIZE - 20 + offsets[rotation][1] + 'px';
                 canvas.append(pin);
             }
         }
@@ -579,9 +571,7 @@ function renderBoardControls() {
         label.textContent =
             draft.placementPreview === null
                 ? 'Выбери цветную точку на поле.'
-                : 'Поворот ' +
-                  draft.availablePlacements[draft.placementPreview].rotation * 90 +
-                  '°. Проверь превью.';
+                : 'Поворот ' + draft.availablePlacements[draft.placementPreview].rotation * 90 + '°. Проверь превью.';
         selection.append(label);
     } else if (selected) {
         const card = cardById(selected.id);

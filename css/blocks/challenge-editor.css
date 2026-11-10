@@ -238,7 +238,9 @@
     .challenge-editor__pin:hover::before,
     .challenge-editor__pin:focus-visible::before {
         transform: scale(1.35);
-        box-shadow: 0 0 0 5px var(--color-pin-hover), var(--shadow-pin);
+        box-shadow:
+            0 0 0 5px var(--color-pin-hover),
+            var(--shadow-pin);
     }
 
     .challenge-editor__ghost {
