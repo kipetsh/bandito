@@ -505,17 +505,27 @@ function renderBoard() {
     const viewport = root.querySelector('[data-board-camera]');
     const canvas = root.querySelector('[data-board-canvas]');
     const previous = editorBoardOrigin;
-    const centerX = previous ? viewport.scrollLeft / previous.cell + previous.minX : 0;
-    const centerY = previous ? viewport.scrollTop / previous.cell + previous.minY : 0;
+    const centerX = previous
+        ? (viewport.scrollLeft + viewport.clientWidth / 2 - previous.offsetX) / previous.cell + previous.minX
+        : 0;
+    const centerY = previous
+        ? (viewport.scrollTop + viewport.clientHeight / 2 - previous.offsetY) / previous.cell + previous.minY
+        : 0;
     const margin = 9;
     const minX = Math.min(...draft.board.map((piece) => piece.x)) - margin;
     const minY = Math.min(...draft.board.map((piece) => piece.y)) - margin;
     const maxX = Math.max(...draft.board.map((piece) => piece.x + rotateMatrix(cardById(piece.id).matrix, piece.rotation)[0].length) ) + margin;
     const maxY = Math.max(...draft.board.map((piece) => piece.y + rotateMatrix(cardById(piece.id).matrix, piece.rotation).length)) + margin;
     const cell = editorCellSize;
+    const boardWidth = (maxX - minX) * cell;
+    const boardHeight = (maxY - minY) * cell;
+    const canvasWidth = Math.max(viewport.clientWidth, boardWidth);
+    const canvasHeight = Math.max(viewport.clientHeight, boardHeight);
+    const offsetX = (canvasWidth - boardWidth) / 2;
+    const offsetY = (canvasHeight - boardHeight) / 2;
     canvas.replaceChildren();
-    canvas.style.width = Math.max(viewport.clientWidth, (maxX - minX) * cell) + 'px';
-    canvas.style.height = Math.max(viewport.clientHeight, (maxY - minY) * cell) + 'px';
+    canvas.style.width = canvasWidth + 'px';
+    canvas.style.height = canvasHeight + 'px';
     canvas.style.setProperty('--board-cell', cell + 'px');
     canvas.style.setProperty('--board-pin-size', '14px');
 
@@ -529,8 +539,8 @@ function renderBoard() {
             (draft.selectedPiece === index ? ' challenge-editor__piece--selected' : '');
         element.dataset.pieceIndex = String(index);
         element.setAttribute('aria-label', 'Выбрать карту ' + piece.id + (index === 0 ? ', стартовая' : ''));
-        element.style.left = (piece.x - minX) * cell + 'px';
-        element.style.top = (piece.y - minY) * cell + 'px';
+        element.style.left = offsetX + (piece.x - minX) * cell + 'px';
+        element.style.top = offsetY + (piece.y - minY) * cell + 'px';
         element.style.width = matrix[0].length * cell + 'px';
         element.style.height = matrix.length * cell + 'px';
         element.style.gridTemplateColumns = 'repeat(' + matrix[0].length + ',' + cell + 'px)';
@@ -551,8 +561,8 @@ function renderBoard() {
             pin.className = 'board__pin board__pin--' + option.rotation + ' challenge-editor__pin';
             pin.dataset.placementIndex = String(index);
             pin.setAttribute('aria-label', 'Поворот ' + option.rotation * 90 + ' градусов, позиция ' + (index + 1));
-            pin.style.left = (option.x - minX + option.matrix[0].length / 2) * cell - 20 + 'px';
-            pin.style.top = (option.y - minY + option.matrix.length / 2) * cell - 20 + 'px';
+            pin.style.left = offsetX + (option.x - minX + option.matrix[0].length / 2) * cell - 20 + 'px';
+            pin.style.top = offsetY + (option.y - minY + option.matrix.length / 2) * cell - 20 + 'px';
             canvas.append(pin);
         });
         draft.availablePlacements = options;
@@ -574,23 +584,23 @@ function renderBoard() {
                 pin.className = 'board__pin board__pin--' + rotation + ' challenge-editor__pin';
                 pin.dataset.pieceRotation = String(rotation);
                 pin.setAttribute('aria-label', 'Повернуть карту на ' + rotation * 90 + ' градусов');
-                pin.style.left = (selected.x - minX + matrix[0].length / 2) * cell - 20 + offsets[rotation][0] + 'px';
-                pin.style.top = (selected.y - minY + matrix.length / 2) * cell - 20 + offsets[rotation][1] + 'px';
+                pin.style.left = offsetX + (selected.x - minX + matrix[0].length / 2) * cell - 20 + offsets[rotation][0] + 'px';
+                pin.style.top = offsetY + (selected.y - minY + matrix.length / 2) * cell - 20 + offsets[rotation][1] + 'px';
                 canvas.append(pin);
             }
         }
     }
 
-    editorBoardOrigin = { minX, minY, cell };
+    editorBoardOrigin = { minX, minY, cell, offsetX, offsetY };
     if (!boardCentered) {
         boardCentered = true;
         const start = draft.board[0];
         const matrix = rotateMatrix(cardById(start.id).matrix, start.rotation);
-        viewport.scrollLeft = (start.x - minX + matrix[0].length / 2) * cell - viewport.clientWidth / 2;
-        viewport.scrollTop = (start.y - minY + matrix.length / 2) * cell - viewport.clientHeight / 2;
+        viewport.scrollLeft = offsetX + (start.x - minX + matrix[0].length / 2) * cell - viewport.clientWidth / 2;
+        viewport.scrollTop = offsetY + (start.y - minY + matrix.length / 2) * cell - viewport.clientHeight / 2;
     } else {
-        viewport.scrollLeft = (centerX - minX) * cell - viewport.clientWidth / 2;
-        viewport.scrollTop = (centerY - minY) * cell - viewport.clientHeight / 2;
+        viewport.scrollLeft = offsetX + (centerX - minX) * cell - viewport.clientWidth / 2;
+        viewport.scrollTop = offsetY + (centerY - minY) * cell - viewport.clientHeight / 2;
     }
     root.querySelector('[data-editor-zoom-level]').textContent = Math.round((cell / 24) * 100) + '%';
     renderBoardControls();
