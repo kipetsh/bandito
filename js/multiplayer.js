@@ -12,7 +12,6 @@ import {
     focusHand,
     startHand,
     opens,
-    normalizeChallengeArray,
     render,
     resetEndScreen,
     showEndScreen,
