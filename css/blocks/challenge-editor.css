@@ -143,22 +143,40 @@
     }
 
     .challenge-editor__viewport {
+        position: relative;
+        display: flex;
         min-width: 0;
         min-height: 0;
-        overflow: auto;
+        overflow: hidden;
         border: 1px solid var(--color-border);
         border-radius: var(--radius-lg);
         background: var(--color-surface-sunken);
-        scrollbar-width: thin;
-        overscroll-behavior: contain;
     }
 
-    .challenge-editor__canvas {
-        position: relative;
-        background-image:
-            linear-gradient(to right, var(--color-border) 1px, transparent 1px),
-            linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
-        background-size: 24px 24px;
+    .challenge-editor__viewport .game__camera {
+        width: 100%;
+        min-height: 0;
+        border-radius: inherit;
+        touch-action: pan-x pan-y;
+        cursor: grab;
+    }
+
+    .challenge-editor__viewport .game__camera--dragging {
+        cursor: grabbing;
+    }
+
+    .challenge-editor__viewport .board {
+        flex: none;
+        margin: 0;
+    }
+
+    .challenge-editor__viewport .game__zoom {
+        right: var(--space-3);
+        bottom: var(--space-3);
+    }
+
+    .challenge-editor__viewport .game__zoom-level {
+        min-width: 44px;
     }
 
     .challenge-editor__piece {
