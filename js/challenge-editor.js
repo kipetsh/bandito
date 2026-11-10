@@ -1,4 +1,14 @@
-import { beginChallenge, clone, normalizeChallengeArray, rotateMatrix, state, validOnBoard } from '#js/game.js';
+import {
+    beginChallenge,
+    centerCamera,
+    clone,
+    normalizeChallengeArray,
+    render as renderGameBoard,
+    rotateMatrix,
+    setChallengeEditorMode,
+    state,
+    validOnBoard,
+} from '#js/game.js';
 import {
     deletePublicChallenge,
     loadPublicChallenges,
@@ -13,16 +23,16 @@ const BOARD_COLUMNS = 100;
 const BOARD_ROWS = 60;
 const BOARD_OFFSET_X = 48;
 const BOARD_OFFSET_Y = 28;
-const MIN_EDITOR_CELL = 12;
-const MAX_EDITOR_CELL = 36;
-let editorCellSize = 24;
-let editorBoardOrigin = null;
-let editorPan = null;
 
 let root = null;
 let launchButton = null;
 let libraryButton = null;
-let activeView = 'editor';
+let editorHeaderActions = null;
+let editorPanel = null;
+let hiddenGameElements = [];
+let gameSnapshot = null;
+let editorMode = false;
+let returnToLibrary = false;
 let draft = null;
 let pickerMode = null;
 let pickerSlot = 0;
@@ -30,7 +40,6 @@ let library = [];
 let libraryStatus = 'idle';
 let libraryError = '';
 let libraryLoading = false;
-let boardCentered = false;
 
 function cardById(id) {
     return state.all.find((card) => card.id === Number(id));
@@ -42,6 +51,7 @@ function tunnelCards() {
 
 function createDraft() {
     const start = cardById(START_CARDS[5]);
+    if (!start) return null;
     return {
         challengeId: null,
         title: '',
@@ -51,16 +61,16 @@ function createDraft() {
         hand: [null, null, null],
         deck: new Set(tunnelCards().map((card) => card.id)),
         pendingCard: null,
-        pendingRotation: 0,
         selectedPiece: null,
-        placementPreview: null,
         activeHandSlot: 0,
+        toolMode: 'select',
     };
 }
 
 function initChallengeEditor() {
     const menu = document.querySelector('#menu');
-    if (!menu) return;
+    const play = document.querySelector('#play');
+    if (!menu || !play) return;
 
     const launchGroup = document.createElement('div');
     launchGroup.className = 'challenge-editor-launches';
@@ -89,121 +99,40 @@ function initChallengeEditor() {
     root.setAttribute('aria-hidden', 'true');
     root.innerHTML =
         '<div class="challenge-editor__backdrop"></div>' +
-        '<section class="challenge-editor__dialog" role="dialog" aria-modal="true" aria-labelledby="challengeEditorTitle">' +
+        '<section class="challenge-editor__dialog" role="dialog" aria-modal="true" aria-labelledby="challengeLibraryTitle">' +
         '<header class="challenge-editor__header">' +
         '<div><p class="challenge-editor__eyebrow">BANDITO · СООБЩЕСТВО</p>' +
-        '<h2 id="challengeEditorTitle" data-dialog-title>Редактор испытаний</h2></div>' +
+        '<h2 id="challengeLibraryTitle">Библиотека испытаний</h2></div>' +
         '<button class="btn btn--icon btn--close-icon" type="button" data-editor-close aria-label="Закрыть"></button>' +
         '</header>' +
-        '<div class="challenge-editor__meta" data-editor-meta>' +
-        '<label class="challenge-editor__field"><span>Название испытания</span>' +
-        '<input class="input" type="text" maxlength="60" placeholder="Например, Узкий тоннель" data-field="title"></label>' +
-        '<label class="challenge-editor__field"><span>Описание</span>' +
-        '<textarea class="input challenge-editor__description" maxlength="240" rows="2" placeholder="Кратко опиши задачу" data-field="description"></textarea></label>' +
-        '<div class="challenge-editor__difficulty-wrap"><span class="caption">Сложность</span>' +
-        '<div class="lobby__difficulty challenge-editor__difficulty" role="group" aria-label="Сложность испытания">' +
-        '<span class="lobby__difficulty-bubble" aria-hidden="true"></span>' +
-        '<button class="lobby__difficulty-option" type="button" data-editor-exits="2" aria-pressed="false">Лёгкая</button>' +
-        '<button class="lobby__difficulty-option is-active" type="button" data-editor-exits="5" aria-pressed="true">Стандартная</button>' +
-        '<button class="lobby__difficulty-option" type="button" data-editor-exits="6" aria-pressed="false">Сложная</button>' +
-        '</div></div></div>' +
         '<div class="challenge-editor__content">' +
-        '<section class="challenge-editor__workspace" data-editor-screen>' +
-        '<div class="challenge-editor__viewport game__boardbox" data-board-viewport aria-label="Поле редактора">' +
-        '<div class="game__camera" data-board-camera><div class="board" data-board-canvas></div></div>' +
-        '<div class="game__zoom" aria-label="Масштаб поля">' +
-        '<button class="btn btn--icon game__zoom-button" type="button" data-editor-zoom="out" aria-label="Уменьшить масштаб">−</button>' +
-        '<span class="game__zoom-level" data-editor-zoom-level>100%</span>' +
-        '<button class="btn btn--icon game__zoom-button" type="button" data-editor-zoom="in" aria-label="Увеличить масштаб">+</button>' +
-        '</div></div>' +
-        '<aside class="challenge-editor__tools">' +
-        '<section class="challenge-editor__tool-group">' +
-        '<h3>Поле</h3>' +
-        '<p class="note">Выбери карту в каталоге, затем нажми цветную точку на поле. Карта установится сразу.</p>' +
-        '<button class="btn btn--primary" type="button" data-picker-open="board">＋ Добавить карту</button>' +
-        '<button class="btn" type="button" data-remove-piece disabled>Удалить выбранную</button>' +
-        '<p class="challenge-editor__selection" data-board-selection>Стартовая карта уже на поле.</p>' +
-        '</section>' +
-        '<section class="challenge-editor__tool-group">' +
-        '<div class="challenge-editor__tools-heading"><h3>Стартовая рука</h3><span class="caption">До 3 карт</span></div>' +
-        '<div class="challenge-editor__hand-slots" data-hand-slots></div>' +
-        '</section>' +
-        '<section class="challenge-editor__tool-group">' +
-        '<div class="challenge-editor__tools-heading"><h3>Колода добора</h3><button class="btn btn--sm" type="button" data-picker-open="deck">Настроить</button></div>' +
-        '<p class="challenge-editor__deck-count" data-deck-count>В колоде: 0 карт</p>' +
-        '<div class="challenge-editor__deck-list" data-deck-list></div>' +
-        '<button class="btn btn--sm" type="button" data-deck-clear disabled>Очистить колоду</button>' +
-        '</section>' +
-        '</aside></section>' +
-        '<section class="challenge-editor__library-screen" data-library-screen hidden>' +
+        '<section class="challenge-editor__library-screen">' +
         '<div class="challenge-editor__section-head"><div><h3>Общая библиотека</h3>' +
         '<p class="note">Играй в испытания других игроков или редактируй свои публикации.</p></div>' +
         '<div class="challenge-editor__library-actions">' +
         '<button class="btn btn--primary" type="button" data-new-challenge>＋ Новое испытание</button>' +
         '<button class="btn" type="button" data-library-refresh>Обновить</button></div></div>' +
         '<div class="challenge-editor__library-list" data-library-list></div></section>' +
-        '</div>' +
-        '<footer class="challenge-editor__footer" data-editor-footer>' +
-        '<p class="note" data-editor-status>Укажи название, собери поле и настрой карты.</p>' +
-        '<button class="btn btn--primary" type="button" data-save disabled>Опубликовать испытание</button></footer>' +
-        '<section class="challenge-editor__picker hidden" data-picker aria-label="Каталог карт">' +
+        '</div></section>' +
+        '<section class="challenge-editor__picker hidden" data-picker role="dialog" aria-modal="true" aria-label="Каталог карт">' +
         '<header class="challenge-editor__picker-head"><div><h3 data-picker-title>Выбери карту</h3>' +
         '<p class="caption" data-picker-hint>Карты показаны по две в ряд.</p></div>' +
         '<button class="btn btn--icon btn--close-icon" type="button" data-picker-close aria-label="Закрыть каталог"></button></header>' +
         '<div class="challenge-editor__picker-grid" data-picker-grid></div>' +
         '<footer class="challenge-editor__picker-footer"><span class="caption">Каталог карт</span>' +
-        '<button class="btn btn--sm" type="button" data-picker-close>Готово</button></footer></section>' +
-        '</section>';
+        '<button class="btn btn--sm" type="button" data-picker-close>Готово</button></footer></section>';
     document.body.append(root);
-    const boardCamera = root.querySelector('[data-board-camera]');
-    boardCamera.addEventListener('pointerdown', (event) => {
-        if (event.pointerType !== 'mouse' || event.button !== 0 || event.target.closest('button')) return;
-        editorPan = {
-            id: event.pointerId,
-            x: event.clientX,
-            y: event.clientY,
-            left: boardCamera.scrollLeft,
-            top: boardCamera.scrollTop,
-            moved: false,
-        };
-    });
-    boardCamera.addEventListener('pointermove', (event) => {
-        if (!editorPan || editorPan.id !== event.pointerId) return;
-        const dx = event.clientX - editorPan.x,
-            dy = event.clientY - editorPan.y;
-        if (!editorPan.moved && Math.hypot(dx, dy) > 5) {
-            editorPan.moved = true;
-            boardCamera.classList.add('game__camera--dragging');
-            boardCamera.setPointerCapture(event.pointerId);
-        }
-        if (editorPan.moved) {
-            boardCamera.scrollLeft = editorPan.left - dx;
-            boardCamera.scrollTop = editorPan.top - dy;
-        }
-    });
-    const endEditorPan = (event) => {
-        if (!editorPan || editorPan.id !== event.pointerId) return;
-        editorPan = null;
-        boardCamera.classList.remove('game__camera--dragging');
-    };
-    boardCamera.addEventListener('pointerup', endEditorPan);
-    boardCamera.addEventListener('pointercancel', endEditorPan);
-    boardCamera.addEventListener(
-        'wheel',
-        (event) => {
-            if (!event.ctrlKey && !event.metaKey) return;
-            event.preventDefault();
-            setEditorZoom(editorCellSize + (event.deltaY < 0 ? 2 : -2));
-        },
-        { passive: false }
-    );
+
     root.addEventListener('click', handleRootClick);
-    root.addEventListener('input', handleRootInput);
+    play.addEventListener('click', handleRootClick);
+    play.addEventListener('input', handleRootInput);
     window.addEventListener('keydown', handleEditorKeydown);
     window.addEventListener('resize', () => {
-        if (!window.matchMedia('(min-width: 761px)').matches) closeEditor();
+        if (editorMode && !window.matchMedia('(min-width: 761px)').matches) closeEditor();
     });
     window.addEventListener('bandito:cards-ready', updateAvailability);
+    window.addEventListener('bandito:editor-placement', handleEditorPlacement);
+    window.addEventListener('bandito:editor-select-piece', handleEditorSelectPiece);
     updateAvailability();
 }
 
@@ -212,12 +141,105 @@ function updateAvailability() {
     if (libraryButton) libraryButton.disabled = !state.all.length;
 }
 
+function hideGameElement(element) {
+    if (!element) return;
+    hiddenGameElements.push({ element, wasHidden: element.classList.contains('hidden') });
+    element.classList.add('hidden');
+}
+
+function createEditorChrome() {
+    const play = document.querySelector('#play');
+    const head = play.querySelector('.game__head');
+    const side = play.querySelector('.game__side');
+    const menu = head.querySelector('.game__menu');
+
+    hideGameElement(menu);
+    hideGameElement(side.querySelector('.game__metrics'));
+    hideGameElement(side.querySelector('.game__hand-section'));
+    hideGameElement(side.querySelector('.game__actions'));
+    hideGameElement(side.querySelector('#mpTimer'));
+    hideGameElement(side.querySelector('#tutorialGoal'));
+    hideGameElement(side.querySelector('#status'));
+    hideGameElement(play.querySelector('#placementPreview'));
+
+    editorHeaderActions = document.createElement('div');
+    editorHeaderActions.className = 'challenge-editor__header-actions';
+    editorHeaderActions.innerHTML =
+        '<button class="btn btn--soft" type="button" data-editor-cancel>Отмена</button>' +
+        '<button class="btn btn--primary" type="button" data-save>Сохранить</button>';
+    head.append(editorHeaderActions);
+
+    editorPanel = document.createElement('section');
+    editorPanel.className = 'challenge-editor__tools';
+    editorPanel.innerHTML =
+        '<section class="challenge-editor__tool-group">' +
+        '<h3>Инструменты</h3>' +
+        '<div class="challenge-editor__tool-grid">' +
+        '<button class="challenge-editor__tool is-active" type="button" data-tool="select" aria-pressed="true">' +
+        '<span class="challenge-editor__tool-icon" aria-hidden="true">↖</span><small>Выбрать</small></button>' +
+        '<button class="challenge-editor__tool" type="button" data-picker-open="board">' +
+        '<span class="challenge-editor__tool-icon" aria-hidden="true">＋</span><small>Добавить</small></button>' +
+        '<button class="challenge-editor__tool" type="button" data-tool="rotate" disabled>' +
+        '<span class="challenge-editor__tool-icon" aria-hidden="true">↻</span><small>Повернуть</small></button>' +
+        '<button class="challenge-editor__tool" type="button" data-tool="delete" disabled>' +
+        '<span class="challenge-editor__tool-icon" aria-hidden="true">⌫</span><small>Удалить</small></button>' +
+        '</div></section>' +
+        '<section class="challenge-editor__tool-group">' +
+        '<div class="challenge-editor__tools-heading"><h3>Карты</h3><span class="caption" data-selected-card-label>Не выбрана</span></div>' +
+        '<div class="challenge-editor__selected-card" data-selected-card><span class="note">Выбери карту на поле.</span></div>' +
+        '</section>' +
+        '<section class="challenge-editor__tool-group">' +
+        '<div class="challenge-editor__tools-heading"><h3>Стартовая рука</h3><span class="caption">До 3 карт</span></div>' +
+        '<div class="challenge-editor__hand-slots" data-hand-slots></div>' +
+        '</section>' +
+        '<section class="challenge-editor__tool-group">' +
+        '<div class="challenge-editor__tools-heading"><h3>Колода для добора</h3>' +
+        '<button class="btn btn--sm" type="button" data-picker-open="deck">Изменить</button></div>' +
+        '<div class="challenge-editor__deck-summary"><div data-deck-preview></div>' +
+        '<p class="challenge-editor__deck-count" data-deck-count>В колоде: 0 карт</p></div>' +
+        '</section>' +
+        '<button class="btn challenge-editor__clear-board" type="button" data-clear-board>♧ Очистить поле</button>' +
+        '<details class="challenge-editor__metadata">' +
+        '<summary>Данные испытания</summary>' +
+        '<div class="challenge-editor__metadata-fields">' +
+        '<label class="challenge-editor__field"><span>Название</span>' +
+        '<input class="input" type="text" maxlength="60" placeholder="Например, Узкий тоннель" data-field="title"></label>' +
+        '<label class="challenge-editor__field"><span>Описание</span>' +
+        '<textarea class="input" maxlength="240" rows="2" placeholder="Кратко опиши задачу" data-field="description"></textarea></label>' +
+        '<div class="challenge-editor__difficulty-wrap"><span class="caption">Сложность</span>' +
+        '<div class="lobby__difficulty challenge-editor__difficulty" role="group" aria-label="Сложность испытания">' +
+        '<span class="lobby__difficulty-bubble" aria-hidden="true"></span>' +
+        '<button class="lobby__difficulty-option" type="button" data-editor-exits="2" aria-pressed="false">Лёгкая</button>' +
+        '<button class="lobby__difficulty-option is-active" type="button" data-editor-exits="5" aria-pressed="true">Стандартная</button>' +
+        '<button class="lobby__difficulty-option" type="button" data-editor-exits="6" aria-pressed="false">Сложная</button>' +
+        '</div></div></div></details>' +
+        '<p class="note challenge-editor__status" data-editor-status>Укажи название испытания, чтобы сохранить его.</p>';
+    side.append(editorPanel);
+}
+
 function showEditor() {
     activeView = 'editor';
-    root.classList.remove('hidden');
-    root.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('challenge-editor-open');
-    render();
+    editorMode = true;
+    gameSnapshot = { ...state };
+    root.classList.add('hidden');
+    root.classList.remove('challenge-editor--picker-layer');
+    root.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('challenge-editor-open');
+
+    document.querySelector('#menu').classList.add('hidden');
+    document.querySelector('#mpLobby').classList.add('hidden');
+    const play = document.querySelector('#play');
+    play.classList.remove('hidden');
+    document.body.classList.add('challenge-editor-mode');
+    createEditorChrome();
+
+    document.querySelector('#heading').textContent = 'Bandito · редактор испытаний';
+    play.querySelector('.game__subtitle').textContent = 'Разместите карты на поле и настройте раскладку.';
+    document.querySelector('#gameMenu').classList.add('hidden');
+    document.querySelector('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+
+    renderEditor();
+    window.requestAnimationFrame(() => centerCamera());
 }
 
 function openEditor() {
@@ -227,37 +249,89 @@ function openEditor() {
         return;
     }
     draft = createDraft();
-    boardCentered = false;
+    if (!draft) return;
+    returnToLibrary = false;
     showEditor();
 }
 
 function openLibrary() {
-    if (!window.matchMedia('(min-width: 761px)').matches) return;
-    activeView = 'library';
+    if (!window.matchMedia('(min-width: 761px)').matches || editorMode) return;
     root.classList.remove('hidden');
+    root.classList.remove('challenge-editor--picker-layer');
     root.setAttribute('aria-hidden', 'false');
     document.body.classList.add('challenge-editor-open');
-    render();
+    renderLibrary();
     loadLibrary();
 }
 
+function restoreGameChrome() {
+    for (const { element, wasHidden } of hiddenGameElements) {
+        element.classList.toggle('hidden', wasHidden);
+    }
+    hiddenGameElements = [];
+    editorHeaderActions?.remove();
+    editorPanel?.remove();
+    editorHeaderActions = null;
+    editorPanel = null;
+}
+
+function exitEditorScreen(showLibrary = false) {
+    if (!editorMode) return;
+    setChallengeEditorMode(false);
+    if (gameSnapshot) Object.assign(state, gameSnapshot);
+    gameSnapshot = null;
+    editorMode = false;
+
+    restoreGameChrome();
+    document.querySelector('#play').classList.add('hidden');
+    document.querySelector('#menu').classList.remove('hidden');
+    document.body.classList.remove('challenge-editor-mode');
+    draft = null;
+    pickerMode = null;
+    root.querySelector('[data-picker]').classList.add('hidden');
+    root.classList.remove('challenge-editor--picker-layer');
+
+    if (showLibrary) {
+        root.classList.remove('hidden');
+        root.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('challenge-editor-open');
+        renderLibrary();
+    } else {
+        root.classList.add('hidden');
+        root.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('challenge-editor-open');
+    }
+    returnToLibrary = false;
+}
+
 function closeEditor() {
+    if (editorMode) {
+        exitEditorScreen(returnToLibrary);
+        return;
+    }
     if (!root || root.classList.contains('hidden')) return;
     root.classList.add('hidden');
     root.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('challenge-editor-open');
+    closePicker();
 }
 
 function handleEditorKeydown(event) {
-    if (!root || root.classList.contains('hidden') || event.key !== 'Escape') return;
-    const picker = root.querySelector('[data-picker]');
-    if (picker && !picker.classList.contains('hidden')) {
-        closePicker();
+    if (event.key !== 'Escape') return;
+    if (editorMode) {
+        if (pickerMode) closePicker();
+        else closeEditor();
         event.preventDefault();
-    } else closeEditor();
+        return;
+    }
+    if (!root || root.classList.contains('hidden')) return;
+    if (pickerMode) closePicker();
+    else closeEditor();
+    event.preventDefault();
 }
 
 function handleRootInput(event) {
+    if (!editorMode || !draft) return;
     const field = event.target.dataset.field;
     if (field === 'title') draft.title = event.target.value.slice(0, 60);
     if (field === 'description') draft.description = event.target.value.slice(0, 240);
@@ -267,21 +341,16 @@ function handleRootInput(event) {
 function handleRootClick(event) {
     const target = event.target;
     if (target === root || target.classList?.contains('challenge-editor__backdrop')) {
+        if (editorMode && pickerMode) closePicker();
+        else closeEditor();
+        return;
+    }
+    if (target.closest?.('[data-editor-close]') || target.closest?.('[data-editor-cancel]')) {
         closeEditor();
         return;
     }
-    if (target.closest?.('[data-editor-close]')) {
-        closeEditor();
-        return;
-    }
-    const zoom = target.closest?.('[data-editor-zoom]');
-    if (zoom) {
-        setEditorZoom(editorCellSize + (zoom.dataset.editorZoom === 'in' ? 2 : -2));
-        return;
-    }
-    const exits = target.closest?.('[data-editor-exits]');
-    if (exits) {
-        changeDifficulty(Number(exits.dataset.editorExits));
+    if (target.closest?.('[data-save]')) {
+        saveChallenge();
         return;
     }
     const pickerOpen = target.closest?.('[data-picker-open]');
@@ -293,19 +362,22 @@ function handleRootClick(event) {
         closePicker();
         return;
     }
-    const pieceRotation = target.closest?.('[data-piece-rotation]');
-    if (pieceRotation) {
-        rotateSelectedPieceTo(Number(pieceRotation.dataset.pieceRotation));
+    const exits = target.closest?.('[data-editor-exits]');
+    if (exits) {
+        changeDifficulty(Number(exits.dataset.editorExits));
         return;
     }
-    const placement = target.closest?.('[data-placement-index]');
-    if (placement) {
-        confirmPendingPlacement(Number(placement.dataset.placementIndex));
-        return;
-    }
-    const piece = target.closest?.('[data-piece-index]');
-    if (piece) {
-        selectPiece(Number(piece.dataset.pieceIndex));
+    const tool = target.closest?.('[data-tool]');
+    if (tool) {
+        if (tool.dataset.tool === 'select') {
+            draft.pendingCard = null;
+            draft.selectedPiece = null;
+            draft.toolMode = 'select';
+            renderEditor();
+        } else if (tool.dataset.tool === 'rotate' && draft.selectedPiece !== null) {
+            const piece = draft.board[draft.selectedPiece];
+            rotateSelectedPieceTo((piece.rotation + 1) % 4);
+        } else if (tool.dataset.tool === 'delete') removeSelectedPiece();
         return;
     }
     const handSlot = target.closest?.('[data-hand-slot]');
@@ -324,19 +396,8 @@ function handleRootClick(event) {
         chooseCatalogCard(Number(catalogCard.dataset.cardId));
         return;
     }
-    if (target.closest?.('[data-deck-clear]')) {
-        clearDeck();
-        return;
-    }
-    const deckRemove = target.closest?.('[data-deck-remove]');
-    if (deckRemove) {
-        draft.deck.delete(Number(deckRemove.dataset.deckRemove));
-        renderDeck();
-        updateSaveButton();
-        return;
-    }
-    if (target.closest?.('[data-remove-piece]')) {
-        removeSelectedPiece();
+    if (target.closest?.('[data-clear-board]')) {
+        clearBoard();
         return;
     }
     if (target.closest?.('[data-library-refresh]')) {
@@ -345,7 +406,8 @@ function handleRootClick(event) {
     }
     if (target.closest?.('[data-new-challenge]')) {
         draft = createDraft();
-        boardCentered = false;
+        returnToLibrary = true;
+        closePicker();
         showEditor();
         return;
     }
@@ -364,7 +426,7 @@ function handleRootClick(event) {
         playChallenge(play.dataset.playChallenge);
         return;
     }
-    if (target.closest?.('[data-save]')) saveChallenge();
+    if (target.closest?.('[data-deck-clear]')) clearDeck();
 }
 
 function changeDifficulty(exits) {
@@ -375,11 +437,10 @@ function changeDifficulty(exits) {
     draft.exits = exits;
     draft.board = [{ id: start.id, x: 0, y: 0, rotation: 0, m: clone(start.matrix) }];
     draft.pendingCard = null;
-    draft.pendingRotation = 0;
-    draft.placementPreview = null;
     draft.selectedPiece = null;
+    draft.toolMode = 'select';
     snackbar('Смена сложности сбросила раскладку поля.');
-    render();
+    renderEditor();
 }
 
 function isBoardValid(board = draft.board) {
@@ -418,35 +479,54 @@ function isBoardValid(board = draft.board) {
     return true;
 }
 
-function render() {
-    if (!root) return;
-    const isEditor = activeView === 'editor';
-    root.querySelector('[data-dialog-title]').textContent = isEditor ? 'Редактор испытания' : 'Библиотека испытаний';
-    root.querySelector('[data-editor-meta]').hidden = !isEditor;
-    root.querySelector('[data-editor-footer]').hidden = !isEditor;
-    root.querySelector('[data-editor-screen]').hidden = !isEditor;
-    root.querySelector('[data-library-screen]').hidden = isEditor;
-    if (!isEditor) {
-        renderLibrary();
-        return;
-    }
-    if (!draft) return;
-    const title = root.querySelector('[data-field="title"]');
-    const description = root.querySelector('[data-field="description"]');
+function renderEditor() {
+    if (!editorMode || !draft) return;
+    syncEditorGameState();
+    const title = document.querySelector('#play [data-field="title"]');
+    const description = document.querySelector('#play [data-field="description"]');
     if (document.activeElement !== title) title.value = draft.title;
     if (document.activeElement !== description) description.value = draft.description;
     const index = { 2: 0, 5: 1, 6: 2 }[draft.exits];
-    const difficulty = root.querySelector('.challenge-editor__difficulty');
+    const difficulty = document.querySelector('#play .challenge-editor__difficulty');
     difficulty.style.setProperty('--difficulty-index', index);
-    root.querySelectorAll('[data-editor-exits]').forEach((button) => {
+    document.querySelectorAll('#play [data-editor-exits]').forEach((button) => {
         const active = Number(button.dataset.editorExits) === draft.exits;
         button.classList.toggle('is-active', active);
         button.setAttribute('aria-pressed', String(active));
     });
-    renderBoard();
+    renderBoardControls();
     renderHandSlots();
     renderDeck();
     updateSaveButton();
+}
+
+function syncEditorGameState() {
+    state.placed = draft.board.map((piece) => ({
+        id: piece.id,
+        x: piece.x,
+        y: piece.y,
+        m: clone(piece.m),
+    }));
+    state.deck = [...draft.deck]
+        .filter((id) => id !== draft.pendingCard)
+        .map((id) => cardById(id))
+        .filter(Boolean)
+        .map((card) => ({ id: card.id, m: clone(card.matrix) }));
+    state.hand =
+        draft.pendingCard === null
+            ? []
+            : [{ id: draft.pendingCard, m: clone(cardById(draft.pendingCard).matrix) }];
+    state.selected = draft.pendingCard === null ? -1 : 0;
+    state.rotation = 0;
+    state.finished = false;
+    state.exits = draft.exits;
+    state.turnCount = draft.board.length - 1;
+    state.placementPreview = null;
+    state.lastPlaced = null;
+    state.animateLastPlacement = false;
+    state.challenge = null;
+    setChallengeEditorMode(true, draft.selectedPiece === null ? -1 : draft.selectedPiece);
+    renderGameBoard({ hand: false });
 }
 
 function createCardPreview(matrix, className = '') {
@@ -462,214 +542,47 @@ function createCardPreview(matrix, className = '') {
     return preview;
 }
 
-function editorPlacementOptions() {
-    const options = [];
-    const seenMatrices = new Set();
-    for (let rotation = 0; rotation < 4; rotation++) {
-        const matrix = rotateMatrix(cardById(draft.pendingCard).matrix, rotation);
-        const matrixKey = JSON.stringify(matrix);
-        if (seenMatrices.has(matrixKey)) continue;
-        seenMatrices.add(matrixKey);
-        const candidates = new Set();
-        for (const piece of draft.board) {
-            for (let py = 0; py < piece.m.length; py++) {
-                for (let px = 0; px < piece.m[py].length; px++) {
-                    if (piece.m[py][px] !== 1) continue;
-                    for (const [dx, dy] of [
-                        [0, -1],
-                        [0, 1],
-                        [-1, 0],
-                        [1, 0],
-                    ]) {
-                        for (let y = 0; y < matrix.length; y++) {
-                            for (let x = 0; x < matrix[y].length; x++) {
-                                if (matrix[y][x] === 1) {
-                                    candidates.add(piece.x + px + dx - x + ',' + (piece.y + py + dy - y));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        for (const key of candidates) {
-            const [x, y] = key.split(',').map(Number);
-            if (
-                x < -BOARD_OFFSET_X ||
-                y < -BOARD_OFFSET_Y ||
-                x + matrix[0].length > BOARD_COLUMNS - BOARD_OFFSET_X ||
-                y + matrix.length > BOARD_ROWS - BOARD_OFFSET_Y ||
-                !validOnBoard(draft.board, matrix, x, y)
-            ) {
-                continue;
-            }
-            options.push({ x, y, rotation, matrix });
-        }
-    }
-    return options;
-}
-
-function setEditorZoom(next) {
-    const value = Math.max(MIN_EDITOR_CELL, Math.min(MAX_EDITOR_CELL, Math.round(next / 2) * 2));
-    if (value === editorCellSize) return;
-    editorCellSize = value;
-    renderBoard();
-}
-
-function renderBoard() {
-    const viewport = root.querySelector('[data-board-camera]');
-    const canvas = root.querySelector('[data-board-canvas]');
-    const previous = editorBoardOrigin;
-    const centerX = previous
-        ? (viewport.scrollLeft + viewport.clientWidth / 2 - previous.offsetX) / previous.cell + previous.minX
-        : 0;
-    const centerY = previous
-        ? (viewport.scrollTop + viewport.clientHeight / 2 - previous.offsetY) / previous.cell + previous.minY
-        : 0;
-    const margin = 9;
-    const minX = Math.min(...draft.board.map((piece) => piece.x)) - margin;
-    const minY = Math.min(...draft.board.map((piece) => piece.y)) - margin;
-    const maxX =
-        Math.max(
-            ...draft.board.map((piece) => piece.x + rotateMatrix(cardById(piece.id).matrix, piece.rotation)[0].length)
-        ) + margin;
-    const maxY =
-        Math.max(
-            ...draft.board.map((piece) => piece.y + rotateMatrix(cardById(piece.id).matrix, piece.rotation).length)
-        ) + margin;
-    const cell = editorCellSize;
-    const boardWidth = (maxX - minX) * cell;
-    const boardHeight = (maxY - minY) * cell;
-    const canvasWidth = Math.max(viewport.clientWidth, boardWidth);
-    const canvasHeight = Math.max(viewport.clientHeight, boardHeight);
-    const offsetX = (canvasWidth - boardWidth) / 2;
-    const offsetY = (canvasHeight - boardHeight) / 2;
-    canvas.replaceChildren();
-    canvas.style.width = canvasWidth + 'px';
-    canvas.style.height = canvasHeight + 'px';
-    canvas.style.setProperty('--board-cell', cell + 'px');
-    const zoomShare = (cell - MIN_EDITOR_CELL) / (MAX_EDITOR_CELL - MIN_EDITOR_CELL);
-    const pinSize = 12 + 2 * Math.round(4 * zoomShare);
-    canvas.style.setProperty('--board-pin-size', pinSize + 'px');
-
-    draft.board.forEach((piece, index) => {
-        const card = cardById(piece.id);
-        if (!card) return;
-        const matrix = rotateMatrix(card.matrix, piece.rotation);
-        const element = document.createElement('button');
-        element.type = 'button';
-        element.className =
-            'board__piece challenge-editor__piece' +
-            (draft.selectedPiece === index ? ' challenge-editor__piece--selected' : '');
-        element.dataset.pieceIndex = String(index);
-        element.setAttribute('aria-label', 'Выбрать карту ' + piece.id + (index === 0 ? ', стартовая' : ''));
-        element.style.left = offsetX + (piece.x - minX) * cell + 'px';
-        element.style.top = offsetY + (piece.y - minY) * cell + 'px';
-        element.style.width = matrix[0].length * cell + 'px';
-        element.style.height = matrix.length * cell + 'px';
-        element.style.gridTemplateColumns = 'repeat(' + matrix[0].length + ',' + cell + 'px)';
-        element.style.gridTemplateRows = 'repeat(' + matrix.length + ',' + cell + 'px)';
-        matrix.flat().forEach((value) => {
-            const tile = document.createElement('i');
-            tile.className = 'board__cell' + (value ? '' : ' board__cell--wall');
-            element.append(tile);
-        });
-        canvas.append(element);
-    });
-
-    if (draft.pendingCard !== null) {
-        const options = editorPlacementOptions();
-        options.forEach((option, index) => {
-            const pin = document.createElement('button');
-            pin.type = 'button';
-            pin.className = 'board__pin board__pin--' + option.rotation + ' challenge-editor__pin';
-            pin.dataset.placementIndex = String(index);
-            pin.setAttribute('aria-label', 'Поворот ' + option.rotation * 90 + ' градусов, позиция ' + (index + 1));
-            pin.style.left = offsetX + (option.x - minX + option.matrix[0].length / 2) * cell - 20 + 'px';
-            pin.style.top = offsetY + (option.y - minY + option.matrix.length / 2) * cell - 20 + 'px';
-            canvas.append(pin);
-        });
-        draft.availablePlacements = options;
-    } else {
-        draft.availablePlacements = [];
-        const selected = draft.selectedPiece === null ? null : draft.board[draft.selectedPiece];
-        if (selected && draft.selectedPiece > 0) {
-            const card = cardById(selected.id);
-            const pinOffset = Math.round((cell * 22) / 24);
-            const offsets = [
-                [0, -pinOffset],
-                [pinOffset, 0],
-                [0, pinOffset],
-                [-pinOffset, 0],
-            ];
-            for (let rotation = 0; rotation < 4; rotation++) {
-                const matrix = rotateMatrix(card.matrix, rotation);
-                const candidate = { ...selected, rotation, m: matrix };
-                const nextBoard = draft.board.map((piece, index) =>
-                    index === draft.selectedPiece ? candidate : piece
-                );
-                if (!isBoardValid(nextBoard)) continue;
-                const pin = document.createElement('button');
-                pin.type = 'button';
-                pin.className = 'board__pin board__pin--' + rotation + ' challenge-editor__pin';
-                pin.dataset.pieceRotation = String(rotation);
-                pin.setAttribute('aria-label', 'Повернуть карту на ' + rotation * 90 + ' градусов');
-                pin.style.left =
-                    offsetX + (selected.x - minX + matrix[0].length / 2) * cell - 20 + offsets[rotation][0] + 'px';
-                pin.style.top =
-                    offsetY + (selected.y - minY + matrix.length / 2) * cell - 20 + offsets[rotation][1] + 'px';
-                canvas.append(pin);
-            }
-        }
-    }
-
-    editorBoardOrigin = { minX, minY, cell, offsetX, offsetY };
-    if (!boardCentered) {
-        boardCentered = true;
-        const start = draft.board[0];
-        const matrix = rotateMatrix(cardById(start.id).matrix, start.rotation);
-        viewport.scrollLeft = offsetX + (start.x - minX + matrix[0].length / 2) * cell - viewport.clientWidth / 2;
-        viewport.scrollTop = offsetY + (start.y - minY + matrix.length / 2) * cell - viewport.clientHeight / 2;
-    } else {
-        viewport.scrollLeft = offsetX + (centerX - minX) * cell - viewport.clientWidth / 2;
-        viewport.scrollTop = offsetY + (centerY - minY) * cell - viewport.clientHeight / 2;
-    }
-    root.querySelector('[data-editor-zoom-level]').textContent = Math.round((cell / 24) * 100) + '%';
-    renderBoardControls();
-}
-
 function renderBoardControls() {
-    const remove = root.querySelector('[data-remove-piece]');
-    const selection = root.querySelector('[data-board-selection]');
     const selected = draft.selectedPiece === null ? null : draft.board[draft.selectedPiece];
-    const pending = draft.pendingCard !== null;
-    remove.disabled = !selected || draft.selectedPiece === 0 || pending;
-    selection.replaceChildren();
-    if (pending) {
-        const card = cardById(draft.pendingCard);
-        selection.append(createCardPreview(rotateMatrix(card.matrix, 0)));
-        const label = document.createElement('span');
-        label.textContent = 'Нажми цветную точку на поле, чтобы сразу поставить карту.';
-        selection.append(label);
-    } else if (selected) {
-        const card = cardById(selected.id);
-        selection.append(createCardPreview(rotateMatrix(card.matrix, selected.rotation)));
-        const label = document.createElement('span');
-        label.textContent =
-            (draft.selectedPiece === 0 ? 'Стартовая карта закреплена' : 'Выбрана карта #' + selected.id) +
-            ' · ' +
-            selected.rotation * 90 +
-            '°';
-        selection.append(label);
-    } else selection.textContent = 'Выбери карту на поле или добавь новую.';
+    const pending = draft.pendingCard === null ? null : cardById(draft.pendingCard);
+    const card = pending || (selected ? cardById(selected.id) : null);
+    const preview = document.querySelector('#play [data-selected-card]');
+    const label = document.querySelector('#play [data-selected-card-label]');
+    const rotate = document.querySelector('#play [data-tool="rotate"]');
+    const remove = document.querySelector('#play [data-tool="delete"]');
+    preview.replaceChildren();
+    if (card) {
+        const matrix = pending ? card.matrix : rotateMatrix(card.matrix, selected.rotation);
+        preview.append(createCardPreview(matrix));
+        const info = document.createElement('span');
+        info.className = 'challenge-editor__selected-card-info';
+        info.textContent = pending
+            ? 'Карта #' + card.id + ' · выбери точку на поле'
+            : (draft.selectedPiece === 0 ? 'Стартовая карта' : 'Карта #' + card.id) + ' · ' + selected.rotation * 90 + '°';
+        preview.append(info);
+        label.textContent = pending ? 'Добавление' : 'Выбрана';
+    } else {
+        const empty = document.createElement('span');
+        empty.className = 'note';
+        empty.textContent = 'Выбери карту на поле.';
+        preview.append(empty);
+        label.textContent = 'Не выбрана';
+    }
+    const canEdit = Boolean(selected && draft.selectedPiece > 0 && !pending);
+    rotate.disabled = !canEdit;
+    remove.disabled = !canEdit;
+    document.querySelectorAll('#play [data-tool]').forEach((button) => {
+        const active = button.dataset.tool === draft.toolMode;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+    });
 }
 
-function confirmPendingPlacement(index) {
-    if (draft.pendingCard === null) return;
-    const option = draft.availablePlacements[index];
-    if (!option || !validOnBoard(draft.board, option.matrix, option.x, option.y)) {
+function confirmPendingPlacement(option) {
+    if (draft.pendingCard === null || !option) return;
+    if (!validOnBoard(draft.board, option.m, option.x, option.y)) {
         snackbar('Это положение больше недоступно. Выбери другую точку.', 'error');
-        renderBoard();
+        renderEditor();
         return;
     }
     const id = draft.pendingCard;
@@ -677,24 +590,32 @@ function confirmPendingPlacement(index) {
         id,
         x: option.x,
         y: option.y,
-        rotation: option.rotation,
-        m: clone(option.matrix),
+        rotation: option.r,
+        m: clone(option.m),
     });
     draft.deck.delete(id);
     draft.pendingCard = null;
-    draft.pendingRotation = 0;
-    draft.placementPreview = null;
     draft.selectedPiece = draft.board.length - 1;
-    renderBoard();
-    updateSaveButton();
+    draft.toolMode = 'select';
+    renderEditor();
+}
+
+function handleEditorPlacement(event) {
+    if (!editorMode || !draft) return;
+    confirmPendingPlacement(event.detail);
+}
+
+function handleEditorSelectPiece(event) {
+    if (!editorMode || !draft) return;
+    selectPiece(Number(event.detail?.index));
 }
 
 function selectPiece(index) {
     if (!draft.board[index]) return;
     draft.selectedPiece = index;
     draft.pendingCard = null;
-    draft.placementPreview = null;
-    renderBoard();
+    draft.toolMode = 'select';
+    renderEditor();
 }
 
 function rotateSelectedPieceTo(rotation) {
@@ -713,8 +634,7 @@ function rotateSelectedPieceTo(rotation) {
         return;
     }
     draft.board = nextBoard;
-    renderBoard();
-    updateSaveButton();
+    renderEditor();
 }
 
 function removeSelectedPiece() {
@@ -729,20 +649,31 @@ function removeSelectedPiece() {
     draft.board = nextBoard;
     draft.deck.add(piece.id);
     draft.selectedPiece = null;
-    renderBoard();
-    updateSaveButton();
+    renderEditor();
+}
+
+function clearBoard() {
+    if (draft.board.length <= 1) return;
+    draft.board.slice(1).forEach((piece) => draft.deck.add(piece.id));
+    draft.board = [draft.board[0]];
+    draft.pendingCard = null;
+    draft.selectedPiece = null;
+    draft.toolMode = 'select';
+    renderEditor();
 }
 
 function openPicker(mode) {
     pickerMode = mode;
-    if (mode === 'hand' && draft.hand[draft.activeHandSlot] !== null) pickerSlot = draft.activeHandSlot;
-    else if (mode === 'hand') {
-        const empty = draft.hand.findIndex((id) => id === null);
-        pickerSlot = empty >= 0 ? empty : draft.activeHandSlot;
-        draft.activeHandSlot = pickerSlot;
+    if (mode === 'hand') {
+        const current = draft.hand[draft.activeHandSlot];
+        if (current !== null) pickerSlot = draft.activeHandSlot;
+        else {
+            const empty = draft.hand.findIndex((id) => id === null);
+            pickerSlot = empty >= 0 ? empty : draft.activeHandSlot;
+            draft.activeHandSlot = pickerSlot;
+        }
     }
     const picker = root.querySelector('[data-picker]');
-    picker.classList.remove('hidden');
     const pickerTitles = {
         board: 'Добавить карту на поле',
         hand: 'Выбрать карту в руку',
@@ -753,13 +684,24 @@ function openPicker(mode) {
         mode === 'deck'
             ? 'Нажимай на карты, чтобы добавить их в колоду или убрать из неё.'
             : 'Карты показаны по две в ряд.';
+    picker.classList.remove('hidden');
+    if (editorMode) {
+        root.classList.add('challenge-editor--picker-layer');
+        root.classList.remove('hidden');
+        root.setAttribute('aria-hidden', 'false');
+    }
     renderPicker();
 }
 
 function closePicker() {
     if (!root) return;
     root.querySelector('[data-picker]').classList.add('hidden');
+    root.classList.remove('challenge-editor--picker-layer');
     pickerMode = null;
+    if (editorMode) {
+        root.classList.add('hidden');
+        root.setAttribute('aria-hidden', 'true');
+    }
 }
 
 function renderPicker() {
@@ -782,8 +724,12 @@ function renderPicker() {
         const title = document.createElement('strong');
         title.textContent = 'Карта #' + card.id;
         const note = document.createElement('small');
-        if (pickerMode === 'deck') note.textContent = selected ? 'В колоде добора' : 'Не входит в колоду';
-        else note.textContent = 'Выбрать карту';
+        note.textContent =
+            pickerMode === 'deck'
+                ? selected
+                    ? 'В колоде добора'
+                    : 'Не входит в колоду'
+                : 'Выбрать карту';
         info.append(title, note);
         button.append(info);
         if (pickerMode === 'deck') {
@@ -814,16 +760,14 @@ function chooseCatalogCard(id) {
         draft.activeHandSlot = draft.hand.findIndex((cardId) => cardId === null);
         if (draft.activeHandSlot < 0) draft.activeHandSlot = pickerSlot;
         closePicker();
-        renderHandSlots();
-        updateSaveButton();
+        renderEditor();
         return;
     }
     draft.pendingCard = id;
-    draft.pendingRotation = 0;
-    draft.placementPreview = null;
     draft.selectedPiece = null;
+    draft.toolMode = 'add';
     closePicker();
-    renderBoard();
+    renderEditor();
 }
 
 function clearHandSlot(index) {
@@ -831,12 +775,11 @@ function clearHandSlot(index) {
     if (previous !== null) draft.deck.add(previous);
     draft.hand[index] = null;
     draft.activeHandSlot = index;
-    renderHandSlots();
-    updateSaveButton();
+    renderEditor();
 }
 
 function renderHandSlots() {
-    const container = root.querySelector('[data-hand-slots]');
+    const container = document.querySelector('#play [data-hand-slots]');
     container.replaceChildren();
     draft.hand.forEach((id, index) => {
         const slot = document.createElement('div');
@@ -845,25 +788,27 @@ function renderHandSlots() {
         button.type = 'button';
         button.className = 'challenge-editor__hand-slot' + (draft.activeHandSlot === index ? ' is-active' : '');
         button.dataset.handSlot = String(index);
+        button.setAttribute(
+            'aria-label',
+            id === null ? 'Добавить карту в слот ' + (index + 1) : 'Изменить карту в слоте ' + (index + 1)
+        );
         if (id === null) {
-            button.textContent = '＋ Выбрать карту';
+            button.innerHTML = '<span class="challenge-editor__hand-plus" aria-hidden="true">＋</span>';
         } else {
             const card = cardById(id);
             button.append(createCardPreview(card.matrix));
-            const label = document.createElement('strong');
-            label.textContent = 'Карта #' + id;
+            const label = document.createElement('small');
+            label.textContent = '#' + id;
             button.append(label);
         }
-        const number = document.createElement('span');
-        number.className = 'challenge-editor__hand-number';
-        number.textContent = 'Слот ' + (index + 1);
-        slot.append(number, button);
+        slot.append(button);
         if (id !== null) {
             const clear = document.createElement('button');
             clear.type = 'button';
             clear.className = 'challenge-editor__remove';
             clear.dataset.handClear = String(index);
-            clear.textContent = 'Убрать';
+            clear.textContent = '×';
+            clear.setAttribute('aria-label', 'Убрать карту из слота ' + (index + 1));
             slot.append(clear);
         }
         container.append(slot);
@@ -871,56 +816,46 @@ function renderHandSlots() {
 }
 
 function renderDeck() {
-    const list = root.querySelector('[data-deck-list]');
-    const count = root.querySelector('[data-deck-count]');
-    const clearButton = root.querySelector('[data-deck-clear]');
+    const preview = document.querySelector('#play [data-deck-preview]');
+    const count = document.querySelector('#play [data-deck-count]');
     const ids = [...draft.deck].sort((a, b) => a - b);
-    count.textContent = 'В колоде добора: ' + ids.length + ' карт';
-    clearButton.disabled = ids.length === 0;
-    list.replaceChildren();
+    preview.replaceChildren();
+    count.textContent = 'В колоде: ' + ids.length + ' карт';
     if (!ids.length) {
-        const empty = document.createElement('p');
+        const empty = document.createElement('span');
         empty.className = 'note';
-        empty.textContent = 'Колода добора пустая. После стартовой руки новые карты приходить не будут.';
-        list.append(empty);
+        empty.textContent = 'Колода пуста';
+        preview.append(empty);
         return;
     }
-    ids.forEach((id) => {
-        const card = cardById(id);
-        if (!card) return;
-        const item = document.createElement('div');
-        item.className = 'challenge-editor__deck-card';
-        item.append(createCardPreview(card.matrix));
-        const label = document.createElement('strong');
-        label.textContent = 'Карта #' + id;
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'challenge-editor__remove';
-        remove.dataset.deckRemove = String(id);
-        remove.textContent = 'Убрать';
-        item.append(label, remove);
-        list.append(item);
-    });
+    const card = cardById(ids[0]);
+    preview.append(createCardPreview(card.matrix, 'challenge-editor__preview--deck'));
+    const label = document.createElement('span');
+    label.className = 'caption';
+    label.textContent = ids.length > 1 ? 'и ещё ' + (ids.length - 1) : 'последняя карта';
+    preview.append(label);
 }
 
 function challengeValidationIssues() {
-    return draft.title.trim() ? [] : ['добавь название'];
+    const issues = [];
+    if (!draft.title.trim()) issues.push('добавь название');
+    if (draft.pendingCard !== null) issues.push('заверши размещение выбранной карты');
+    return issues;
 }
 
 function updateSaveButton() {
-    if (!root || !draft) return;
+    if (!draft || !editorMode) return;
     const issues = challengeValidationIssues();
-    const button = root.querySelector('[data-save]');
-    button.disabled = false;
-    button.textContent = issues.length
-        ? 'Укажи название'
-        : draft.challengeId
-          ? 'Сохранить изменения'
-          : 'Опубликовать испытание';
-    const status = root.querySelector('[data-editor-status]');
+    const button = document.querySelector('#play [data-save]');
+    const status = document.querySelector('#play [data-editor-status]');
+    if (!button || !status) return;
+    button.disabled = issues.length > 0;
+    button.textContent = 'Сохранить';
     status.textContent = issues.length
-        ? 'Для публикации достаточно указать название.'
-        : 'Название задано — испытание можно опубликовать. Поле, стартовую руку и колоду можно настроить отдельно.';
+        ? issues.length === 1 && !draft.title.trim()
+            ? 'Открой «Данные испытания» и укажи название.'
+            : 'Заверши размещение карты и укажи название.'
+        : 'Испытание готово к сохранению.';
 }
 
 function challengeAccessError(error) {
@@ -940,17 +875,17 @@ function clearDeck() {
 }
 
 async function saveChallenge() {
-    if (!draft) return;
-    const button = root.querySelector('[data-save]');
+    if (!draft || !editorMode) return;
+    const button = document.querySelector('#play [data-save]');
     const issues = challengeValidationIssues();
     if (issues.length) {
-        snackbar('Перед публикацией: ' + issues.join('; ') + '.', 'error');
+        snackbar('Перед сохранением: ' + issues.join('; ') + '.', 'error');
         updateSaveButton();
         return;
     }
     const editing = Boolean(draft.challengeId);
     button.disabled = true;
-    button.textContent = editing ? 'Сохраняю…' : 'Публикую…';
+    button.textContent = 'Сохраняю…';
     const hand = draft.hand.filter((id) => id !== null);
     const challenge = {
         title: draft.title.trim(),
@@ -966,10 +901,8 @@ async function saveChallenge() {
             : await savePublicChallenge(challenge);
         library = [saved, ...library.filter((item) => item.id !== saved.id)];
         libraryStatus = 'ready';
-        activeView = 'library';
-        closePicker();
-        render();
         snackbar(editing ? 'Изменения сохранены.' : 'Испытание опубликовано в общей библиотеке.');
+        exitEditorScreen(true);
     } catch (error) {
         snackbar('Не удалось сохранить испытание: ' + challengeAccessError(error), 'error');
         updateSaveButton();
@@ -1031,7 +964,7 @@ function renderLibrary() {
         meta.textContent =
             Number(challenge.exits || 5) +
             ' выходов · ' +
-            (Array.isArray(challenge.board) ? challenge.board.length : 0) +
+            normalizeChallengeArray(challenge.board).length +
             ' карт на поле · ' +
             String(challenge.authorName || 'Игрок');
         const play = document.createElement('button');
@@ -1072,8 +1005,6 @@ function editChallenge(id) {
         return;
     }
 
-    // Editing must remain possible even when the published layout violates game rules.
-    // Normalize recoverable fields instead of rejecting the entire challenge.
     const startCard = cardById(START_CARDS[exits]);
     const tunnelIds = new Set(tunnelCards().map((card) => card.id));
     const pieces = boardData
@@ -1119,8 +1050,8 @@ function editChallenge(id) {
     draft.deck = new Set(deck);
     draft.pendingCard = null;
     draft.selectedPiece = null;
-    draft.placementPreview = null;
-    boardCentered = false;
+    draft.toolMode = 'select';
+    returnToLibrary = true;
     closePicker();
     showEditor();
 }

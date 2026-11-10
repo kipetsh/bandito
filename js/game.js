@@ -31,6 +31,8 @@ export const state = {
     tutorial: null,
     challenge: null,
 };
+let challengeEditorMode = false;
+let challengeEditorSelectedPiece = -1;
 const defaultStats = { games: 0, wins: 0, losses: 0, best: null };
 let playerStats = {
     ...defaultStats,
@@ -476,7 +478,7 @@ window.addEventListener('resize', () => {
         zoomBase = base;
     }
     // Crossing the narrow breakpoint turns the cards in the hand, so the hand is rebuilt too.
-    if (!$('#play').classList.contains('hidden')) render({ hand: crossed });
+    if (!$('#play').classList.contains('hidden')) render({ hand: challengeEditorMode ? false : crossed });
 });
 // hand: false keeps the hand as it is (zoom changes only the board).
 export function render({ hand = true } = {}) {
@@ -524,7 +526,7 @@ export function render({ hand = true } = {}) {
     const zoomShare = (c - clampCell(0)) / (clampCell(Infinity) - clampCell(0)),
         pinSize = 12 + 2 * Math.round(4 * zoomShare);
     b.style.setProperty('--board-pin-size', pinSize + 'px');
-    for (const p of state.placed) {
+    for (const [pieceIndex, p] of state.placed.entries()) {
         const [w, h] = dims(p.m),
             el = document.createElement('div');
         const isLatest =
@@ -537,6 +539,13 @@ export function render({ hand = true } = {}) {
             'board__piece' +
             (isLatest && p !== state.placed[0] ? ' board__piece--latest' : '') +
             (animateThis ? ' board__piece--fresh' : '');
+        if (challengeEditorMode) {
+            el.dataset.editorPieceIndex = String(pieceIndex);
+            el.tabIndex = 0;
+            el.setAttribute('role', 'button');
+            el.setAttribute('aria-label', 'Выбрать карту ' + p.id + (pieceIndex === 0 ? ', стартовая' : ''));
+            el.classList.toggle('challenge-editor__piece--selected', pieceIndex === challengeEditorSelectedPiece);
+        }
         if (animateThis) state.animateLastPlacement = false;
         el.style.cssText = `left:${padX + (p.x - minX) * c}px;top:${padY + (p.y - minY) * c}px;width:${w * c}px;height:${h * c}px;grid-template-columns:repeat(${w},${c}px);grid-template-rows:repeat(${h},${c}px)`;
         p.m.flat().forEach((v) => {
@@ -552,12 +561,12 @@ export function render({ hand = true } = {}) {
     $('#deckcount').textContent = state.deck.length;
     $('#openCount').textContent = opens();
     $('#turnCount').textContent = state.turnCount;
-    const canExchange = !state.finished && canAct && state.hand.length > 0 && !hasMoves;
+    const canExchange = !challengeEditorMode && !state.finished && canAct && state.hand.length > 0 && !hasMoves;
     $('#exchange').disabled = !canExchange;
     $('#exchange').classList.toggle('is-visible', canExchange);
     $('#exchange').setAttribute('aria-hidden', String(!canExchange));
     $('#zoomLevel').textContent = Math.round((cellSize / zoomBase) * 100) + '%';
-    if (!mpRoomCode && canAct && !state.finished && state.hand.length > 0 && !hasMoves) {
+    if (!challengeEditorMode && !mpRoomCode && canAct && !state.finished && state.hand.length > 0 && !hasMoves) {
         if (!state.deck.length) {
             finishGame(false);
             status('Поражение. Нет доступных ходов, а колода пуста.', 'lose');
@@ -736,6 +745,11 @@ document.addEventListener('pointerout', (e) => !e.relatedTarget && (cursor = nul
 
 // Placements of the selected card drawn by the last render(): card box and pin centre in px of the board.
 let boardTargets = [];
+export function setChallengeEditorMode(enabled, selectedPiece = -1) {
+    challengeEditorMode = Boolean(enabled);
+    challengeEditorSelectedPiece = challengeEditorMode ? selectedPiece : -1;
+    if (!challengeEditorMode) boardTargets = [];
+}
 // The placement under a point of the screen: any point of a possible card counts, and where the cards of several
 // placements overlap, the one with the pin nearest to the point wins. The point must be on the board itself,
 // not under a button or the edge of the camera.
@@ -816,10 +830,41 @@ boardEl.addEventListener('pointerdown', (e) => {
 // the card is placed with «Поставить», so a stray second tap does not place it.
 boardEl.addEventListener('click', (e) => {
     if (panDragged) return;
+    if (challengeEditorMode) {
+        const piece = e.target.closest('[data-editor-piece-index]');
+        if (piece) {
+            window.dispatchEvent(
+                new CustomEvent('bandito:editor-select-piece', {
+                    detail: { index: Number(piece.dataset.editorPieceIndex) },
+                })
+            );
+            return;
+        }
+        const editorTarget = targetAt({ x: e.clientX, y: e.clientY });
+        if (editorTarget) {
+            window.dispatchEvent(
+                new CustomEvent('bandito:editor-placement', {
+                    detail: { x: editorTarget.x, y: editorTarget.y, r: editorTarget.r, m: clone(editorTarget.m) },
+                })
+            );
+        }
+        return;
+    }
     const target = targetAt({ x: e.clientX, y: e.clientY });
     if (!target) return;
     if (pressType === 'mouse' && isPreviewed(target)) play(target.x, target.y, target.m);
     else setPreview(target);
+});
+boardEl.addEventListener('keydown', (e) => {
+    if (!challengeEditorMode || (e.key !== 'Enter' && e.key !== ' ')) return;
+    const piece = e.target.closest('[data-editor-piece-index]');
+    if (!piece) return;
+    e.preventDefault();
+    window.dispatchEvent(
+        new CustomEvent('bandito:editor-select-piece', {
+            detail: { index: Number(piece.dataset.editorPieceIndex) },
+        })
+    );
 });
 
 // A pin stands at the centre of its future card. Rotations that share a centre are spread, in px of the current zoom.
@@ -1131,7 +1176,7 @@ cameraEl.addEventListener(
     { passive: false }
 );
 document.addEventListener('keydown', (e) => {
-    if ($('#play').classList.contains('hidden') || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (challengeEditorMode || $('#play').classList.contains('hidden') || e.altKey || e.ctrlKey || e.metaKey) return;
     if (!$('#settingsModal').classList.contains('hidden')) return;
     if (e.target.closest?.('input,textarea,select,[contenteditable="true"]')) return;
     const arrow = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key);

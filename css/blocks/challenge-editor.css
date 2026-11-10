@@ -27,8 +27,8 @@
         position: relative;
         display: flex;
         flex-direction: column;
-        width: min(1480px, 100%);
-        height: min(960px, calc(100svh - 32px));
+        width: min(1080px, 100%);
+        max-height: min(860px, calc(100svh - 32px));
         overflow: hidden;
         border: 1px solid var(--color-border);
         border-radius: var(--radius-xl);
@@ -59,7 +59,7 @@
     .challenge-editor__tools-heading,
     .challenge-editor__picker-head,
     .challenge-editor__picker-footer,
-    .challenge-editor__footer {
+    .challenge-editor__header-actions {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -73,14 +73,6 @@
         border-bottom: 1px solid var(--color-border);
     }
 
-    .challenge-editor__eyebrow {
-        margin: 0 0 4px;
-        color: var(--color-text-muted);
-        font-size: var(--text-xs);
-        font-weight: var(--weight-bold);
-        letter-spacing: 0.08em;
-    }
-
     .challenge-editor__header h2,
     .challenge-editor__section-head h3,
     .challenge-editor__tools h3,
@@ -90,38 +82,12 @@
         font-size: var(--text-lg);
     }
 
-    .challenge-editor__meta {
-        display: grid;
-        flex: none;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(250px, 0.9fr);
-        align-items: end;
-        gap: var(--space-3) var(--space-4);
-        padding: 12px 20px;
-        border-bottom: 1px solid var(--color-border);
-    }
-
-    .challenge-editor__field {
-        display: grid;
-        gap: 6px;
-        min-width: 0;
-        color: var(--color-text-secondary);
-        font-size: var(--text-sm);
-        font-weight: var(--weight-semibold);
-    }
-
-    .challenge-editor__description {
-        min-height: 42px;
-        resize: vertical;
-    }
-
-    .challenge-editor__difficulty-wrap {
-        display: grid;
-        gap: 6px;
-        min-width: 0;
-    }
-
-    .challenge-editor__difficulty {
-        width: 100%;
+    .challenge-editor__eyebrow {
+        margin: 0 0 4px;
+        color: var(--color-text-muted);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-bold);
+        letter-spacing: 0.08em;
     }
 
     .challenge-editor__content {
@@ -129,245 +95,8 @@
         display: flex;
         flex: 1;
         min-height: 0;
-        padding: 14px 20px;
-        overflow: hidden;
-    }
-
-    .challenge-editor__workspace {
-        display: grid;
-        flex: 1;
-        grid-template-columns: minmax(0, 1fr) minmax(270px, 320px);
-        gap: var(--space-4);
-        min-width: 0;
-        min-height: 0;
-    }
-
-    .challenge-editor__viewport {
-        position: relative;
-        display: flex;
-        flex: 1;
-        width: 100%;
-        height: 100%;
-        min-width: 0;
-        min-height: 0;
-        overflow: hidden;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        background: var(--color-surface-sunken);
-    }
-
-    .challenge-editor__viewport.game__boardbox {
-        height: 100%;
-        min-height: 0;
-    }
-
-    .challenge-editor__viewport .game__camera {
-        width: 100%;
-        min-height: 0;
-        border-radius: inherit;
-        touch-action: pan-x pan-y;
-        cursor: grab;
-    }
-
-    .challenge-editor__viewport .game__camera--dragging {
-        cursor: grabbing;
-    }
-
-    .challenge-editor__viewport .board {
-        flex: none;
-        margin: 0;
-    }
-
-    .challenge-editor__viewport .game__zoom {
-        right: var(--space-3);
-        bottom: var(--space-3);
-    }
-
-    .challenge-editor__viewport .game__zoom-level {
-        min-width: 44px;
-    }
-
-    .challenge-editor__piece {
-        z-index: 1;
-        padding: 0;
-        border: 0;
-        appearance: none;
-        background: transparent;
-        color: inherit;
-        cursor: pointer;
-    }
-
-    .challenge-editor__piece--selected {
-        z-index: 2;
-        outline: 2px solid var(--color-focus);
-        outline-offset: 2px;
-    }
-
-    .board__pin.challenge-editor__pin {
-        z-index: 8;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        pointer-events: auto;
-        cursor: pointer;
-    }
-
-    .challenge-editor__pin:hover::before,
-    .challenge-editor__pin:focus-visible::before {
-        transform: scale(1.35);
-        box-shadow:
-            0 0 0 5px var(--color-pin-hover),
-            var(--shadow-pin);
-    }
-
-    .challenge-editor__tools {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-3);
-        min-width: 0;
-        min-height: 0;
-        padding: var(--space-3);
+        padding: 16px 20px 20px;
         overflow: auto;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        background: var(--color-surface);
-    }
-
-    .challenge-editor__tool-group {
-        display: grid;
-        gap: var(--space-2);
-        min-width: 0;
-    }
-
-    .challenge-editor__tool-group + .challenge-editor__tool-group {
-        padding-top: var(--space-3);
-        border-top: 1px solid var(--color-border);
-    }
-
-    .challenge-editor__tools .note,
-    .challenge-editor__tools .caption {
-        margin: 0;
-        line-height: var(--leading-normal);
-    }
-
-    .challenge-editor__tools-heading {
-        min-height: 32px;
-    }
-
-    .challenge-editor__tools-heading .caption {
-        color: var(--color-text-muted);
-    }
-
-    .challenge-editor__selection {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        min-height: 42px;
-        margin: 0;
-        padding: 8px 10px;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-md);
-        background: var(--color-surface-sunken);
-        color: var(--color-text-strong);
-        font-size: var(--text-xs);
-    }
-
-    .challenge-editor__hand-slots {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 6px;
-    }
-
-    .challenge-editor__hand-slot-wrap {
-        display: grid;
-        gap: 4px;
-        min-width: 0;
-    }
-
-    .challenge-editor__hand-number {
-        color: var(--color-text-muted);
-        font-size: 10px;
-        font-weight: var(--weight-semibold);
-        text-align: center;
-    }
-
-    .challenge-editor__hand-slot {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        min-height: 94px;
-        padding: 6px 3px;
-        border: 1px dashed var(--color-border-strong);
-        border-radius: var(--radius-md);
-        background: var(--color-surface-sunken);
-        color: var(--color-text-strong);
-        font: inherit;
-        font-size: var(--text-xs);
-        cursor: pointer;
-    }
-
-    .challenge-editor__hand-slot.is-active {
-        border-style: solid;
-        background: var(--color-surface-selected);
-    }
-
-    .challenge-editor__hand-slot strong {
-        overflow: hidden;
-        max-width: 100%;
-        font-size: 10px;
-        text-overflow: ellipsis;
-    }
-
-    .challenge-editor__hand-slot-wrap .challenge-editor__remove {
-        justify-self: center;
-    }
-
-    .challenge-editor__deck-count {
-        margin: 0;
-        color: var(--color-text-secondary);
-        font-size: var(--text-xs);
-        font-weight: var(--weight-semibold);
-    }
-
-    .challenge-editor__deck-list {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 5px;
-        max-height: 128px;
-        overflow: auto;
-        padding: 1px;
-    }
-
-    .challenge-editor__deck-card {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        min-width: 0;
-        padding: 5px;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-sm);
-        background: var(--color-surface-sunken);
-    }
-
-    .challenge-editor__deck-card strong {
-        flex: 1;
-        min-width: 0;
-        color: var(--color-text-strong);
-        font-size: 10px;
-    }
-
-    .challenge-editor__remove {
-        flex: none;
-        padding: 4px 6px;
-        border: 0;
-        border-radius: var(--radius-full);
-        background: var(--color-surface-selected);
-        color: var(--color-text-secondary);
-        font: inherit;
-        font-size: 10px;
-        cursor: pointer;
     }
 
     .challenge-editor__library-screen {
@@ -435,35 +164,15 @@
         margin-top: auto;
     }
 
-    .challenge-editor__preview {
-        display: grid;
-        flex: none;
-        gap: 0;
-        width: max-content;
-        overflow: hidden;
-        border: 1px solid var(--color-tile-outline);
-        background: var(--color-tile-cell);
-    }
-
-    .challenge-editor__preview-cell {
-        border: 0.5px solid var(--color-tile-line);
-        background: var(--color-tile-cell);
-    }
-
-    .challenge-editor__preview-cell.is-wall {
-        border-color: var(--color-tile-wall);
-        background: var(--color-tile-wall);
-    }
-
     .challenge-editor__picker {
-        position: absolute;
-        z-index: 5;
-        top: 12px;
-        right: 12px;
-        bottom: 12px;
+        position: fixed;
+        z-index: var(--z-modal);
+        top: 16px;
+        right: 16px;
+        bottom: 16px;
         display: flex;
         flex-direction: column;
-        width: min(540px, calc(100% - 24px));
+        width: min(540px, calc(100vw - 32px));
         overflow: hidden;
         border: 1px solid var(--color-border-strong);
         border-radius: var(--radius-lg);
@@ -542,57 +251,339 @@
         border-bottom: 0;
     }
 
-    .challenge-editor__footer {
+    .challenge-editor--picker-layer {
+        display: block;
+        padding: 0;
+        background: transparent;
+        pointer-events: none;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .challenge-editor--picker-layer .challenge-editor__backdrop,
+    .challenge-editor--picker-layer .challenge-editor__dialog {
+        display: none;
+    }
+
+    .challenge-editor--picker-layer .challenge-editor__picker {
+        pointer-events: auto;
+    }
+
+    .challenge-editor__preview {
+        display: grid;
         flex: none;
-        padding: 12px 20px;
-        border-top: 1px solid var(--color-border);
+        gap: 0;
+        width: max-content;
+        overflow: hidden;
+        border: 1px solid var(--color-tile-outline);
+        background: var(--color-tile-cell);
     }
 
-    .challenge-editor__footer .note {
-        margin: 0;
+    .challenge-editor__preview-cell {
+        border: 0.5px solid var(--color-tile-line);
+        background: var(--color-tile-cell);
     }
 
-    .challenge-editor [hidden] {
-        display: none !important;
+    .challenge-editor__preview-cell.is-wall {
+        border-color: var(--color-tile-wall);
+        background: var(--color-tile-wall);
+    }
+
+    .challenge-editor__preview--deck {
+        transform: scale(0.82);
+        transform-origin: left center;
     }
 
     body.challenge-editor-open {
         overflow: hidden;
     }
 
-    @media (max-width: 980px) and (min-width: 761px) {
-        .challenge-editor__meta {
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        }
-
-        .challenge-editor__difficulty-wrap {
-            grid-column: 1 / -1;
-            max-width: 520px;
-        }
-
-        .challenge-editor__workspace {
-            grid-template-columns: minmax(0, 1fr) 270px;
-            gap: var(--space-2);
-        }
-
-        .challenge-editor__content {
-            padding: 10px 12px;
-        }
-
-        .challenge-editor__tools {
-            padding: var(--space-2);
-        }
+    body.challenge-editor-mode {
+        overflow: hidden;
     }
 
-    @media (max-height: 720px) and (min-width: 761px) {
-        .challenge-editor__meta {
-            padding-top: 8px;
-            padding-bottom: 8px;
+    body.challenge-editor-mode .page {
+        max-width: 1720px;
+        min-height: 100svh;
+        padding: 20px clamp(16px, 4.7vw, 78px);
+    }
+
+    body.challenge-editor-mode .game__head {
+        margin-bottom: var(--space-3);
+    }
+
+    body.challenge-editor-mode .game__layout {
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 280px);
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: var(--space-2) var(--space-3);
+    }
+
+    body.challenge-editor-mode .game__boardbox {
+        height: clamp(420px, calc(100svh - 165px), 900px);
+        min-height: 420px;
+    }
+
+    body.challenge-editor-mode .game__side {
+        min-height: 0;
+        max-height: calc(100svh - 140px);
+        overflow: hidden;
+        gap: 0;
+    }
+
+    .challenge-editor__header-actions {
+        flex: none;
+    }
+
+    .challenge-editor__tools {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: var(--space-3);
+        min-width: 0;
+        min-height: 0;
+        overflow: auto;
+    }
+
+    .challenge-editor__tool-group {
+        display: grid;
+        gap: var(--space-2);
+        min-width: 0;
+    }
+
+    .challenge-editor__tool-group + .challenge-editor__tool-group {
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--color-border);
+    }
+
+    .challenge-editor__tools-heading {
+        min-height: 30px;
+    }
+
+    .challenge-editor__tools-heading .caption {
+        color: var(--color-text-muted);
+    }
+
+    .challenge-editor__tool-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .challenge-editor__tool {
+        display: grid;
+        justify-items: center;
+        align-content: center;
+        gap: 5px;
+        min-width: 0;
+        min-height: 58px;
+        padding: 6px 2px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: transparent;
+        color: var(--color-text);
+        font: inherit;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease;
+    }
+
+    .challenge-editor__tool:hover,
+    .challenge-editor__tool.is-active {
+        border-color: var(--color-border-strong);
+        background: var(--color-surface-selected);
+    }
+
+    .challenge-editor__tool:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .challenge-editor__tool-icon {
+        color: var(--color-text-strong);
+        font-size: 21px;
+        line-height: 1;
+    }
+
+    .challenge-editor__tool small {
+        color: var(--color-text-secondary);
+        font-size: 10px;
+        line-height: 1.1;
+    }
+
+    .challenge-editor__selected-card {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        min-height: 86px;
+        padding: var(--space-2);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface-sunken);
+    }
+
+    .challenge-editor__selected-card-info {
+        color: var(--color-text-secondary);
+        font-size: var(--text-xs);
+        line-height: var(--leading-normal);
+    }
+
+    .challenge-editor__hand-slots {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-2);
+    }
+
+    .challenge-editor__hand-slot-wrap {
+        display: grid;
+        justify-items: center;
+        gap: 5px;
+        min-width: 0;
+    }
+
+    .challenge-editor__hand-slot {
+        position: relative;
+        display: grid;
+        place-items: center;
+        gap: 5px;
+        width: 100%;
+        min-width: 0;
+        min-height: 68px;
+        padding: 5px 2px;
+        border: 1px dashed var(--color-border-strong);
+        border-radius: var(--radius-md);
+        background: var(--color-surface-sunken);
+        color: var(--color-text-strong);
+        font: inherit;
+        cursor: pointer;
+    }
+
+    .challenge-editor__hand-slot.is-active {
+        border-style: solid;
+        background: var(--color-surface-selected);
+    }
+
+    .challenge-editor__hand-slot small {
+        color: var(--color-text-muted);
+        font-size: 10px;
+    }
+
+    .challenge-editor__hand-plus {
+        color: var(--color-text-secondary);
+        font-size: 20px;
+        line-height: 1;
+    }
+
+    .challenge-editor__remove {
+        min-width: 24px;
+        min-height: 22px;
+        padding: 2px 6px;
+        border: 0;
+        border-radius: var(--radius-full);
+        background: var(--color-surface-selected);
+        color: var(--color-text-secondary);
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+    }
+
+    .challenge-editor__deck-summary {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        min-height: 54px;
+    }
+
+    .challenge-editor__deck-summary > div {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-width: 0;
+    }
+
+    .challenge-editor__deck-count {
+        margin: 0;
+        color: var(--color-text-secondary);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-semibold);
+    }
+
+    .challenge-editor__clear-board {
+        width: 100%;
+    }
+
+    .challenge-editor__metadata {
+        padding-top: var(--space-2);
+        border-top: 1px solid var(--color-border);
+    }
+
+    .challenge-editor__metadata summary {
+        color: var(--color-text-secondary);
+        font-size: var(--text-sm);
+        font-weight: var(--weight-semibold);
+        cursor: pointer;
+    }
+
+    .challenge-editor__metadata-fields {
+        display: grid;
+        gap: var(--space-2);
+        padding-top: var(--space-3);
+    }
+
+    .challenge-editor__field {
+        display: grid;
+        gap: 5px;
+        color: var(--color-text-secondary);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-semibold);
+    }
+
+    .challenge-editor__metadata-fields textarea {
+        min-height: 54px;
+        resize: vertical;
+    }
+
+    .challenge-editor__difficulty-wrap {
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .challenge-editor__difficulty {
+        width: 100%;
+    }
+
+    .challenge-editor__difficulty .lobby__difficulty-option {
+        padding-right: 4px;
+        padding-left: 4px;
+        font-size: 10px;
+    }
+
+    .challenge-editor__status {
+        margin: 0;
+        padding: 8px 10px;
+        border-radius: var(--radius-md);
+        background: var(--color-surface-sunken);
+        color: var(--color-text-secondary);
+        font-size: var(--text-xs);
+        line-height: var(--leading-normal);
+    }
+
+    body.challenge-editor-mode .board__piece {
+        cursor: pointer;
+    }
+
+    body.challenge-editor-mode .board__piece--selected {
+        z-index: 6;
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+    }
+
+    @media (max-width: 980px) and (min-width: 761px) {
+        body.challenge-editor-mode .game__layout {
+            grid-template-columns: minmax(0, 1fr) 250px;
         }
 
-        .challenge-editor__content {
-            padding-top: 8px;
-            padding-bottom: 8px;
+        body.challenge-editor-mode .game__side {
+            padding: var(--space-3);
         }
 
         .challenge-editor__tools {
@@ -604,10 +595,33 @@
         }
     }
 
+    @media (max-height: 720px) and (min-width: 761px) {
+        body.challenge-editor-mode .game__boardbox {
+            height: calc(100svh - 145px);
+            min-height: 360px;
+        }
+
+        body.challenge-editor-mode .game__side {
+            max-height: calc(100svh - 120px);
+        }
+
+        .challenge-editor__tool {
+            min-height: 50px;
+        }
+
+        .challenge-editor__selected-card {
+            min-height: 66px;
+        }
+
+        .challenge-editor__hand-slot {
+            min-height: 58px;
+        }
+    }
+
     @media (max-width: 760px) {
         .challenge-editor-launches,
         .challenge-editor {
-            display: none !important;
+            display: none;
         }
     }
 }
