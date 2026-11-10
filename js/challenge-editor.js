@@ -9,11 +9,11 @@ import {
 import { snackbar } from '#js/snackbar.js';
 
 const START_CARDS = { 2: 75, 5: 72, 6: 71 };
-const CELL_SIZE = 24;
-const BOARD_COLUMNS = 100;
-const BOARD_ROWS = 60;
-const BOARD_OFFSET_X = 48;
-const BOARD_OFFSET_Y = 28;
+const MIN_EDITOR_CELL = 12;
+const MAX_EDITOR_CELL = 36;
+let editorCellSize = 24;
+let editorBoardOrigin = null;
+let editorPan = null;
 
 let root = null;
 let launchButton = null;
@@ -105,8 +105,13 @@ function initChallengeEditor() {
         '</div></div></div>' +
         '<div class="challenge-editor__content">' +
         '<section class="challenge-editor__workspace" data-editor-screen>' +
-        '<div class="challenge-editor__viewport" data-board-viewport aria-label="Поле редактора">' +
-        '<div class="challenge-editor__canvas" data-board-canvas></div></div>' +
+        '<div class="challenge-editor__viewport game__boardbox" data-board-viewport aria-label="Поле редактора">' +
+        '<div class="game__camera" data-board-camera><div class="board" data-board-canvas></div></div>' +
+        '<div class="game__zoom" aria-label="Масштаб поля">' +
+        '<button class="btn btn--icon game__zoom-button" type="button" data-editor-zoom="out" aria-label="Уменьшить масштаб">−</button>' +
+        '<span class="game__zoom-level" data-editor-zoom-level>100%</span>' +
+        '<button class="btn btn--icon game__zoom-button" type="button" data-editor-zoom="in" aria-label="Увеличить масштаб">+</button>' +
+        '</div></div>' +
         '<aside class="challenge-editor__tools">' +
         '<section class="challenge-editor__tool-group">' +
         '<h3>Поле</h3>' +
@@ -146,6 +151,37 @@ function initChallengeEditor() {
         '<button class="btn btn--sm" type="button" data-picker-close>Готово</button></footer></section>' +
         '</section>';
     document.body.append(root);
+    const boardCamera = root.querySelector('[data-board-camera]');
+    boardCamera.addEventListener('pointerdown', (event) => {
+        if (event.pointerType !== 'mouse' || event.button !== 0 || event.target.closest('button')) return;
+        editorPan = { id: event.pointerId, x: event.clientX, y: event.clientY,
+            left: boardCamera.scrollLeft, top: boardCamera.scrollTop, moved: false };
+    });
+    boardCamera.addEventListener('pointermove', (event) => {
+        if (!editorPan || editorPan.id !== event.pointerId) return;
+        const dx = event.clientX - editorPan.x, dy = event.clientY - editorPan.y;
+        if (!editorPan.moved && Math.hypot(dx, dy) > 5) {
+            editorPan.moved = true;
+            boardCamera.classList.add('game__camera--dragging');
+            boardCamera.setPointerCapture(event.pointerId);
+        }
+        if (editorPan.moved) {
+            boardCamera.scrollLeft = editorPan.left - dx;
+            boardCamera.scrollTop = editorPan.top - dy;
+        }
+    });
+    const endEditorPan = (event) => {
+        if (!editorPan || editorPan.id !== event.pointerId) return;
+        editorPan = null;
+        boardCamera.classList.remove('game__camera--dragging');
+    };
+    boardCamera.addEventListener('pointerup', endEditorPan);
+    boardCamera.addEventListener('pointercancel', endEditorPan);
+    boardCamera.addEventListener('wheel', (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        setEditorZoom(editorCellSize + (event.deltaY < 0 ? 2 : -2));
+    }, { passive: false });
     root.addEventListener('click', handleRootClick);
     root.addEventListener('input', handleRootInput);
     window.addEventListener('keydown', handleEditorKeydown);
@@ -221,6 +257,11 @@ function handleRootClick(event) {
     }
     if (target.closest?.('[data-editor-close]')) {
         closeEditor();
+        return;
+    }
+    const zoom = target.closest?.('[data-editor-zoom]');
+    if (zoom) {
+        setEditorZoom(editorCellSize + (zoom.dataset.editorZoom === 'in' ? 2 : -2));
         return;
     }
     const exits = target.closest?.('[data-editor-exits]');
@@ -453,35 +494,51 @@ function editorPlacementOptions() {
     return options;
 }
 
+function setEditorZoom(next) {
+    const value = Math.max(MIN_EDITOR_CELL, Math.min(MAX_EDITOR_CELL, Math.round(next / 2) * 2));
+    if (value === editorCellSize) return;
+    editorCellSize = value;
+    renderBoard();
+}
+
 function renderBoard() {
-    const viewport = root.querySelector('[data-board-viewport]');
+    const viewport = root.querySelector('[data-board-camera]');
     const canvas = root.querySelector('[data-board-canvas]');
-    const scrollLeft = viewport.scrollLeft;
-    const scrollTop = viewport.scrollTop;
+    const previous = editorBoardOrigin;
+    const centerX = previous ? viewport.scrollLeft / previous.cell + previous.minX : 0;
+    const centerY = previous ? viewport.scrollTop / previous.cell + previous.minY : 0;
+    const margin = 9;
+    const minX = Math.min(...draft.board.map((piece) => piece.x)) - margin;
+    const minY = Math.min(...draft.board.map((piece) => piece.y)) - margin;
+    const maxX = Math.max(...draft.board.map((piece) => piece.x + rotateMatrix(cardById(piece.id).matrix, piece.rotation)[0].length) ) + margin;
+    const maxY = Math.max(...draft.board.map((piece) => piece.y + rotateMatrix(cardById(piece.id).matrix, piece.rotation).length)) + margin;
+    const cell = editorCellSize;
     canvas.replaceChildren();
-    canvas.style.width = BOARD_COLUMNS * CELL_SIZE + 'px';
-    canvas.style.height = BOARD_ROWS * CELL_SIZE + 'px';
+    canvas.style.width = Math.max(viewport.clientWidth, (maxX - minX) * cell) + 'px';
+    canvas.style.height = Math.max(viewport.clientHeight, (maxY - minY) * cell) + 'px';
+    canvas.style.setProperty('--board-cell', cell + 'px');
+    canvas.style.setProperty('--board-pin-size', '14px');
+
     draft.board.forEach((piece, index) => {
         const card = cardById(piece.id);
         if (!card) return;
         const matrix = rotateMatrix(card.matrix, piece.rotation);
         const element = document.createElement('button');
         element.type = 'button';
-        element.className =
-            'board__piece challenge-editor__piece' +
+        element.className = 'board__piece challenge-editor__piece' +
             (draft.selectedPiece === index ? ' challenge-editor__piece--selected' : '');
         element.dataset.pieceIndex = String(index);
         element.setAttribute('aria-label', 'Выбрать карту ' + piece.id + (index === 0 ? ', стартовая' : ''));
-        element.style.left = (piece.x + BOARD_OFFSET_X) * CELL_SIZE + 'px';
-        element.style.top = (piece.y + BOARD_OFFSET_Y) * CELL_SIZE + 'px';
-        element.style.width = matrix[0].length * CELL_SIZE + 'px';
-        element.style.height = matrix.length * CELL_SIZE + 'px';
-        element.style.gridTemplateColumns = 'repeat(' + matrix[0].length + ',' + CELL_SIZE + 'px)';
-        element.style.gridTemplateRows = 'repeat(' + matrix.length + ',' + CELL_SIZE + 'px)';
+        element.style.left = (piece.x - minX) * cell + 'px';
+        element.style.top = (piece.y - minY) * cell + 'px';
+        element.style.width = matrix[0].length * cell + 'px';
+        element.style.height = matrix.length * cell + 'px';
+        element.style.gridTemplateColumns = 'repeat(' + matrix[0].length + ',' + cell + 'px)';
+        element.style.gridTemplateRows = 'repeat(' + matrix.length + ',' + cell + 'px)';
         matrix.flat().forEach((value) => {
-            const cell = document.createElement('i');
-            cell.className = 'board__cell' + (value ? '' : ' board__cell--wall');
-            element.append(cell);
+            const tile = document.createElement('i');
+            tile.className = 'board__cell' + (value ? '' : ' board__cell--wall');
+            element.append(tile);
         });
         canvas.append(element);
     });
@@ -494,8 +551,8 @@ function renderBoard() {
             pin.className = 'board__pin board__pin--' + option.rotation + ' challenge-editor__pin';
             pin.dataset.placementIndex = String(index);
             pin.setAttribute('aria-label', 'Поворот ' + option.rotation * 90 + ' градусов, позиция ' + (index + 1));
-            pin.style.left = (option.x + BOARD_OFFSET_X + option.matrix[0].length / 2) * CELL_SIZE - 20 + 'px';
-            pin.style.top = (option.y + BOARD_OFFSET_Y + option.matrix.length / 2) * CELL_SIZE - 20 + 'px';
+            pin.style.left = (option.x - minX + option.matrix[0].length / 2) * cell - 20 + 'px';
+            pin.style.top = (option.y - minY + option.matrix.length / 2) * cell - 20 + 'px';
             canvas.append(pin);
         });
         draft.availablePlacements = options;
@@ -504,19 +561,10 @@ function renderBoard() {
         const selected = draft.selectedPiece === null ? null : draft.board[draft.selectedPiece];
         if (selected && draft.selectedPiece > 0) {
             const card = cardById(selected.id);
-            const offsets = [
-                [0, -22],
-                [22, 0],
-                [0, 22],
-                [-22, 0],
-            ];
+            const offsets = [[0, -22], [22, 0], [0, 22], [-22, 0]];
             for (let rotation = 0; rotation < 4; rotation++) {
                 const matrix = rotateMatrix(card.matrix, rotation);
-                const candidate = {
-                    ...selected,
-                    rotation,
-                    m: matrix,
-                };
+                const candidate = { ...selected, rotation, m: matrix };
                 const nextBoard = draft.board.map((piece, index) =>
                     index === draft.selectedPiece ? candidate : piece
                 );
@@ -526,24 +574,25 @@ function renderBoard() {
                 pin.className = 'board__pin board__pin--' + rotation + ' challenge-editor__pin';
                 pin.dataset.pieceRotation = String(rotation);
                 pin.setAttribute('aria-label', 'Повернуть карту на ' + rotation * 90 + ' градусов');
-                pin.style.left =
-                    (selected.x + BOARD_OFFSET_X + matrix[0].length / 2) * CELL_SIZE - 20 + offsets[rotation][0] + 'px';
-                pin.style.top =
-                    (selected.y + BOARD_OFFSET_Y + matrix.length / 2) * CELL_SIZE - 20 + offsets[rotation][1] + 'px';
+                pin.style.left = (selected.x - minX + matrix[0].length / 2) * cell - 20 + offsets[rotation][0] + 'px';
+                pin.style.top = (selected.y - minY + matrix.length / 2) * cell - 20 + offsets[rotation][1] + 'px';
                 canvas.append(pin);
             }
         }
     }
 
-    viewport.scrollLeft = scrollLeft;
-    viewport.scrollTop = scrollTop;
+    editorBoardOrigin = { minX, minY, cell };
     if (!boardCentered) {
         boardCentered = true;
-        requestAnimationFrame(() => {
-            viewport.scrollLeft = (BOARD_OFFSET_X + 3) * CELL_SIZE - viewport.clientWidth / 2;
-            viewport.scrollTop = (BOARD_OFFSET_Y + 1.5) * CELL_SIZE - viewport.clientHeight / 2;
-        });
+        const start = draft.board[0];
+        const matrix = rotateMatrix(cardById(start.id).matrix, start.rotation);
+        viewport.scrollLeft = (start.x - minX + matrix[0].length / 2) * cell - viewport.clientWidth / 2;
+        viewport.scrollTop = (start.y - minY + matrix.length / 2) * cell - viewport.clientHeight / 2;
+    } else {
+        viewport.scrollLeft = (centerX - minX) * cell - viewport.clientWidth / 2;
+        viewport.scrollTop = (centerY - minY) * cell - viewport.clientHeight / 2;
     }
+    root.querySelector('[data-editor-zoom-level]').textContent = Math.round((cell / 24) * 100) + '%';
     renderBoardControls();
 }
 
