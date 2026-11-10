@@ -885,13 +885,23 @@ async function saveChallenge() {
     }
     button.disabled = true;
     button.textContent = 'Публикую…';
+    const hand = draft.hand.slice();
+    const usedIds = new Set([...draft.board.map((piece) => piece.id), ...hand.filter((id) => id !== null)]);
+    const availableCards = tunnelCards()
+        .map((card) => card.id)
+        .filter((id) => !usedIds.has(id));
+    hand.forEach((id, index) => {
+        if (id !== null || !availableCards.length) return;
+        const randomIndex = Math.floor(Math.random() * availableCards.length);
+        hand[index] = availableCards.splice(randomIndex, 1)[0];
+    });
     const challenge = {
         title: draft.title.trim(),
         description: draft.description.trim(),
         exits: draft.exits,
         board: draft.board.map(({ id, x, y, rotation }) => ({ id, x, y, rotation })),
-        hand: draft.hand.slice(),
-        deck: [...draft.deck],
+        hand,
+        deck: [...draft.deck].filter((id) => !hand.includes(id)),
     };
     try {
         const saved = await savePublicChallenge(challenge);
