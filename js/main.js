@@ -41,6 +41,7 @@ async function startApplication() {
     await import('#js/snackbar.js');
     await import('#js/game.js');
     const multiplayer = await import('#js/multiplayer.js');
+    await import('#js/challenge-editor.js');
 
     if (!tauriInvoke) {
         const roomCode = getRoomCodeFromPath(window.location.pathname);

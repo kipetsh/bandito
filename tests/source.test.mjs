@@ -170,6 +170,17 @@ test('a pressed mouse pointer does not clear the placement preview', async () =>
     assert.equal(shouldClearPlacementPreview({ ...mouseHover, pointerType: 'pen' }, null), false);
 });
 
+test('challenge placement validation reuses the game rules for connections and overlaps', async () => {
+    const { validOnBoard, rotateMatrix } = await import(moduleUrl('js/game.js'));
+    const board = [{ id: 1, x: 0, y: 0, m: [[1]] }];
+
+    assert.equal(validOnBoard(board, [[1]], 1, 0), true);
+    assert.equal(validOnBoard(board, [[0]], 1, 0), false);
+    assert.equal(validOnBoard(board, [[1]], 0, 0), false);
+    assert.equal(validOnBoard(board, [[1]], 5, 0), false);
+    assert.deepEqual(rotateMatrix([[1, 0]], 1), [[1], [0]]);
+});
+
 test('all game scripts pass the JavaScript parser', () => {
     const scriptsDirectory = resolve(projectRoot, 'js');
     const scripts = readdirSync(scriptsDirectory).filter((name) => name.endsWith('.js'));

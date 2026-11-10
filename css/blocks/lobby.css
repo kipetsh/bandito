@@ -154,12 +154,17 @@
         bottom: 4px;
         left: 4px;
         width: calc((100% - 8px) / 3);
-        border: 1px solid var(--color-border-strong);
+        border: 1px solid var(--color-border);
         border-radius: var(--radius-full);
-        background: var(--color-surface);
-        box-shadow: var(--shadow-float);
+        background: var(--color-surface-raised);
+        box-shadow:
+            0 3px 10px #00000018,
+            inset 0 1px 0 #ffffff30;
         transform: translateX(calc(var(--difficulty-index) * 100%));
-        transition: transform 420ms cubic-bezier(.2, .8, .2, 1);
+        transition:
+            transform 280ms cubic-bezier(.22, .85, .28, 1),
+            background-color 180ms ease,
+            box-shadow 180ms ease;
         pointer-events: none;
     }
 

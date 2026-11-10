@@ -29,6 +29,7 @@ export const state = {
     lastPlaced: null,
     animateLastPlacement: false,
     tutorial: null,
+    challenge: null,
 };
 const defaultStats = { games: 0, wins: 0, losses: 0, best: null };
 let playerStats = {
@@ -74,6 +75,11 @@ function rot(m) {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) o[x][h - 1 - y] = m[y][x];
     return o;
 }
+export function rotateMatrix(m, turns = 1) {
+    let result = clone(m);
+    for (let i = 0; i < ((turns % 4) + 4) % 4; i++) result = rot(result);
+    return result;
+}
 function dims(m) {
     return [m[0].length, m.length];
 }
@@ -100,13 +106,12 @@ function cellAt(gx, gy) {
     const value = ensureBoardIndex().get(gx + ',' + gy);
     return value === undefined ? null : value;
 }
-export function valid(m, x, y) {
-    const [w, h] = dims(m),
-        index = ensureBoardIndex();
+function validAgainstBoard(placed, index, m, x, y) {
+    const [w, h] = dims(m);
     // A card occupies its entire rectangular footprint, including wall cells.
     // Checking piece bounds explicitly prevents a stale/missing cell index from
     // allowing a card to be squeezed into a gap that is smaller than the card.
-    for (const p of state.placed) {
+    for (const p of placed) {
         const [pw, ph] = dims(p.m);
         if (x < p.x + pw && x + w > p.x && y < p.y + ph && y + h > p.y) return false;
     }
@@ -128,6 +133,16 @@ export function valid(m, x, y) {
             }
         }
     return connected;
+}
+export function validOnBoard(placed, m, x, y) {
+    const index = new Map();
+    for (const p of placed)
+        for (let yy = 0; yy < p.m.length; yy++)
+            for (let xx = 0; xx < p.m[yy].length; xx++) index.set(p.x + xx + ',' + (p.y + yy), p.m[yy][xx]);
+    return validAgainstBoard(placed, index, m, x, y);
+}
+export function valid(m, x, y) {
+    return validAgainstBoard(state.placed, ensureBoardIndex(), m, x, y);
 }
 export function shuffle(a) {
     for (let i = a.length - 1; i > 0; i--) {
@@ -171,6 +186,7 @@ export function opens() {
 async function begin(n) {
     if (!state.all.length) return;
     state.tutorial = null;
+    state.challenge = null;
     resetEndScreen();
     // The solo modes stay clickable next to the coop lobby: a solo game leaves the room first,
     // otherwise the room's turn order keeps every card in the hand disabled.
@@ -201,6 +217,127 @@ async function begin(n) {
     render();
     centerCamera();
     startHand();
+}
+export async function beginChallenge(challenge) {
+    if (!state.all.length || !challenge || !Array.isArray(challenge.board)) return false;
+    const exits = Number(challenge.exits),
+        startId = { 2: 75, 5: 72, 6: 71 }[exits],
+        start = state.all.find((card) => card.id === startId),
+        cardById = new Map(state.all.filter((card) => card.kind === 'tunnel').map((card) => [card.id, card]));
+    if (!start || challenge.board.length < 1 || challenge.board.length > 73) {
+        snackbar('В испытании повреждена стартовая раскладка.', 'error');
+        return false;
+    }
+    if (
+        !Array.isArray(challenge.hand) ||
+        challenge.hand.length !== 3 ||
+        challenge.hand.some((id) => !cardById.has(Number(id))) ||
+        !Array.isArray(challenge.deck) ||
+        challenge.deck.length > 72 ||
+        challenge.deck.some((id) => !cardById.has(Number(id)))
+    ) {
+        snackbar('В испытании повреждены стартовая рука или колода добора.', 'error');
+        return false;
+    }
+    const placed = [];
+    for (let index = 0; index < challenge.board.length; index++) {
+        const piece = challenge.board[index];
+        if (!piece || typeof piece !== 'object') {
+            snackbar('В испытании повреждена раскладка поля.', 'error');
+            return false;
+        }
+        const card = index === 0 ? start : cardById.get(Number(piece.id)),
+            x = Number(piece.x),
+            y = Number(piece.y),
+            rotation = Number(piece.rotation || 0);
+        if (
+            !card ||
+            !Number.isInteger(x) ||
+            !Number.isInteger(y) ||
+            x < -48 ||
+            y < -28 ||
+            !Number.isInteger(rotation) ||
+            rotation < 0 ||
+            rotation > 3 ||
+            (index === 0 && (Number(piece.id) !== startId || x !== 0 || y !== 0 || rotation !== 0))
+        ) {
+            snackbar('В испытании повреждена раскладка поля.', 'error');
+            return false;
+        }
+        const matrix = rotateMatrix(card.matrix, rotation);
+        if (
+            x + matrix[0].length > 52 ||
+            y + matrix.length > 32 ||
+            (index > 0 && placed.some((placedPiece) => placedPiece.id === card.id)) ||
+            (index > 0 && !validOnBoard(placed, matrix, x, y))
+        ) {
+            snackbar('В испытании есть карта, которая не соединяется с полем по правилам.', 'error');
+            return false;
+        }
+        placed.push({ id: card.id, x, y, m: matrix });
+    }
+    const usedIds = new Set(placed.map((piece) => piece.id));
+    for (const id of challenge.hand.concat(challenge.deck)) {
+        const cardId = Number(id);
+        if (!cardById.has(cardId) || usedIds.has(cardId)) {
+            snackbar('В испытании одна и та же карта указана в нескольких местах.', 'error');
+            return false;
+        }
+        usedIds.add(cardId);
+    }
+    const hand = challenge.hand.map((id) => {
+        const card = cardById.get(Number(id));
+        return { id: card.id, m: clone(card.matrix) };
+    });
+    const deck = challenge.deck.map((id) => {
+        const card = cardById.get(Number(id));
+        return { id: card.id, m: clone(card.matrix) };
+    });
+    if (mpRoomCode) await leaveMultiplayer();
+    mpStopTimer();
+    resetEndScreen();
+    state.tutorial = null;
+    state.challenge = {
+        id: challenge.id || null,
+        title: String(challenge.title || 'Пользовательское испытание').slice(0, 60),
+        description: String(challenge.description || '').slice(0, 240),
+        exits,
+        board: challenge.board.map((piece) => ({
+            id: Number(piece.id),
+            x: Number(piece.x),
+            y: Number(piece.y),
+            rotation: Number(piece.rotation || 0),
+        })),
+        hand: challenge.hand.map(Number),
+        deck: challenge.deck.map(Number),
+    };
+    state.exits = exits;
+    state.deck = shuffle(deck);
+    state.hand = hand;
+    state.placed = placed;
+    state.lastPlaced = null;
+    state.animateLastPlacement = false;
+    state.selected = -1;
+    state.rotation = 0;
+    state.finished = false;
+    state.turnCount = 0;
+    state.placementPreview = null;
+    $('#menu').classList.add('hidden');
+    $('#mpLobby').classList.add('hidden');
+    $('#play').classList.remove('hidden');
+    $('#gameMenu').classList.add('hidden');
+    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+    $('#heading').textContent = 'Bandito · ' + state.challenge.title;
+    $('#tutorialGoal').classList.add('hidden');
+    document.querySelectorAll('.game__subtitle').forEach((el) => {
+        el.classList.remove('game__subtitle--tutorial');
+        el.textContent = state.challenge.description || 'Пользовательское испытание · закрой все выходы.';
+    });
+    status(chooseCardMessage, '', chooseCardTouchMessage);
+    render();
+    centerCamera();
+    startHand();
+    return true;
 }
 const tutorialLevels = [
     {
@@ -244,6 +381,7 @@ async function startTutorial(levelNumber) {
         return;
     }
     state.tutorial = { level: levelNumber };
+    state.challenge = null;
     state.exits = level.exits;
     state.deck = cards.slice(3).reverse();
     state.hand = cards.slice(0, 3);
@@ -1096,6 +1234,7 @@ export function showEndScreen(won) {
         return;
     }
     const multi = !!mpRoomCode,
+        custom = !multi && !!state.challenge,
         host = multi && mpRoomData?.owner === mpUid;
     const difficulty = mpRoomData?.game?.exits || 6;
     layer.innerHTML =
@@ -1116,7 +1255,10 @@ export function showEndScreen(won) {
             ? host
                 ? '<button class="btn btn--lg btn--primary end-screen__action" data-end="rematch">Реванш</button>'
                 : '<button class="btn btn--lg btn--primary end-screen__action" disabled>Ждём реванша…</button>'
-            : '<button class="btn btn--lg btn--primary end-screen__action" data-end="menu">В меню</button>') +
+            : custom
+              ? '<button class="btn btn--lg btn--primary end-screen__action" data-end="retry">Повторить испытание</button>' +
+                '<button class="btn btn--lg end-screen__action" data-end="menu">В меню</button>'
+              : '<button class="btn btn--lg btn--primary end-screen__action" data-end="menu">В меню</button>') +
         '<button class="btn btn--lg end-screen__action" data-end="view">Посмотреть поле</button>' +
         (multi ? '<button class="btn btn--lg end-screen__action" data-end="leave">Выйти из комнаты</button>' : '') +
         '</div></div>';
@@ -1130,6 +1272,13 @@ export function showEndScreen(won) {
             $('#mpExits').value = choice;
             layer.remove();
             mpStart();
+        };
+    const retry = layer.querySelector('[data-end="retry"]');
+    if (retry)
+        retry.onclick = () => {
+            const challenge = state.challenge;
+            layer.remove();
+            beginChallenge(challenge);
         };
     const menu = layer.querySelector('[data-end="menu"]');
     if (menu)
@@ -1252,10 +1401,12 @@ $('#newgame').onclick = async () => {
         await mpStart();
         return;
     }
-    await begin(state.exits);
+    if (state.challenge) await beginChallenge(state.challenge);
+    else await begin(state.exits);
 };
 $('#leaveLobby').onclick = async () => {
     state.tutorial = null;
+    state.challenge = null;
     $('#gameMenu').classList.add('hidden');
     $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
     state.placementPreview = null;
@@ -1306,6 +1457,7 @@ fetch('./resources/bandido-matrices/cards.json')
     })
     .then((d) => {
         state.all = d.cards.filter((c) => c.matrix);
+        window.dispatchEvent?.(new Event('bandito:cards-ready'));
         document.querySelectorAll('[data-start]').forEach((b) => (b.disabled = false));
         $('#loadstate').classList.remove('hidden');
         $('#loadstate').textContent = 'Колода загружена. Можно начинать.';

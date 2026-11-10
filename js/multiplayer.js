@@ -375,6 +375,11 @@ async function mpPassTurn(forUid = null) {
 }
 async function mpEnsureAuth() {
     if (mpUid) return mpUid;
+    if (!mpAuth || !mpDb) throw new Error('Firebase не загрузился. Проверь подключение и обнови страницу.');
+    if (mpAuth.currentUser) {
+        mpUid = mpAuth.currentUser.uid;
+        return mpUid;
+    }
     try {
         const cred = await mpAuth.signInAnonymously();
         mpUid = cred.user.uid;
@@ -386,6 +391,44 @@ async function mpEnsureAuth() {
                 : e.message
         );
     }
+}
+export async function loadPublicChallenges() {
+    await mpEnsureAuth();
+    const snapshot = await mpDb.ref('challenges').limitToLast(100).once('value');
+    const records = snapshot.val() || {};
+    return Object.entries(records)
+        .filter(([, challenge]) => challenge && typeof challenge === 'object')
+        .map(([id, challenge]) => ({ ...challenge, id }))
+        .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+}
+export async function savePublicChallenge(challenge) {
+    await mpEnsureAuth();
+    if (!challenge || !Array.isArray(challenge.board) || !Array.isArray(challenge.hand) || !Array.isArray(challenge.deck)) {
+        throw new Error('Некорректные данные испытания.');
+    }
+    const record = {
+        schemaVersion: 1,
+        title: String(challenge.title || '').trim().slice(0, 60),
+        description: String(challenge.description || '').trim().slice(0, 240),
+        exits: Number(challenge.exits),
+        board: challenge.board.map((piece) => ({
+            id: Number(piece.id),
+            x: Number(piece.x),
+            y: Number(piece.y),
+            rotation: Number(piece.rotation || 0),
+        })),
+        hand: challenge.hand.map(Number),
+        deck: challenge.deck.map(Number),
+        ownerUid: mpUid,
+        authorName: mpName(),
+        createdAt: Date.now(),
+    };
+    if (!record.title || ![2, 5, 6].includes(record.exits) || record.hand.length !== 3) {
+        throw new Error('Заполни название, сложность и три карты стартовой руки.');
+    }
+    const ref = mpDb.ref('challenges').push();
+    await ref.set(record);
+    return { ...record, id: ref.key };
 }
 async function mpCreate() {
     // Prevent an underlying create-room action if a modal is open.
@@ -473,6 +516,7 @@ export async function mpJoin(codeOverride = null) {
 }
 export async function mpStart() {
     if (!mpRoomCode || mpRoomData?.owner !== mpUid) return;
+    state.challenge = null;
     mpCelebrated = false;
     state.animateLastPlacement = false;
     const chosen = $('#mpExits').value;
@@ -663,6 +707,7 @@ export async function leaveMultiplayer(showMenu = true) {
     state.placed = [];
     state.deck = [];
     state.selected = -1;
+    state.challenge = null;
     $('#play').classList.add('hidden');
     mpSwapPanel(false);
     if (showMenu) $('#menu').classList.remove('hidden');
