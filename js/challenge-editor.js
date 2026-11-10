@@ -843,11 +843,7 @@ function renderDeck() {
 }
 
 function challengeValidationIssues() {
-    const issues = [];
-    if (!draft.title.trim()) issues.push('добавь название');
-    if (draft.hand.some((id) => id === null)) issues.push('выбери три карты стартовой руки');
-    if (!isBoardValid()) issues.push('проверь соединения карт на поле');
-    return issues;
+    return draft.title.trim() ? [] : ['добавь название'];
 }
 
 function updateSaveButton() {
@@ -855,11 +851,11 @@ function updateSaveButton() {
     const issues = challengeValidationIssues();
     const button = root.querySelector('[data-save]');
     button.disabled = false;
-    button.textContent = issues.length ? 'Проверить готовность' : 'Опубликовать испытание';
+    button.textContent = issues.length ? 'Укажи название' : 'Опубликовать испытание';
     const status = root.querySelector('[data-editor-status]');
     status.textContent = issues.length
-        ? 'До публикации: ' + issues.join('; ') + '.'
-        : 'Всё готово — испытание появится в общей библиотеке сразу после публикации.';
+        ? 'Для публикации достаточно указать название.'
+        : 'Название задано — испытание можно опубликовать. Поле, стартовую руку и колоду можно настроить отдельно.';
 }
 
 function challengeAccessError(error) {
