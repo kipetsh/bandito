@@ -32,6 +32,11 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Inspect Prettier formatting
+        run: |
+          npx prettier --write css/blocks/challenge-editor.css js/challenge-editor.js
+          git diff -- css/blocks/challenge-editor.css js/challenge-editor.js
+
       - name: Run code checks
         run: npm run check
 
