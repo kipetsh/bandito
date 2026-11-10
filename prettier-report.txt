@@ -1,1 +1,4 @@
-[[31merror[39m] Cannot use --check and --list-different together.
+AGENTS.md
+js/challenge-editor.js
+lint-report.json
+README.md
