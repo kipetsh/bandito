@@ -28,10 +28,10 @@ jobs:
         run: npm ci
       - name: Format changed files
         run: npx prettier --write js/challenge-editor.js css/blocks/challenge-editor.css README.md AGENTS.md .github/workflows/format-editor-once.yml
-      - name: Verify formatting and lint
-        run: |
-          npm run format:check
-          npm run lint
+      - name: Check formatting
+        run: npm run format:check
+      - name: Check lint
+        run: npm run lint
       - name: Commit formatted files through GitHub API
         uses: actions/github-script@v7
         with:
