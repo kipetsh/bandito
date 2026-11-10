@@ -152,6 +152,10 @@ function createEditorChrome() {
     const head = play.querySelector('.game__head');
     const side = play.querySelector('.game__side');
     const menu = head.querySelector('.game__menu');
+    document.querySelector('.page').classList.add('challenge-editor__page');
+    play.querySelector('.game__layout').classList.add('challenge-editor__layout');
+    play.querySelector('.game__boardbox').classList.add('challenge-editor__boardbox');
+    side.classList.add('challenge-editor__side');
 
     hideGameElement(menu);
     hideGameElement(side.querySelector('.game__metrics'));
@@ -218,7 +222,6 @@ function createEditorChrome() {
 }
 
 function showEditor() {
-    activeView = 'editor';
     editorMode = true;
     gameSnapshot = { ...state };
     root.classList.add('hidden');
@@ -260,11 +263,17 @@ function openLibrary() {
     root.classList.remove('challenge-editor--picker-layer');
     root.setAttribute('aria-hidden', 'false');
     document.body.classList.add('challenge-editor-open');
+    if (libraryStatus === 'idle') libraryStatus = 'loading';
     renderLibrary();
     loadLibrary();
 }
 
 function restoreGameChrome() {
+    document.querySelector('.page').classList.remove('challenge-editor__page');
+    const play = document.querySelector('#play');
+    play.querySelector('.game__layout').classList.remove('challenge-editor__layout');
+    play.querySelector('.game__boardbox').classList.remove('challenge-editor__boardbox');
+    play.querySelector('.game__side').classList.remove('challenge-editor__side');
     for (const { element, wasHidden } of hiddenGameElements) {
         element.classList.toggle('hidden', wasHidden);
     }

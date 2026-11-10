@@ -294,36 +294,29 @@
         transform-origin: left center;
     }
 
-    body.challenge-editor-open {
-        overflow: hidden;
-    }
-
+    body.challenge-editor-open,
     body.challenge-editor-mode {
         overflow: hidden;
     }
 
-    body.challenge-editor-mode .page {
+    .challenge-editor__page {
         max-width: 1720px;
         min-height: 100svh;
         padding: 20px clamp(16px, 4.7vw, 78px);
     }
 
-    body.challenge-editor-mode .game__head {
-        margin-bottom: var(--space-3);
-    }
-
-    body.challenge-editor-mode .game__layout {
+    .challenge-editor__layout {
         grid-template-columns: minmax(0, 1fr) minmax(260px, 280px);
         grid-template-rows: auto minmax(0, 1fr);
         gap: var(--space-2) var(--space-3);
     }
 
-    body.challenge-editor-mode .game__boardbox {
+    .challenge-editor__boardbox {
         height: clamp(420px, calc(100svh - 165px), 900px);
         min-height: 420px;
     }
 
-    body.challenge-editor-mode .game__side {
+    .challenge-editor__side {
         min-height: 0;
         max-height: calc(100svh - 140px);
         overflow: hidden;
@@ -567,22 +560,22 @@
         line-height: var(--leading-normal);
     }
 
-    body.challenge-editor-mode .board__piece {
+    .challenge-editor__piece {
         cursor: pointer;
     }
 
-    body.challenge-editor-mode .board__piece--selected {
+    .challenge-editor__piece--selected {
         z-index: 6;
         outline: 2px solid var(--color-focus);
         outline-offset: 2px;
     }
 
     @media (max-width: 980px) and (min-width: 761px) {
-        body.challenge-editor-mode .game__layout {
+        .challenge-editor__layout {
             grid-template-columns: minmax(0, 1fr) 250px;
         }
 
-        body.challenge-editor-mode .game__side {
+        .challenge-editor__side {
             padding: var(--space-3);
         }
 
@@ -596,12 +589,12 @@
     }
 
     @media (max-height: 720px) and (min-width: 761px) {
-        body.challenge-editor-mode .game__boardbox {
+        .challenge-editor__boardbox {
             height: calc(100svh - 145px);
             min-height: 360px;
         }
 
-        body.challenge-editor-mode .game__side {
+        .challenge-editor__side {
             max-height: calc(100svh - 120px);
         }
 

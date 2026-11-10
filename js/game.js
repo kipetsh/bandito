@@ -165,6 +165,7 @@ const choosePlacementMessage = 'Выбери положение карты на 
 const choosePlacementTouchMessage = 'Выбери положение карты на поле и нажми «Поставить».';
 // Sets the status line; a status that mentions the keyboard gives a text without it for narrow screens.
 export function status(t, k = '', touch = t) {
+    if (challengeEditorMode) return;
     $('#status').textContent = narrowScreen() ? touch : t;
     $('#status').classList.toggle('hidden', k === 'win' || k === 'lose');
 }
@@ -540,6 +541,7 @@ export function render({ hand = true } = {}) {
             (isLatest && p !== state.placed[0] ? ' board__piece--latest' : '') +
             (animateThis ? ' board__piece--fresh' : '');
         if (challengeEditorMode) {
+            el.classList.add('challenge-editor__piece');
             el.dataset.editorPieceIndex = String(pieceIndex);
             el.tabIndex = 0;
             el.setAttribute('role', 'button');
