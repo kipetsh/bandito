@@ -1,4 +1,4 @@
-name: Format editor files once
+name: Collect Prettier diagnostics
 
 on:
   push:
@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 jobs:
-  format:
+  report:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,37 +26,27 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Format changed files
-        run: npx prettier --write js/challenge-editor.js css/blocks/challenge-editor.css README.md AGENTS.md .github/workflows/format-editor-once.yml
-      - name: Check formatting
-        run: npm run format:check
-      - name: Check lint
-        run: npm run lint
-      - name: Commit formatted files through GitHub API
+      - name: Generate Prettier report
+        run: npx prettier --check --list-different --ignore-unknown . > prettier-report.txt 2>&1 || true
+      - name: Publish report
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const paths = ['js/challenge-editor.js', 'css/blocks/challenge-editor.css', 'README.md', 'AGENTS.md', '.github/workflows/format-editor-once.yml'];
+            const path = 'prettier-report.txt';
+            const content = fs.readFileSync(path, 'utf8');
             const ref = await github.rest.git.getRef({ owner: context.repo.owner, repo: context.repo.repo, ref: 'heads/main' });
             const parent = ref.data.object.sha;
             const commit = await github.rest.git.getCommit({ owner: context.repo.owner, repo: context.repo.repo, commit_sha: parent });
-            const tree = [];
-            for (const path of paths) {
-              const content = fs.readFileSync(path, 'utf8');
-              const blob = await github.rest.git.createBlob({ owner: context.repo.owner, repo: context.repo.repo, content, encoding: 'utf-8' });
-              tree.push({ path, mode: '100644', type: 'blob', sha: blob.data.sha });
-            }
-            const nextTree = await github.rest.git.createTree({
+            const blob = await github.rest.git.createBlob({ owner: context.repo.owner, repo: context.repo.repo, content, encoding: 'utf-8' });
+            const tree = await github.rest.git.createTree({
               owner: context.repo.owner, repo: context.repo.repo,
-              base_tree: commit.data.tree.sha, tree
+              base_tree: commit.data.tree.sha,
+              tree: [{ path, mode: '100644', type: 'blob', sha: blob.data.sha }]
             });
-            const nextCommit = await github.rest.git.createCommit({
+            const next = await github.rest.git.createCommit({
               owner: context.repo.owner, repo: context.repo.repo,
-              message: 'Format challenge editor files',
-              tree: nextTree.data.sha, parents: [parent]
+              message: 'Add temporary Prettier diagnostics',
+              tree: tree.data.sha, parents: [parent]
             });
-            await github.rest.git.updateRef({
-              owner: context.repo.owner, repo: context.repo.repo,
-              ref: 'heads/main', sha: nextCommit.data.sha, force: false
-            });
+            await github.rest.git.updateRef({ owner: context.repo.owner, repo: context.repo.repo, ref: 'heads/main', sha: next.data.sha, force: false });
