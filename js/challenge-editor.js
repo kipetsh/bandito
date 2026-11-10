@@ -40,6 +40,7 @@ function createDraft() {
         pendingCard: null,
         pendingRotation: 0,
         selectedPiece: null,
+        placementPreview: null,
         activeHandSlot: 0,
         tab: 'board',
     };
@@ -91,12 +92,14 @@ function initChallengeEditor() {
         '<div class="challenge-editor__content">' +
         '<section class="challenge-editor__panel challenge-editor__board-panel" data-panel="board">' +
         '<aside class="challenge-editor__tools">' +
-        '<p class="note">Нажми «＋», выбери карту в каталоге, затем щёлкни по клетке поля, где должен начинаться её левый верхний угол.</p>' +
+        '<p class="note">Выбери карту в каталоге. На поле появятся цветные точки — каждая показывает допустимое место и поворот. Нажми точку, проверь превью и выбери «Поставить».</p>' +
         '<button class="btn btn--primary" type="button" data-picker-open="board">＋ Добавить карту</button>' +
-        '<button class="btn" type="button" data-rotate disabled>Повернуть карту</button>' +
+        '<div class="challenge-editor__placement-actions" data-placement-actions hidden>' +
+        '<button class="btn" type="button" data-place-cancel>Отмена</button>' +
+        '<button class="btn btn--primary" type="button" data-place-confirm>Поставить</button></div>' +
         '<button class="btn" type="button" data-remove-piece disabled>Удалить выбранную</button>' +
         '<p class="challenge-editor__selection" data-board-selection>Стартовая карта уже на поле.</p>' +
-        '<p class="caption">Стартовая карта закреплена. Остальные карты можно выбирать на поле и поворачивать отдельной кнопкой.</p>' +
+        '<p class="caption">Стартовая карта закреплена. Выбери карту на поле, чтобы увидеть доступные повороты и удалить её.</p>' +
         '</aside>' +
         '<div class="challenge-editor__viewport" data-board-viewport aria-label="Поле редактора">' +
         '<div class="challenge-editor__canvas" data-board-canvas></div></div></section>' +
@@ -211,14 +214,27 @@ function handleRootClick(event) {
         closePicker();
         return;
     }
+    const pieceRotation = target.closest?.('[data-piece-rotation]');
+    if (pieceRotation) {
+        rotateSelectedPieceTo(Number(pieceRotation.dataset.pieceRotation));
+        return;
+    }
+    const placement = target.closest?.('[data-placement-index]');
+    if (placement) {
+        showPlacementPreview(Number(placement.dataset.placementIndex));
+        return;
+    }
+    if (target.closest?.('[data-place-confirm]')) {
+        confirmPendingPlacement();
+        return;
+    }
+    if (target.closest?.('[data-place-cancel]')) {
+        cancelPendingPlacement();
+        return;
+    }
     const piece = target.closest?.('[data-piece-index]');
     if (piece) {
         selectPiece(Number(piece.dataset.pieceIndex));
-        return;
-    }
-    const canvas = target.closest?.('[data-board-canvas]');
-    if (canvas) {
-        placePendingCard(event, canvas);
         return;
     }
     const handSlot = target.closest?.('[data-hand-slot]');
@@ -242,10 +258,6 @@ function handleRootClick(event) {
         draft.deck.delete(Number(deckRemove.dataset.deckRemove));
         renderDeck();
         updateSaveButton();
-        return;
-    }
-    if (target.closest?.('[data-rotate]')) {
-        rotateCurrentCard();
         return;
     }
     if (target.closest?.('[data-remove-piece]')) {
@@ -287,6 +299,7 @@ function changeDifficulty(exits) {
     draft.board = [{ id: start.id, x: 0, y: 0, rotation: 0, m: clone(start.matrix) }];
     draft.pendingCard = null;
     draft.pendingRotation = 0;
+    draft.placementPreview = null;
     draft.selectedPiece = null;
     snackbar('Смена сложности сбросила раскладку поля.');
     render();
@@ -372,6 +385,50 @@ function createCardPreview(matrix, className = '') {
     return preview;
 }
 
+function editorPlacementOptions() {
+    const options = [];
+    const seenMatrices = new Set();
+    for (let rotation = 0; rotation < 4; rotation++) {
+        const matrix = rotateMatrix(cardById(draft.pendingCard).matrix, rotation);
+        const matrixKey = JSON.stringify(matrix);
+        if (seenMatrices.has(matrixKey)) continue;
+        seenMatrices.add(matrixKey);
+        const candidates = new Set();
+        for (const piece of draft.board) {
+            for (let py = 0; py < piece.m.length; py++) {
+                for (let px = 0; px < piece.m[py].length; px++) {
+                    if (piece.m[py][px] !== 1) continue;
+                    for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+                        for (let y = 0; y < matrix.length; y++) {
+                            for (let x = 0; x < matrix[y].length; x++) {
+                                if (matrix[y][x] === 1) {
+                                    candidates.add(
+                                        piece.x + px + dx - x + ',' + (piece.y + py + dy - y)
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (const key of candidates) {
+            const [x, y] = key.split(',').map(Number);
+            if (
+                x < -BOARD_OFFSET_X ||
+                y < -BOARD_OFFSET_Y ||
+                x + matrix[0].length > BOARD_COLUMNS - BOARD_OFFSET_X ||
+                y + matrix.length > BOARD_ROWS - BOARD_OFFSET_Y ||
+                !validOnBoard(draft.board, matrix, x, y)
+            ) {
+                continue;
+            }
+            options.push({ x, y, rotation, matrix });
+        }
+    }
+    return options;
+}
+
 function renderBoard() {
     const viewport = root.querySelector('[data-board-viewport]');
     const canvas = root.querySelector('[data-board-canvas]');
@@ -390,7 +447,7 @@ function renderBoard() {
             'board__piece challenge-editor__piece' +
             (draft.selectedPiece === index ? ' challenge-editor__piece--selected' : '');
         element.dataset.pieceIndex = String(index);
-        element.setAttribute('aria-label', 'Карта ' + piece.id + (index === 0 ? ', стартовая' : ''));
+        element.setAttribute('aria-label', 'Выбрать карту ' + piece.id + (index === 0 ? ', стартовая' : ''));
         element.style.left = (piece.x + BOARD_OFFSET_X) * CELL_SIZE + 'px';
         element.style.top = (piece.y + BOARD_OFFSET_Y) * CELL_SIZE + 'px';
         element.style.width = matrix[0].length * CELL_SIZE + 'px';
@@ -404,6 +461,90 @@ function renderBoard() {
         });
         canvas.append(element);
     });
+
+    if (draft.pendingCard !== null) {
+        const ghost = document.createElement('div');
+        ghost.className = 'board__piece board__piece--ghost challenge-editor__ghost hidden';
+        ghost.dataset-editor-ghost = '';
+        canvas.append(ghost);
+        const options = editorPlacementOptions();
+        options.forEach((option, index) => {
+            const pin = document.createElement('button');
+            pin.type = 'button';
+            pin.className = 'board__pin board__pin--' + option.rotation + ' challenge-editor__pin';
+            pin.dataset.placementIndex = String(index);
+            pin.setAttribute(
+                'aria-label',
+                'Поворот ' + option.rotation * 90 + ' градусов, позиция ' + (index + 1)
+            );
+            pin.style.left =
+                (option.x + BOARD_OFFSET_X + option.matrix[0].length / 2) * CELL_SIZE - 20 + 'px';
+            pin.style.top =
+                (option.y + BOARD_OFFSET_Y + option.matrix.length / 2) * CELL_SIZE - 20 + 'px';
+            canvas.append(pin);
+        });
+        draft.availablePlacements = options;
+    } else {
+        draft.availablePlacements = [];
+        const selected = draft.selectedPiece === null ? null : draft.board[draft.selectedPiece];
+        if (selected && draft.selectedPiece > 0) {
+            const card = cardById(selected.id);
+            const offsets = [
+                [0, -22],
+                [22, 0],
+                [0, 22],
+                [-22, 0],
+            ];
+            for (let rotation = 0; rotation < 4; rotation++) {
+                const matrix = rotateMatrix(card.matrix, rotation);
+                const candidate = {
+                    ...selected,
+                    rotation,
+                    m: matrix,
+                };
+                const nextBoard = draft.board.map((piece, index) =>
+                    index === draft.selectedPiece ? candidate : piece
+                );
+                if (!isBoardValid(nextBoard)) continue;
+                const pin = document.createElement('button');
+                pin.type = 'button';
+                pin.className = 'board__pin board__pin--' + rotation + ' challenge-editor__pin';
+                pin.dataset.pieceRotation = String(rotation);
+                pin.setAttribute('aria-label', 'Повернуть карту на ' + rotation * 90 + ' градусов');
+                pin.style.left =
+                    (selected.x + BOARD_OFFSET_X + matrix[0].length / 2) * CELL_SIZE -
+                    20 +
+                    offsets[rotation][0] +
+                    'px';
+                pin.style.top =
+                    (selected.y + BOARD_OFFSET_Y + matrix.length / 2) * CELL_SIZE -
+                    20 +
+                    offsets[rotation][1] +
+                    'px';
+                canvas.append(pin);
+            }
+        }
+    }
+
+    if (draft.placementPreview !== null && draft.availablePlacements[draft.placementPreview]) {
+        const option = draft.availablePlacements[draft.placementPreview];
+        const ghost = canvas.querySelector('[data-editor-ghost]');
+        ghost.style.left = (option.x + BOARD_OFFSET_X) * CELL_SIZE + 'px';
+        ghost.style.top = (option.y + BOARD_OFFSET_Y) * CELL_SIZE + 'px';
+        ghost.style.width = option.matrix[0].length * CELL_SIZE + 'px';
+        ghost.style.height = option.matrix.length * CELL_SIZE + 'px';
+        ghost.style.gridTemplateColumns = 'repeat(' + option.matrix[0].length + ',' + CELL_SIZE + 'px)';
+        ghost.style.gridTemplateRows = 'repeat(' + option.matrix.length + ',' + CELL_SIZE + 'px)';
+        option.matrix.flat().forEach((value) => {
+            const cell = document.createElement('i');
+            cell.className = 'board__cell' + (value ? '' : ' board__cell--wall');
+            ghost.append(cell);
+        });
+        ghost.classList.remove('hidden');
+        canvas.querySelectorAll('[data-placement-index]').forEach((pin, index) => {
+            pin.classList.toggle('board__pin--preview', index === draft.placementPreview);
+        });
+    }
     viewport.scrollLeft = scrollLeft;
     viewport.scrollTop = scrollTop;
     if (!boardCentered) {
@@ -417,60 +558,75 @@ function renderBoard() {
 }
 
 function renderBoardControls() {
-    const rotate = root.querySelector('[data-rotate]');
     const remove = root.querySelector('[data-remove-piece]');
     const selection = root.querySelector('[data-board-selection]');
+    const actions = root.querySelector('[data-placement-actions]');
     const selected = draft.selectedPiece === null ? null : draft.board[draft.selectedPiece];
-    rotate.disabled = draft.pendingCard === null && (!selected || draft.selectedPiece === 0);
-    remove.disabled = !selected || draft.selectedPiece === 0;
+    const pending = draft.pendingCard !== null;
+    remove.disabled = !selected || draft.selectedPiece === 0 || pending;
+    actions.hidden = !pending;
     selection.replaceChildren();
-    if (draft.pendingCard !== null) {
+    if (pending) {
         const card = cardById(draft.pendingCard);
-        selection.append(createCardPreview(rotateMatrix(card.matrix, draft.pendingRotation)));
+        selection.append(createCardPreview(rotateMatrix(card.matrix, 0)));
         const label = document.createElement('span');
-        label.textContent = 'Карта #' + draft.pendingCard + ' · ' + draft.pendingRotation * 90 + '°';
+        label.textContent =
+            draft.placementPreview === null
+                ? 'Выбери цветную точку на поле.'
+                : 'Поворот ' +
+                  draft.availablePlacements[draft.placementPreview].rotation * 90 +
+                  '°. Проверь превью.';
         selection.append(label);
     } else if (selected) {
         const card = cardById(selected.id);
         selection.append(createCardPreview(rotateMatrix(card.matrix, selected.rotation)));
         const label = document.createElement('span');
         label.textContent =
-            (draft.selectedPiece === 0 ? 'Стартовая карта' : 'Карта #' + selected.id) +
+            (draft.selectedPiece === 0 ? 'Стартовая карта закреплена' : 'Выбрана карта #' + selected.id) +
             ' · ' +
             selected.rotation * 90 +
             '°';
         selection.append(label);
-    } else selection.textContent = 'Стартовая карта уже на поле.';
+    } else selection.textContent = 'Выбери карту на поле или добавь новую.';
 }
 
-function placePendingCard(event, canvas) {
-    if (draft.pendingCard === null) {
-        snackbar('Сначала нажми «Добавить карту» и выбери карту в каталоге.');
-        return;
-    }
-    const card = cardById(draft.pendingCard);
-    if (!card) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((event.clientX - rect.left) / CELL_SIZE) - BOARD_OFFSET_X;
-    const y = Math.floor((event.clientY - rect.top) / CELL_SIZE) - BOARD_OFFSET_Y;
-    const matrix = rotateMatrix(card.matrix, draft.pendingRotation);
-    if (
-        x < -BOARD_OFFSET_X ||
-        y < -BOARD_OFFSET_Y ||
-        x + matrix[0].length > BOARD_COLUMNS - BOARD_OFFSET_X ||
-        y + matrix.length > BOARD_ROWS - BOARD_OFFSET_Y
-    ) {
-        snackbar('Карта должна полностью помещаться в видимую сетку редактора.', 'error');
-        return;
-    }
-    if (!validOnBoard(draft.board, matrix, x, y)) {
-        snackbar('В этой точке карта не соединяется с тоннелями. Попробуй другое место или поворот.', 'error');
-        return;
-    }
-    draft.board.push({ id: card.id, x, y, rotation: draft.pendingRotation, m: matrix });
-    draft.deck.delete(card.id);
+function showPlacementPreview(index) {
+    if (draft.pendingCard === null || !draft.availablePlacements[index]) return;
+    draft.placementPreview = index;
+    renderBoard();
+}
+
+function cancelPendingPlacement() {
     draft.pendingCard = null;
     draft.pendingRotation = 0;
+    draft.placementPreview = null;
+    renderBoard();
+}
+
+function confirmPendingPlacement() {
+    if (draft.pendingCard === null || draft.placementPreview === null) {
+        snackbar('Сначала выбери одну из цветных точек на поле.', 'error');
+        return;
+    }
+    const option = draft.availablePlacements[draft.placementPreview];
+    if (!option || !validOnBoard(draft.board, option.matrix, option.x, option.y)) {
+        snackbar('Это положение больше недоступно. Выбери другую точку.', 'error');
+        draft.placementPreview = null;
+        renderBoard();
+        return;
+    }
+    const id = draft.pendingCard;
+    draft.board.push({
+        id,
+        x: option.x,
+        y: option.y,
+        rotation: option.rotation,
+        m: clone(option.matrix),
+    });
+    draft.deck.delete(id);
+    draft.pendingCard = null;
+    draft.pendingRotation = 0;
+    draft.placementPreview = null;
     draft.selectedPiece = draft.board.length - 1;
     renderBoard();
     updateSaveButton();
@@ -480,20 +636,15 @@ function selectPiece(index) {
     if (!draft.board[index]) return;
     draft.selectedPiece = index;
     draft.pendingCard = null;
+    draft.placementPreview = null;
     renderBoard();
 }
 
-function rotateCurrentCard() {
-    if (draft.pendingCard !== null) {
-        draft.pendingRotation = (draft.pendingRotation + 1) % 4;
-        renderBoardControls();
-        return;
-    }
-    if (draft.selectedPiece === null || draft.selectedPiece === 0) return;
+function rotateSelectedPieceTo(rotation) {
+    if (draft.selectedPiece === null || draft.selectedPiece === 0 || rotation < 0 || rotation > 3) return;
     const index = draft.selectedPiece;
     const piece = draft.board[index];
     const card = cardById(piece.id);
-    const rotation = (piece.rotation + 1) % 4;
     const candidate = {
         ...piece,
         rotation,
@@ -501,7 +652,7 @@ function rotateCurrentCard() {
     };
     const nextBoard = draft.board.map((item, itemIndex) => (itemIndex === index ? candidate : item));
     if (!isBoardValid(nextBoard)) {
-        snackbar('В этом положении карта нарушает соединение с соседними тоннелями.', 'error');
+        snackbar('В этом повороте нарушается соединение с соседними тоннелями.', 'error');
         return;
     }
     draft.board = nextBoard;
@@ -612,9 +763,10 @@ function chooseCatalogCard(id) {
     }
     draft.pendingCard = id;
     draft.pendingRotation = 0;
+    draft.placementPreview = null;
     draft.selectedPiece = null;
     closePicker();
-    renderBoardControls();
+    renderBoard();
 }
 
 function clearHandSlot(index) {
