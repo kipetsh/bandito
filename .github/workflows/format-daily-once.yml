@@ -1,0 +1,108 @@
+name: Format and verify daily challenge changes once
+
+on:
+  push:
+    branches:
+      - daily-challenge-chatgpt-check
+    paths:
+      - 'js/challenge-editor.js'
+      - 'js/multiplayer.js'
+      - 'js/challenge-utils.js'
+      - 'css/blocks/challenge-editor.css'
+      - 'tests/source.test.mjs'
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.github/workflows/format-daily-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: daily-challenge-chatgpt-check
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format changed files
+        run: npx prettier --write js/challenge-editor.js js/multiplayer.js js/challenge-utils.js css/blocks/challenge-editor.css tests/source.test.mjs README.md AGENTS.md
+
+      - name: Run required checks
+        run: npm run check
+
+      - name: Run full tests and production build
+        run: npm test
+
+      - name: Commit formatted files and remove this workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const branch = 'daily-challenge-chatgpt-check';
+            const paths = [
+              'js/challenge-editor.js',
+              'js/multiplayer.js',
+              'js/challenge-utils.js',
+              'css/blocks/challenge-editor.css',
+              'tests/source.test.mjs',
+              'README.md',
+              'AGENTS.md'
+            ];
+            const ref = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/' + branch
+            });
+            const parent = ref.data.object.sha;
+            const commit = await github.rest.git.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: parent
+            });
+            const tree = [];
+            for (const path of paths) {
+              const blob = await github.rest.git.createBlob({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                content: fs.readFileSync(path, 'utf8'),
+                encoding: 'utf-8'
+              });
+              tree.push({ path, mode: '100644', type: 'blob', sha: blob.data.sha });
+            }
+            tree.push({
+              path: '.github/workflows/format-daily-once.yml',
+              mode: '100644',
+              type: 'blob',
+              sha: null
+            });
+            const nextTree = await github.rest.git.createTree({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base_tree: commit.data.tree.sha,
+              tree
+            });
+            const nextCommit = await github.rest.git.createCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              message: 'Format and verify daily challenge implementation',
+              tree: nextTree.data.sha,
+              parents: [parent]
+            });
+            await github.rest.git.updateRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/' + branch,
+              sha: nextCommit.data.sha,
+              force: false
+            });
