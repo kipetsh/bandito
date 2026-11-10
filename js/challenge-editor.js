@@ -531,7 +531,9 @@ function renderBoard() {
     canvas.style.width = canvasWidth + 'px';
     canvas.style.height = canvasHeight + 'px';
     canvas.style.setProperty('--board-cell', cell + 'px');
-    canvas.style.setProperty('--board-pin-size', '14px');
+    const zoomShare = (cell - MIN_EDITOR_CELL) / (MAX_EDITOR_CELL - MIN_EDITOR_CELL);
+    const pinSize = 12 + 2 * Math.round(4 * zoomShare);
+    canvas.style.setProperty('--board-pin-size', pinSize + 'px');
 
     draft.board.forEach((piece, index) => {
         const card = cardById(piece.id);
@@ -575,7 +577,8 @@ function renderBoard() {
         const selected = draft.selectedPiece === null ? null : draft.board[draft.selectedPiece];
         if (selected && draft.selectedPiece > 0) {
             const card = cardById(selected.id);
-            const offsets = [[0, -22], [22, 0], [0, 22], [-22, 0]];
+            const pinOffset = Math.round((cell * 22) / 24);
+            const offsets = [[0, -pinOffset], [pinOffset, 0], [0, pinOffset], [-pinOffset, 0]];
             for (let rotation = 0; rotation < 4; rotation++) {
                 const matrix = rotateMatrix(card.matrix, rotation);
                 const candidate = { ...selected, rotation, m: matrix };
