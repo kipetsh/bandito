@@ -10,29 +10,6 @@
         min-width: 220px;
     }
 
-    .challenge-daily-launches {
-        display: flex;
-        justify-content: center;
-        margin: var(--space-3) auto 0;
-    }
-
-    .challenge-daily-launch {
-        display: grid;
-        gap: 4px;
-        width: min(460px, 100%);
-        min-height: 56px;
-        padding: 10px 20px;
-    }
-
-    .challenge-daily-launch small {
-        overflow: hidden;
-        color: var(--color-text-secondary);
-        font-size: var(--text-xs);
-        font-weight: var(--weight-semibold);
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
     .challenge-editor {
         position: fixed;
         z-index: var(--z-modal);
@@ -122,133 +99,12 @@
         overflow: auto;
     }
 
-    .challenge-editor__library-screen,
-    .challenge-editor__admin-screen {
+    .challenge-editor__library-screen {
         display: flex;
         flex: 1;
         flex-direction: column;
         min-height: 0;
         width: 100%;
-    }
-
-    .challenge-editor__admin-screen {
-        gap: var(--space-4);
-    }
-
-    .challenge-editor__admin-header,
-    .challenge-editor__admin-section-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-3);
-    }
-
-    .challenge-editor__admin-header h3,
-    .challenge-editor__admin-section h3 {
-        margin: 0;
-        color: var(--color-text-strong);
-        font-size: var(--text-lg);
-    }
-
-    .challenge-editor__admin-gate,
-    .challenge-editor__admin-section {
-        display: grid;
-        align-content: start;
-        gap: var(--space-3);
-        min-width: 0;
-        padding: var(--space-4);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        background: var(--color-surface);
-    }
-
-    .challenge-editor__admin-gate p,
-    .challenge-editor__admin-section p {
-        margin: 0;
-        color: var(--color-text-secondary);
-        font-size: var(--text-sm);
-        line-height: var(--leading-normal);
-    }
-
-    .challenge-editor__admin-uid-row,
-    .challenge-editor__admin-actions,
-    .challenge-editor__admin-item-actions {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: var(--space-2);
-    }
-
-    .challenge-editor__admin-uid-row code {
-        min-width: 0;
-        padding: 8px 10px;
-        border-radius: var(--radius-md);
-        background: var(--color-surface-sunken);
-        overflow-wrap: anywhere;
-    }
-
-    .challenge-editor__admin-content {
-        display: grid;
-        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-        align-items: start;
-        gap: var(--space-4);
-        min-height: 0;
-    }
-
-    .challenge-editor__admin-section-head {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .challenge-editor__admin-fields {
-        display: grid;
-        grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.3fr);
-        gap: var(--space-3);
-    }
-
-    .challenge-editor__admin-field {
-        display: grid;
-        gap: 6px;
-        min-width: 0;
-        color: var(--color-text-secondary);
-        font-size: var(--text-sm);
-        font-weight: var(--weight-semibold);
-    }
-
-    .challenge-editor__admin-list {
-        display: grid;
-        gap: var(--space-2);
-        max-height: 420px;
-        min-height: 0;
-        overflow: auto;
-    }
-
-    .challenge-editor__admin-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-3);
-        min-width: 0;
-        padding: var(--space-3);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-md);
-        background: var(--color-surface-raised);
-    }
-
-    .challenge-editor__admin-item-copy {
-        display: grid;
-        gap: 4px;
-        min-width: 0;
-    }
-
-    .challenge-editor__admin-item-copy strong {
-        overflow-wrap: anywhere;
-        color: var(--color-text-strong);
-        font-size: var(--text-sm);
-    }
-
-    .challenge-editor__admin-item-copy .caption {
-        color: var(--color-text-muted);
     }
 
     .challenge-editor__section-head {
@@ -792,14 +648,6 @@
         .challenge-editor-launches,
         .challenge-editor {
             display: none;
-        }
-
-        .challenge-daily-launches {
-            display: flex;
-        }
-
-        .challenge-daily-launch {
-            width: min(460px, 100%);
         }
     }
 }

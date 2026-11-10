@@ -2,7 +2,6 @@
 import { $ } from '#js/dom.js';
 import { snackbar } from '#js/snackbar.js';
 import { getRoomPath, getRoomUrl } from '#js/room-url.js';
-import { isValidDateKey, localDateKey } from '#js/challenge-utils.js';
 import {
     canPlayAny,
     chooseCardMessage,
@@ -394,17 +393,6 @@ async function mpEnsureAuth() {
         );
     }
 }
-export async function getCurrentUserUid() {
-    return mpEnsureAuth();
-}
-export async function isCurrentUserAdmin() {
-    await mpEnsureAuth();
-    const snapshot = await mpDb.ref('admins/' + mpUid).once('value');
-    return snapshot.val() === true;
-}
-async function mpRequireAdmin() {
-    if (!(await isCurrentUserAdmin())) throw new Error('У этого аккаунта нет прав администратора.');
-}
 export async function loadPublicChallenges() {
     await mpEnsureAuth();
     const snapshot = await mpDb.ref('challenges').limitToLast(100).once('value');
@@ -413,14 +401,6 @@ export async function loadPublicChallenges() {
         .filter(([, challenge]) => challenge && typeof challenge === 'object')
         .map(([id, challenge]) => ({ ...challenge, id }))
         .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
-}
-export async function loadDailyChallenge(dateKey = localDateKey()) {
-    await mpEnsureAuth();
-    if (!isValidDateKey(dateKey)) throw new Error('Некорректная дата испытания дня.');
-    const snapshot = await mpDb.ref('dailyChallenges/' + dateKey).once('value');
-    const record = snapshot.val();
-    if (!record || !record.challenge || typeof record.challenge !== 'object') return null;
-    return { ...record.challenge, id: String(record.challengeId || record.challenge.id || ''), dateKey };
 }
 function createPublicChallengeRecord(challenge, createdAt = Date.now()) {
     if (!challenge || !Array.isArray(challenge.board) || !Array.isArray(challenge.hand) || !Array.isArray(challenge.deck)) {
@@ -448,53 +428,6 @@ function createPublicChallengeRecord(challenge, createdAt = Date.now()) {
     }
     return record;
 }
-function createDailyChallengeSnapshot(challenge) {
-    if (!challenge || !challenge.id) throw new Error('Выбери опубликованное испытание.');
-    const board = normalizeChallengeArray(challenge.board);
-    const hand = normalizeChallengeArray(challenge.hand);
-    const deck = normalizeChallengeArray(challenge.deck);
-    if (!board.length || ![2, 5, 6].includes(Number(challenge.exits)) || hand.length > 3) {
-        throw new Error('У выбранного испытания некорректные данные.');
-    }
-    return {
-        schemaVersion: 1,
-        id: String(challenge.id),
-        title: String(challenge.title || '').trim().slice(0, 60),
-        description: String(challenge.description || '').trim().slice(0, 240),
-        exits: Number(challenge.exits),
-        board: board.map((piece) => ({
-            id: Number(piece.id),
-            x: Number(piece.x),
-            y: Number(piece.y),
-            rotation: Number(piece.rotation || 0),
-        })),
-        hand: hand.map(Number),
-        deck: deck.map(Number),
-        ownerUid: String(challenge.ownerUid || ''),
-        authorName: String(challenge.authorName || 'Игрок'),
-        createdAt: Number(challenge.createdAt || Date.now()),
-    };
-}
-export async function saveDailyChallenge(dateKey, challenge) {
-    await mpRequireAdmin();
-    if (!isValidDateKey(dateKey)) throw new Error('Выбери корректную дату.');
-    const snapshot = createDailyChallengeSnapshot(challenge);
-    const record = {
-        challengeId: snapshot.id,
-        challenge: snapshot,
-        dateKey,
-        updatedAt: Date.now(),
-        updatedBy: mpUid,
-    };
-    await mpDb.ref('dailyChallenges/' + dateKey).set(record);
-    return { ...snapshot, dateKey };
-}
-export async function deleteDailyChallenge(dateKey) {
-    await mpRequireAdmin();
-    if (!isValidDateKey(dateKey)) throw new Error('Выбери корректную дату.');
-    await mpDb.ref('dailyChallenges/' + dateKey).remove();
-    return dateKey;
-}
 export function ownsPublicChallenge(challenge) {
     return Boolean(mpUid && challenge && challenge.ownerUid === mpUid);
 }
@@ -511,8 +444,7 @@ export async function updatePublicChallenge(id, challenge) {
     const ref = mpDb.ref('challenges/' + id);
     const snapshot = await ref.once('value');
     const existing = snapshot.val();
-    const canManage = existing && (existing.ownerUid === mpUid || (await isCurrentUserAdmin()));
-    if (!canManage) throw new Error('Редактировать можно только собственные испытания или с правами администратора.');
+    if (!existing || existing.ownerUid !== mpUid) throw new Error('Редактировать можно только собственные испытания.');
     const record = createPublicChallengeRecord(challenge, Number(existing.createdAt) || Date.now());
     record.ownerUid = existing.ownerUid;
     record.authorName = existing.authorName || record.authorName;
@@ -525,8 +457,7 @@ export async function deletePublicChallenge(id) {
     const ref = mpDb.ref('challenges/' + id);
     const snapshot = await ref.once('value');
     const existing = snapshot.val();
-    const canManage = existing && (existing.ownerUid === mpUid || (await isCurrentUserAdmin()));
-    if (!canManage) throw new Error('Удалять можно только собственные испытания или с правами администратора.');
+    if (!existing || existing.ownerUid !== mpUid) throw new Error('Удалять можно только собственные испытания.');
     await ref.remove();
     return String(id);
 }
