@@ -63,7 +63,6 @@ function createDraft() {
         pendingCard: null,
         selectedPiece: null,
         activeHandSlot: 0,
-        toolMode: 'select',
     };
 }
 
@@ -180,12 +179,8 @@ function createEditorChrome() {
         '<section class="challenge-editor__tool-group">' +
         '<h3>Инструменты</h3>' +
         '<div class="challenge-editor__tool-grid">' +
-        '<button class="challenge-editor__tool is-active" type="button" data-tool="select" aria-pressed="true">' +
-        '<span class="challenge-editor__tool-icon" aria-hidden="true">↖</span><small>Выбрать</small></button>' +
         '<button class="challenge-editor__tool" type="button" data-picker-open="board">' +
         '<span class="challenge-editor__tool-icon" aria-hidden="true">＋</span><small>Добавить</small></button>' +
-        '<button class="challenge-editor__tool" type="button" data-tool="rotate" disabled>' +
-        '<span class="challenge-editor__tool-icon" aria-hidden="true">↻</span><small>Повернуть</small></button>' +
         '<button class="challenge-editor__tool" type="button" data-tool="delete" disabled>' +
         '<span class="challenge-editor__tool-icon" aria-hidden="true">⌫</span><small>Удалить</small></button>' +
         '</div></section>' +
@@ -198,8 +193,10 @@ function createEditorChrome() {
         '<div class="challenge-editor__hand-slots" data-hand-slots></div>' +
         '</section>' +
         '<section class="challenge-editor__tool-group">' +
-        '<div class="challenge-editor__tools-heading"><h3>Колода для добора</h3>' +
-        '<button class="btn btn--sm" type="button" data-picker-open="deck">Изменить</button></div>' +
+        '<div class="challenge-editor__tools-heading"><h3>Колода</h3>' +
+        '<div class="challenge-editor__deck-actions">' +
+        '<button class="btn btn--sm" type="button" data-picker-open="deck">Изменить</button>' +
+        '<button class="btn btn--sm" type="button" data-deck-clear>Очистить</button></div></div>' +
         '<div class="challenge-editor__deck-summary"><div data-deck-preview></div>' +
         '<p class="challenge-editor__deck-count" data-deck-count>В колоде: 0 карт</p></div>' +
         '</section>' +
@@ -379,15 +376,7 @@ function handleRootClick(event) {
     }
     const tool = target.closest?.('[data-tool]');
     if (tool) {
-        if (tool.dataset.tool === 'select') {
-            draft.pendingCard = null;
-            draft.selectedPiece = null;
-            draft.toolMode = 'select';
-            renderEditor();
-        } else if (tool.dataset.tool === 'rotate' && draft.selectedPiece !== null) {
-            const piece = draft.board[draft.selectedPiece];
-            rotateSelectedPieceTo((piece.rotation + 1) % 4);
-        } else if (tool.dataset.tool === 'delete') removeSelectedPiece();
+        if (tool.dataset.tool === 'delete') removeSelectedPiece();
         return;
     }
     const handSlot = target.closest?.('[data-hand-slot]');
@@ -448,7 +437,6 @@ function changeDifficulty(exits) {
     draft.board = [{ id: start.id, x: 0, y: 0, rotation: 0, m: clone(start.matrix) }];
     draft.pendingCard = null;
     draft.selectedPiece = null;
-    draft.toolMode = 'select';
     snackbar('Смена сложности сбросила раскладку поля.');
     renderEditor();
 }
@@ -537,11 +525,11 @@ function syncEditorGameState() {
     renderGameBoard({ hand: false });
 }
 
-function createCardPreview(matrix, className = '') {
+function createCardPreview(matrix, className = '', cellSize = 6) {
     const preview = document.createElement('span');
     preview.className = 'challenge-editor__preview ' + className;
-    preview.style.gridTemplateColumns = 'repeat(' + matrix[0].length + ', 6px)';
-    preview.style.gridTemplateRows = 'repeat(' + matrix.length + ', 6px)';
+    preview.style.gridTemplateColumns = 'repeat(' + matrix[0].length + ', ' + cellSize + 'px)';
+    preview.style.gridTemplateRows = 'repeat(' + matrix.length + ', ' + cellSize + 'px)';
     matrix.flat().forEach((value) => {
         const cell = document.createElement('i');
         cell.className = value ? 'challenge-editor__preview-cell' : 'challenge-editor__preview-cell is-wall';
@@ -555,31 +543,15 @@ function renderBoardControls() {
     const pending = draft.pendingCard === null ? null : cardById(draft.pendingCard);
     const card = pending || (selected ? cardById(selected.id) : null);
     const preview = document.querySelector('#play [data-selected-card]');
-    const rotate = document.querySelector('#play [data-tool="rotate"]');
     const remove = document.querySelector('#play [data-tool="delete"]');
     preview.replaceChildren();
     preview.classList.toggle('hidden', !card);
     if (card) {
         const matrix = pending ? card.matrix : rotateMatrix(card.matrix, selected.rotation);
         preview.append(createCardPreview(matrix));
-        const info = document.createElement('span');
-        info.className = 'challenge-editor__selected-card-info';
-        info.textContent = pending
-            ? 'Карта #' + card.id
-            : (draft.selectedPiece === 0 ? 'Стартовая карта' : 'Карта #' + card.id) +
-              ' · ' +
-              selected.rotation * 90 +
-              '°';
-        preview.append(info);
     }
-    const canEdit = Boolean(selected && draft.selectedPiece > 0 && !pending);
-    rotate.disabled = !canEdit;
-    remove.disabled = !canEdit;
-    document.querySelectorAll('#play [data-tool]').forEach((button) => {
-        const active = button.dataset.tool === draft.toolMode;
-        button.classList.toggle('is-active', active);
-        button.setAttribute('aria-pressed', String(active));
-    });
+    const canDelete = Boolean(selected && draft.selectedPiece > 0 && !pending);
+    remove.disabled = !canDelete;
 }
 
 function confirmPendingPlacement(option) {
@@ -600,7 +572,6 @@ function confirmPendingPlacement(option) {
     draft.deck.delete(id);
     draft.pendingCard = null;
     draft.selectedPiece = draft.board.length - 1;
-    draft.toolMode = 'select';
     renderEditor();
 }
 
@@ -618,26 +589,6 @@ function selectPiece(index) {
     if (!draft.board[index]) return;
     draft.selectedPiece = index;
     draft.pendingCard = null;
-    draft.toolMode = 'select';
-    renderEditor();
-}
-
-function rotateSelectedPieceTo(rotation) {
-    if (draft.selectedPiece === null || draft.selectedPiece === 0 || rotation < 0 || rotation > 3) return;
-    const index = draft.selectedPiece;
-    const piece = draft.board[index];
-    const card = cardById(piece.id);
-    const candidate = {
-        ...piece,
-        rotation,
-        m: rotateMatrix(card.matrix, rotation),
-    };
-    const nextBoard = draft.board.map((item, itemIndex) => (itemIndex === index ? candidate : item));
-    if (!isBoardValid(nextBoard)) {
-        snackbar('В этом повороте нарушается соединение с соседними тоннелями.', 'error');
-        return;
-    }
-    draft.board = nextBoard;
     renderEditor();
 }
 
@@ -662,7 +613,6 @@ function clearBoard() {
     draft.board = [draft.board[0]];
     draft.pendingCard = null;
     draft.selectedPiece = null;
-    draft.toolMode = 'select';
     renderEditor();
 }
 
@@ -681,7 +631,7 @@ function openPicker(mode) {
     const pickerTitles = {
         board: 'Добавить карту на поле',
         hand: 'Выбрать карту в руку',
-        deck: 'Настроить колоду добора',
+        deck: 'Колода',
     };
     root.querySelector('[data-picker-title]').textContent = pickerTitles[mode];
     picker.classList.remove('hidden');
@@ -718,13 +668,8 @@ function renderPicker() {
         button.type = 'button';
         button.className = 'challenge-editor__catalog-card' + (pickerMode === 'deck' && selected ? ' is-selected' : '');
         button.dataset.cardId = String(card.id);
-        button.append(createCardPreview(card.matrix));
-        const info = document.createElement('span');
-        info.className = 'challenge-editor__catalog-info';
-        const title = document.createElement('strong');
-        title.textContent = 'Карта #' + card.id;
-        info.append(title);
-        button.append(info);
+        button.append(createCardPreview(card.matrix, 'challenge-editor__catalog-preview', 10));
+        button.setAttribute('aria-label', pickerMode === 'deck' ? 'Изменить состав колоды' : 'Добавить карту');
         if (pickerMode === 'deck') {
             const mark = document.createElement('span');
             mark.className = 'challenge-editor__catalog-mark';
@@ -758,7 +703,6 @@ function chooseCatalogCard(id) {
     }
     draft.pendingCard = id;
     draft.selectedPiece = null;
-    draft.toolMode = 'add';
     closePicker();
     renderEditor();
 }
@@ -790,9 +734,6 @@ function renderHandSlots() {
         } else {
             const card = cardById(id);
             button.append(createCardPreview(card.matrix));
-            const label = document.createElement('small');
-            label.textContent = '#' + id;
-            button.append(label);
         }
         slot.append(button);
         if (id !== null) {
@@ -813,20 +754,13 @@ function renderDeck() {
     const count = document.querySelector('#play [data-deck-count]');
     const ids = [...draft.deck].sort((a, b) => a - b);
     preview.replaceChildren();
-    count.textContent = 'В колоде: ' + ids.length + ' карт';
-    if (!ids.length) {
-        const empty = document.createElement('span');
-        empty.className = 'note';
-        empty.textContent = 'Колода пуста';
-        preview.append(empty);
-        return;
-    }
+    const word = ids.length === 1 ? 'карта' : ids.length >= 2 && ids.length <= 4 ? 'карты' : 'карт';
+    count.textContent = ids.length + ' ' + word;
+    const clearButton = document.querySelector('#play [data-deck-clear]');
+    clearButton.disabled = ids.length === 0;
+    if (!ids.length) return;
     const card = cardById(ids[0]);
     preview.append(createCardPreview(card.matrix, 'challenge-editor__preview--deck'));
-    const label = document.createElement('span');
-    label.className = 'caption';
-    label.textContent = ids.length > 1 ? 'и ещё ' + (ids.length - 1) : 'последняя карта';
-    preview.append(label);
 }
 
 function challengeValidationIssues() {
@@ -1045,7 +979,6 @@ function editChallenge(id) {
     draft.deck = new Set(deck);
     draft.pendingCard = null;
     draft.selectedPiece = null;
-    draft.toolMode = 'select';
     returnToLibrary = true;
     closePicker();
     showEditor();

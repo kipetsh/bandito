@@ -195,12 +195,12 @@
     }
 
     .challenge-editor__catalog-card {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
+        position: relative;
+        display: grid;
+        place-items: center;
         min-width: 0;
-        min-height: 64px;
-        padding: var(--space-2);
+        min-height: 88px;
+        padding: var(--space-3);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
         background: var(--color-surface);
@@ -216,21 +216,18 @@
         background: var(--color-surface-selected);
     }
 
-    .challenge-editor__catalog-info {
-        display: grid;
-        flex: 1;
-        gap: 3px;
-        min-width: 0;
-    }
-
-    .challenge-editor__catalog-info strong {
-        color: var(--color-text-strong);
-        font-size: var(--text-sm);
+    .challenge-editor__catalog-preview {
+        justify-self: center;
     }
 
     .challenge-editor__catalog-mark {
+        position: absolute;
+        top: 8px;
+        right: 8px;
         color: var(--color-text-strong);
+        font-size: var(--text-sm);
         font-weight: var(--weight-bold);
+        line-height: 1;
     }
 
     .challenge-editor__picker-footer {
@@ -350,7 +347,7 @@
 
     .challenge-editor__tool-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
     }
 
@@ -405,12 +402,6 @@
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
         background: var(--color-surface-sunken);
-    }
-
-    .challenge-editor__selected-card-info {
-        color: var(--color-text-secondary);
-        font-size: var(--text-xs);
-        line-height: var(--leading-normal);
     }
 
     .challenge-editor__hand-slots {
@@ -470,6 +461,12 @@
         font: inherit;
         font-size: 11px;
         cursor: pointer;
+    }
+
+    .challenge-editor__deck-actions {
+        display: flex;
+        flex: none;
+        gap: var(--space-1);
     }
 
     .challenge-editor__deck-summary {
