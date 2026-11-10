@@ -111,7 +111,9 @@ function initChallengeEditor() {
         '<section class="challenge-editor__panel" data-panel="deck" hidden>' +
         '<div class="challenge-editor__section-head"><div><h3>Карты для добора</h3>' +
         '<p class="note">Это набор карт, которые могут прийти после хода. В начале испытания они перемешиваются.</p></div>' +
-        '<button class="btn btn--primary" type="button" data-picker-open="deck">＋ Настроить колоду</button></div>' +
+        '<div class="challenge-editor__library-actions">' +
+        '<button class="btn btn--primary" type="button" data-picker-open="deck">＋ Настроить колоду</button>' +
+        '<button class="btn" type="button" data-deck-clear disabled>Очистить колоду</button></div></div>' +
         '<p class="challenge-editor__deck-count" data-deck-count>В колоде: 0 карт</p>' +
         '<div class="challenge-editor__deck-list" data-deck-list></div></section>' +
         '<section class="challenge-editor__panel" data-panel="library" hidden>' +
@@ -251,6 +253,10 @@ function handleRootClick(event) {
     const catalogCard = target.closest?.('[data-card-id]');
     if (catalogCard) {
         chooseCatalogCard(Number(catalogCard.dataset.cardId));
+        return;
+    }
+    if (target.closest?.('[data-deck-clear]')) {
+        clearDeck();
         return;
     }
     const deckRemove = target.closest?.('[data-deck-remove]');
@@ -816,8 +822,10 @@ function renderHandSlots() {
 function renderDeck() {
     const list = root.querySelector('[data-deck-list]');
     const count = root.querySelector('[data-deck-count]');
+    const clearButton = root.querySelector('[data-deck-clear]');
     const ids = [...draft.deck].sort((a, b) => a - b);
     count.textContent = 'В колоде добора: ' + ids.length + ' карт';
+    clearButton.disabled = ids.length === 0;
     list.replaceChildren();
     if (!ids.length) {
         const empty = document.createElement('p');
@@ -844,23 +852,53 @@ function renderDeck() {
     });
 }
 
+function challengeValidationIssues() {
+    const issues = [];
+    if (!draft.title.trim()) issues.push('добавь название');
+    if (draft.hand.some((id) => id === null)) issues.push('выбери три карты стартовой руки');
+    if (!isBoardValid()) issues.push('проверь соединения карт на поле');
+    return issues;
+}
+
 function updateSaveButton() {
     if (!root || !draft) return;
-    const valid = !!draft.title.trim() && draft.hand.every((id) => id !== null) && isBoardValid();
+    const issues = challengeValidationIssues();
     const button = root.querySelector('[data-save]');
-    button.disabled = !valid;
+    button.disabled = false;
+    button.textContent = issues.length ? 'Проверить готовность' : 'Опубликовать испытание';
     const status = root.querySelector('[data-editor-status]');
-    if (!draft.title.trim()) status.textContent = 'Добавь название испытания.';
-    else if (draft.hand.some((id) => id === null)) status.textContent = 'Выбери три карты для стартовой руки.';
-    else if (!isBoardValid()) status.textContent = 'Проверь раскладку поля: все карты должны соединяться по правилам.';
-    else status.textContent = 'Испытание будет опубликовано сразу и появится в общей библиотеке.';
+    status.textContent = issues.length
+        ? 'До публикации: ' + issues.join('; ') + '.'
+        : 'Всё готово — испытание появится в общей библиотеке сразу после публикации.';
+}
+
+function challengeAccessError(error) {
+    const message = String(error?.message || error || 'Неизвестная ошибка');
+    if (/permission_denied|permission denied/i.test(message)) {
+        return 'Firebase запретил доступ к /challenges. В Realtime Database Rules нужно разрешить чтение для auth != null и создание записей только с ownerUid = auth.uid.';
+    }
+    return message;
+}
+
+function clearDeck() {
+    if (!draft.deck.size) return;
+    draft.deck.clear();
+    renderDeck();
+    if (pickerMode === 'deck') renderPicker();
+    updateSaveButton();
 }
 
 async function saveChallenge() {
     if (!draft) return;
     const button = root.querySelector('[data-save]');
-    if (button.disabled) return;
+    const issues = challengeValidationIssues();
+    if (issues.length) {
+        snackbar('Перед публикацией: ' + issues.join('; ') + '.', 'error');
+        updateSaveButton();
+        return;
+    }
     button.disabled = true;
+    button.textContent = 'Публикую…';
     const challenge = {
         title: draft.title.trim(),
         description: draft.description.trim(),
@@ -878,8 +916,8 @@ async function saveChallenge() {
         render();
         snackbar('Испытание опубликовано в общей библиотеке.');
     } catch (error) {
-        snackbar('Не удалось опубликовать испытание: ' + error.message, 'error');
-        button.disabled = false;
+        snackbar('Не удалось опубликовать испытание: ' + challengeAccessError(error), 'error');
+        updateSaveButton();
     }
 }
 
@@ -894,7 +932,7 @@ async function loadLibrary(force = false) {
         libraryStatus = 'ready';
     } catch (error) {
         libraryStatus = 'error';
-        libraryError = error.message;
+        libraryError = challengeAccessError(error);
     } finally {
         libraryLoading = false;
         renderLibrary();
