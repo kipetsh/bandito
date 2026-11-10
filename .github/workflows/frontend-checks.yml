@@ -9,7 +9,7 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: frontend-checks-${{ github.ref }}
@@ -32,21 +32,8 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Format touched editor files
-        run: npx prettier --write js/challenge-editor.js css/blocks/challenge-editor.css
-
       - name: Run code checks
         run: npm run check
 
       - name: Run tests and production build
         run: npm test
-
-      - name: Commit formatter output and restore this workflow
-        run: |
-          git fetch --no-tags --depth=1 origin "${{ github.event.before }}"
-          git checkout FETCH_HEAD -- .github/workflows/frontend-checks.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- js/challenge-editor.js css/blocks/challenge-editor.css .github/workflows/frontend-checks.yml
-          git commit -m "Format challenge editor source and styles"
-          git push origin HEAD:main

@@ -376,7 +376,9 @@
         color: var(--color-text);
         font: inherit;
         cursor: pointer;
-        transition: background 120ms ease, border-color 120ms ease;
+        transition:
+            background 120ms ease,
+            border-color 120ms ease;
     }
 
     .challenge-editor__tool:hover,

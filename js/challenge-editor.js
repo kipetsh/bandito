@@ -522,9 +522,7 @@ function syncEditorGameState() {
         .filter(Boolean)
         .map((card) => ({ id: card.id, m: clone(card.matrix) }));
     state.hand =
-        draft.pendingCard === null
-            ? []
-            : [{ id: draft.pendingCard, m: clone(cardById(draft.pendingCard).matrix) }];
+        draft.pendingCard === null ? [] : [{ id: draft.pendingCard, m: clone(cardById(draft.pendingCard).matrix) }];
     state.selected = draft.pendingCard === null ? -1 : 0;
     state.rotation = 0;
     state.finished = false;
@@ -567,7 +565,10 @@ function renderBoardControls() {
         info.className = 'challenge-editor__selected-card-info';
         info.textContent = pending
             ? 'Карта #' + card.id + ' · выбери точку на поле'
-            : (draft.selectedPiece === 0 ? 'Стартовая карта' : 'Карта #' + card.id) + ' · ' + selected.rotation * 90 + '°';
+            : (draft.selectedPiece === 0 ? 'Стартовая карта' : 'Карта #' + card.id) +
+              ' · ' +
+              selected.rotation * 90 +
+              '°';
         preview.append(info);
         label.textContent = pending ? 'Добавление' : 'Выбрана';
     } else {
@@ -734,11 +735,7 @@ function renderPicker() {
         title.textContent = 'Карта #' + card.id;
         const note = document.createElement('small');
         note.textContent =
-            pickerMode === 'deck'
-                ? selected
-                    ? 'В колоде добора'
-                    : 'Не входит в колоду'
-                : 'Выбрать карту';
+            pickerMode === 'deck' ? (selected ? 'В колоде добора' : 'Не входит в колоду') : 'Выбрать карту';
         info.append(title, note);
         button.append(info);
         if (pickerMode === 'deck') {
