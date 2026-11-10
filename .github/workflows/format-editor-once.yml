@@ -28,6 +28,8 @@ jobs:
         run: npm ci
       - name: Format changed files
         run: npx prettier --write js/challenge-editor.js README.md AGENTS.md .github/workflows/format-editor-once.yml
+      - name: Remove temporary reports
+        run: rm -f lint-report.json prettier-report.txt
       - name: Check formatting
         run: npm run format:check
       - name: Check lint
