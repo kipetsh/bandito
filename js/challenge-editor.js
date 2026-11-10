@@ -117,7 +117,8 @@ function initChallengeEditor() {
         '<button class="btn btn--icon btn--close-icon" type="button" data-picker-close aria-label="Закрыть каталог"></button></header>' +
         '<div class="challenge-editor__picker-grid" data-picker-grid></div>' +
         '<footer class="challenge-editor__picker-footer">' +
-        '<button class="btn btn--sm" type="button" data-picker-close>Готово</button></footer></section>';
+        '<button class="btn btn--sm" type="button" data-picker-close>Готово</button>' +
+        '<button class="btn btn--sm challenge-editor__picker-clear hidden" type="button" data-deck-clear>Очистить колоду</button></footer></section>';
     document.body.append(root);
 
     root.addEventListener('click', handleRootClick);
@@ -194,9 +195,7 @@ function createEditorChrome() {
         '</section>' +
         '<section class="challenge-editor__tool-group">' +
         '<div class="challenge-editor__tools-heading"><h3>Колода</h3>' +
-        '<div class="challenge-editor__deck-actions">' +
-        '<button class="btn btn--sm" type="button" data-picker-open="deck">Изменить</button>' +
-        '<button class="btn btn--sm" type="button" data-deck-clear>Очистить</button></div></div>' +
+        '<button class="btn btn--sm" type="button" data-picker-open="deck">Изменить</button></div>' +
         '<div class="challenge-editor__deck-summary"><div data-deck-preview></div>' +
         '<p class="challenge-editor__deck-count" data-deck-count>В колоде: 0 карт</p></div>' +
         '</section>' +
@@ -628,6 +627,7 @@ function openPicker(mode) {
         }
     }
     const picker = root.querySelector('[data-picker]');
+    root.querySelector('[data-deck-clear]').classList.toggle('hidden', mode !== 'deck');
     const pickerTitles = {
         board: 'Добавить карту на поле',
         hand: 'Выбрать карту в руку',
@@ -756,7 +756,7 @@ function renderDeck() {
     preview.replaceChildren();
     const word = ids.length === 1 ? 'карта' : ids.length >= 2 && ids.length <= 4 ? 'карты' : 'карт';
     count.textContent = ids.length + ' ' + word;
-    const clearButton = document.querySelector('#play [data-deck-clear]');
+    const clearButton = root.querySelector('[data-deck-clear]');
     clearButton.disabled = ids.length === 0;
     if (!ids.length) return;
     const card = cardById(ids[0]);

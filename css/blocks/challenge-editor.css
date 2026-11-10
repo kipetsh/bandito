@@ -236,6 +236,10 @@
         border-bottom: 0;
     }
 
+    .challenge-editor__picker-clear {
+        margin-left: auto;
+    }
+
     .challenge-editor--picker-layer {
         display: block;
         padding: 0;
@@ -461,12 +465,6 @@
         font: inherit;
         font-size: 11px;
         cursor: pointer;
-    }
-
-    .challenge-editor__deck-actions {
-        display: flex;
-        flex: none;
-        gap: var(--space-1);
     }
 
     .challenge-editor__deck-summary {
