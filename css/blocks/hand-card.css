@@ -13,8 +13,9 @@
         align-items: center;
         justify-content: center;
         min-width: 0;
-        /* No side padding: the miniatures reach the edges of the hand. Above is room for the lift, below for the bar. */
-        padding: var(--space-3) 0 var(--space-2);
+        /* No side padding: the miniatures reach the edges of the hand. Above is room for the lift, below only for
+           the half of the frame outside the edge, which a scrolling hand would clip. */
+        padding: var(--space-3) 0 var(--space-1);
         border: 0;
         border-radius: var(--radius-md);
         background: none;
@@ -34,14 +35,6 @@
         transform: translateY(calc(-1 * var(--space-2)));
     }
 
-    /* The frame of the selected and the pointed card is a pixel thicker, still centred on the edge, so the card
-       keeps its size. */
-    .hand-card--selected .hand-card__mini,
-    .hand-card--pointed .hand-card__mini {
-        outline-width: 2px;
-        outline-offset: -1px;
-    }
-
     /* The pointed card's walls get lighter; the cell lines and the frame colour stay. */
     .hand-card--pointed .hand-card__cell--wall {
         border-color: var(--color-tile-wall-hover);
@@ -55,9 +48,9 @@
         content: '';
         position: absolute;
         /* Narrower than the card by its rounding on each side, so it does not stick out past the corners. */
-        right: var(--radius-sm);
-        bottom: var(--space-2);
-        left: var(--radius-sm);
+        right: var(--radius-xs);
+        bottom: var(--space-1);
+        left: var(--radius-xs);
         height: 3px;
         border-radius: 2px;
         background: var(--color-hand-mark);
@@ -79,7 +72,7 @@
         outline: 1px solid var(--color-tile-outline);
         outline-offset: -0.5px;
         /* Cards in the hand have rounded corners, unlike the pieces on the board. */
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-xs);
         /* Clips the corner cells to the rounding, the outline is drawn outside the clip. */
         overflow: hidden;
         transition: transform var(--hand-card-motion);

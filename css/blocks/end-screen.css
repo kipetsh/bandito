@@ -106,7 +106,7 @@
         padding: var(--space-12) var(--space-8);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-2xl);
-        background: var(--color-surface);
+        background: var(--color-surface-dialog);
         box-shadow: var(--shadow-end-card);
         text-align: center;
         animation: end-screen-pop 0.5s var(--ease-out-back) both;

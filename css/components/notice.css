@@ -1,11 +1,9 @@
-/* Status message on a sunken background. */
+/* Status message: plain text in the panel, without a plate of its own. A block can set the size with
+   --notice-font-size. */
 @layer components {
     .notice {
-        padding: var(--space-3);
-        border-radius: var(--radius-md);
-        background: var(--color-surface-sunken);
         color: var(--color-text);
-        font-size: var(--text-sm);
+        font-size: var(--notice-font-size, var(--text-sm));
     }
 
     .notice--strong {
@@ -13,7 +11,6 @@
     }
 
     .notice--urgent {
-        background: var(--color-danger-surface);
         color: var(--color-danger);
     }
 }

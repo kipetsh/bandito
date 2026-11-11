@@ -20,7 +20,7 @@
         -webkit-backdrop-filter: blur(4px);
         backdrop-filter: blur(4px);
         opacity: 0;
-        content: "";
+        content: '';
         animation: settings-backdrop-in 120ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
     }
 
@@ -74,18 +74,28 @@
         }
     }
 
+    /* Only the body scrolls, and it stops a dialog padding short of the top and the bottom: the system scrollbar stays
+       clear of the rounded corners. */
     .modal__dialog {
-        background: #fff;
-        --card-padding: var(--space-6);
+        background: var(--color-surface-dialog);
+        --card-padding: var(--space-4) 0;
         --card-radius: var(--radius-xl);
+        --modal-inset: var(--space-6);
 
+        display: flex;
+        flex-direction: column;
         width: min(460px, 100%);
         max-height: 100%;
-        overflow: auto;
+        /* Not visible: the grid row would grow with the content, past the screen. */
+        overflow: hidden;
     }
 
-    .dark-theme .modal__dialog {
-        background: #292d32;
+    .modal__body {
+        min-height: 0;
+        overflow: auto;
+        /* Scrolling to the end of a long dialog doesn't go on to the page under it. */
+        overscroll-behavior: contain;
+        padding: calc(var(--modal-inset) - var(--space-4)) var(--modal-inset);
     }
 
     .modal--welcome {
@@ -165,11 +175,10 @@
         }
 
         .modal__dialog {
-            --card-padding: var(--space-5);
+            --modal-inset: var(--space-5);
         }
     }
 }
-
 
 /* Flaticon close icon 5254940; source: flaticon.com/free-icon/close_5254940. */
 @layer blocks {
@@ -180,12 +189,12 @@
     }
 
     .btn--close-icon::before {
-        content: "";
+        content: '';
         display: block;
         width: 17px;
         height: 17px;
         background-color: currentColor;
-        -webkit-mask: url("https://cdn-icons-png.flaticon.com/512/5254/5254940.png") center / contain no-repeat;
-        mask: url("https://cdn-icons-png.flaticon.com/512/5254/5254940.png") center / contain no-repeat;
+        -webkit-mask: url('https://cdn-icons-png.flaticon.com/512/5254/5254940.png') center / contain no-repeat;
+        mask: url('https://cdn-icons-png.flaticon.com/512/5254/5254940.png') center / contain no-repeat;
     }
 }

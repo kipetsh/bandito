@@ -1,6 +1,7 @@
 /* Single-player rules, board rendering, controls, and end screens. */
 import { $ } from '#js/dom.js';
 import { rememberOpener, returnFocus } from '#js/focus-return.js';
+import { closeModal, isModalOpen, openModal } from '#js/modal.js';
 import { applySettings, saveSettings } from '#js/settings.js';
 import { snackbar } from '#js/snackbar.js';
 import {
@@ -492,22 +493,48 @@ export function centerCamera() {
     boardOrigin = null;
     render({ hand: false });
 }
-// A resize keeps the zoom in percent (100% differs on narrow screens) and the cell in the middle of the view.
+// A resize keeps the zoom in percent (100% differs on narrow screens).
 window.addEventListener('resize', () => {
-    const base = baseCellSize(),
-        crossed = base !== zoomBase;
-    if (crossed) {
-        cellSize = clampCell(Math.round((cellSize * base) / zoomBase / 2) * 2);
-        zoomBase = base;
-    }
+    const base = baseCellSize();
+    if (base === zoomBase) return;
+    cellSize = clampCell(Math.round((cellSize * base) / zoomBase / 2) * 2);
+    zoomBase = base;
     // Crossing the narrow breakpoint turns the cards in the hand, so the hand is rebuilt too.
-    if (!$('#play').classList.contains('hidden')) render({ hand: challengeEditorMode ? false : crossed });
+    if (!$('#play').classList.contains('hidden')) render({ hand: !challengeEditorMode });
 });
+// The view changes with the window and, on a phone, with the bottom sheet (the discard button slides in). The cell
+// in the middle of the view stays put at once; the board is re-rendered once the size settles, not on every frame.
+let cameraSize = { w: 0, h: 0 },
+    cameraResizeTimer = 0,
+    // The scroll that keeps the middle cell: a growing view cannot scroll past the old board, so the next render
+    // takes this one instead of the clamped scroll of the camera.
+    cameraScroll = null;
+new ResizeObserver(() => {
+    const camera = $('#camera'),
+        w = camera.clientWidth,
+        h = camera.clientHeight,
+        prev = cameraSize;
+    cameraSize = { w, h };
+    // Showing or hiding the game: a new game centres the camera itself.
+    if (!prev.w || !prev.h || !w || !h || !boardOrigin) return;
+    const left = (cameraScroll?.left ?? camera.scrollLeft) + (boardOrigin.w - w) / 2,
+        top = (cameraScroll?.top ?? camera.scrollTop) + (boardOrigin.h - h) / 2;
+    cameraScroll = { left, top };
+    camera.scrollLeft = left;
+    camera.scrollTop = top;
+    boardOrigin.w = w;
+    boardOrigin.h = h;
+    clearTimeout(cameraResizeTimer);
+    cameraResizeTimer = setTimeout(() => {
+        if (!$('#play').classList.contains('hidden')) render({ hand: false });
+    }, 150);
+}).observe($('#camera'));
 // hand: false keeps the hand as it is (zoom changes only the board).
 export function render({ hand = true } = {}) {
     const camera = $('#camera'),
-        savedLeft = camera?.scrollLeft || 0,
-        savedTop = camera?.scrollTop || 0;
+        savedLeft = cameraScroll?.left ?? (camera?.scrollLeft || 0),
+        savedTop = cameraScroll?.top ?? (camera?.scrollTop || 0);
+    cameraScroll = null;
     if (state.selected >= state.hand.length) state.selected = -1;
     if (state.finished) state.selected = -1;
     // Spots touch the placed cards, so they always lie inside the margin.
@@ -1173,7 +1200,11 @@ function clearSelection() {
 // no next element and keep the selection.
 function dropSelectionOnFocusLeave(e) {
     const next = e.relatedTarget;
-    if (state.selected < 0 || !next || next.closest('#hand, #placementOptions, #placementPreview, #gameHelpToggle'))
+    if (
+        state.selected < 0 ||
+        !next ||
+        next.closest('#hand, #placementOptions, #placementPreview, #gameHelpToggle, #gameHelpModal')
+    )
         return;
     // The next element is focused after this event; a keyboard move gives it :focus-visible, a mouse click does not.
     setTimeout(() => {
@@ -1206,25 +1237,17 @@ $('#gameMenuToggle').onclick = () => {
     $('#gameMenuToggle').setAttribute('aria-expanded', 'true');
 };
 
-const gameHelpPanel = $('#gameHelpPanel');
-function closeGameHelp() {
-    if (gameHelpPanel.classList.contains('hidden')) return;
-    returnFocus(gameHelpPanel);
-    gameHelpPanel.classList.add('hidden');
-    document.body.classList.remove('game-help-open');
-    $('#gameHelpToggle').setAttribute('aria-expanded', 'false');
-}
-$('#gameHelpToggle').onclick = (event) => {
-    event.stopPropagation();
-    if (!gameHelpPanel.classList.contains('hidden')) return closeGameHelp();
-    rememberOpener(gameHelpPanel, $('#gameHelpToggle'));
-    gameHelpPanel.classList.remove('hidden');
-    document.body.classList.toggle('game-help-open', narrowScreen());
-    $('#gameHelpToggle').setAttribute('aria-expanded', 'true');
+const gameHelpModal = $('#gameHelpModal');
+$('#gameHelpToggle').onclick = () => {
+    // The help describes the current input only: touch, or a mouse with the keyboard.
+    gameHelpModal
+        .querySelectorAll('[data-help-input]')
+        .forEach((el) => el.classList.toggle('hidden', (el.dataset.helpInput === 'touch') !== touchInput));
+    openModal(gameHelpModal, $('#gameHelpToggle'), $('#closeGameHelp'));
 };
-$('#closeGameHelp').onclick = closeGameHelp;
-document.addEventListener('click', (event) => {
-    if (!event.target.closest('.game__hand-section')) closeGameHelp();
+$('#closeGameHelp').onclick = () => closeModal(gameHelpModal);
+gameHelpModal.addEventListener('click', (e) => {
+    if (e.target === gameHelpModal) closeModal(gameHelpModal);
 });
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.game__menu')) closeGameMenu();
@@ -1304,7 +1327,7 @@ cameraEl.addEventListener(
 );
 document.addEventListener('keydown', (e) => {
     if (challengeEditorMode || $('#play').classList.contains('hidden') || e.altKey || e.ctrlKey || e.metaKey) return;
-    if (!$('#settingsModal').classList.contains('hidden')) return;
+    if (isModalOpen(settingsModal) || isModalOpen(gameHelpModal)) return;
     // Text fields keep their keys; the hand and the placements are radios and are handled here.
     if (e.target.closest?.('input:not([type="radio"]),textarea,select,[contenteditable="true"]')) return;
     // The arrows are native: they check the next card or placement.
@@ -1333,9 +1356,6 @@ document.addEventListener('keydown', (e) => {
         confirmCard(Number(e.key) - 1);
     } else if (e.key === 'Escape' && !$('#gameMenu').classList.contains('hidden')) {
         closeGameMenu();
-        e.preventDefault();
-    } else if (e.key === 'Escape' && !gameHelpPanel.classList.contains('hidden')) {
-        closeGameHelp();
         e.preventDefault();
     } else if (e.key === 'Escape' && state.selected >= 0) {
         // One step back: from the placements to the cards, from a selected card to none.
@@ -1635,26 +1655,13 @@ function showWelcomePrompt() {
     try {
         if (localStorage.getItem('banditoWelcomeSeen') === '1') return;
     } catch {}
-    rememberOpener(welcomeModal, document.activeElement);
-    welcomeModal.classList.remove('is-closing', 'hidden');
-    $('#closeWelcome').focus({ preventScroll: true });
+    openModal(welcomeModal, document.activeElement, $('#closeWelcome'));
 }
 
 function closeWelcomePrompt() {
-    if (welcomeModal.classList.contains('hidden') || welcomeModal.classList.contains('is-closing')) return;
+    if (!isModalOpen(welcomeModal)) return;
     rememberWelcomeChoice();
-    const reducedMotion =
-        document.body.classList.contains('reduce-motion') ||
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reducedMotion) {
-        welcomeModal.classList.add('hidden');
-        return;
-    }
-    welcomeModal.classList.add('is-closing');
-    window.setTimeout(() => {
-        welcomeModal.classList.add('hidden');
-        welcomeModal.classList.remove('is-closing');
-    }, 140);
+    closeModal(welcomeModal);
 }
 
 fetch('./resources/bandido-matrices/cards.json')
@@ -1678,35 +1685,11 @@ fetch('./resources/bandido-matrices/cards.json')
 
 const settingsModal = $('#settingsModal');
 const welcomeModal = $('#welcomeModal');
-let settingsCloseTimer;
-
-function openSettings() {
-    window.clearTimeout(settingsCloseTimer);
-    rememberOpener(settingsModal, $('#openSettings'));
-    settingsModal.classList.remove('is-closing', 'hidden');
-    $('#closeSettings').focus({ preventScroll: true });
-}
-
-function closeSettings() {
-    if (settingsModal.classList.contains('hidden') || settingsModal.classList.contains('is-closing')) return;
-    returnFocus(settingsModal);
-    const reducedMotion =
-        document.body.classList.contains('reduce-motion') ||
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reducedMotion) {
-        settingsModal.classList.add('hidden');
-        return;
-    }
-    settingsModal.classList.add('is-closing');
-    settingsCloseTimer = window.setTimeout(() => {
-        settingsModal.classList.add('hidden');
-        settingsModal.classList.remove('is-closing');
-    }, 140);
-}
+const closeSettings = () => closeModal(settingsModal);
 
 $('#openSettings').onclick = (event) => {
     event.stopPropagation();
-    openSettings();
+    openModal(settingsModal, $('#openSettings'), $('#closeSettings'));
 };
 $('#openTutorial').onclick = () => startTutorial(1);
 $('#welcomeAlreadyPlayed').onclick = closeWelcomePrompt;
@@ -1729,5 +1712,7 @@ $('#resetSettings').onclick = () => {
     applySettings();
 };
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeSettings();
+    if (e.key !== 'Escape') return;
+    closeSettings();
+    closeModal(gameHelpModal);
 });

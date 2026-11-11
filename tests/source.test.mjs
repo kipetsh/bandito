@@ -152,6 +152,9 @@ test('the entry point loads every application module without runtime errors', as
         matchMedia: () => ({ matches: false }),
         fetch: () => new Promise(() => {}),
         requestAnimationFrame: () => 0,
+        ResizeObserver: class {
+            observe() {}
+        },
         addEventListener: () => {},
     };
     await withGlobals({ ...globals, window: globals }, async () => {
@@ -234,8 +237,6 @@ test('the card data is structurally valid and contains all supported starting ca
     assert.equal(starts.get(72), 5, 'Five-exit start card is missing');
     assert.equal(starts.get(71), 6, 'Six-exit start card is missing');
 });
-
-
 
 test('settings modal reveals a static backdrop blur without animating the filter', () => {
     const css = readFileSync(resolve(projectRoot, 'css/blocks/modal.css'), 'utf8');

@@ -19,14 +19,22 @@
     }
 
     @media (max-width: 760px) {
+        /* One line on a phone: the value right after its label. */
         .stat {
-            flex-direction: column;
-            gap: 0;
-            font-size: var(--text-xs);
+            justify-content: flex-start;
+            gap: 0.25em;
+            padding-bottom: 0;
+            border-bottom: 0;
+            font-size: var(--text-md);
+        }
+
+        /* «Ход: 3» — the colon keeps the label and the value apart without the dividing line. */
+        .stat__label::after {
+            content: ':';
         }
 
         .stat__value {
-            font-size: var(--text-sm);
+            font-size: var(--text-md);
         }
     }
 }

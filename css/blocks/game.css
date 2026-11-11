@@ -1,5 +1,12 @@
 /* Game screen: header, board frame and side panel. */
 @layer blocks {
+    /* The screen is a column the height of the page: the header and the layout, whose board takes the room left. */
+    .game {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+    }
+
     .game__head {
         display: flex;
         flex-wrap: wrap;
@@ -16,13 +23,17 @@
         align-items: center;
         justify-content: space-between;
         gap: var(--space-3);
-        min-height: 34px;
-        margin-bottom: var(--space-2);
+        margin-bottom: var(--space-5);
     }
 
     .game__subtitle-row .game__subtitle {
         min-width: 0;
         margin: 0;
+    }
+
+    /* A plain game has no subtitle: without the return button the empty row goes and the board takes its room. */
+    .game__subtitle-row--empty:not(:has(.game__return)) {
+        display: none;
     }
 
     .game__return {
@@ -51,7 +62,7 @@
         padding: 6px;
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
-        background: var(--color-surface-raised);
+        background: var(--color-surface-dialog);
         box-shadow: var(--shadow-float);
     }
 
@@ -100,38 +111,46 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) 280px;
         grid-template-rows: auto minmax(0, 1fr);
-        gap: var(--space-3) var(--space-4);
+        flex: 1;
+        gap: 0 var(--space-4);
     }
 
     .game__boardbox {
         grid-column: 1;
         grid-row: 2;
         position: relative;
-        --card-padding: var(--space-3);
+        /* The camera reaches the edges of the card, so do its scrollbars. */
+        --card-padding: 0;
         --card-radius: var(--radius-lg);
 
         display: flex;
         flex-direction: column;
-        height: clamp(430px, calc(100svh - 190px), 860px);
         min-height: 430px;
         overflow: hidden;
     }
 
+    /* The layout sizes the camera, so the board inside it doesn't stretch the screen. */
+    /* No scrollbars: the board scrolls with the wheel, a drag and a finger. Its own stacking context keeps the whole
+       board, the placement dots too, under the zoom and the placement panel. */
     .game__camera {
         position: relative;
+        z-index: 0;
+        contain: size;
         flex: 1;
         min-height: 0;
         width: 100%;
         height: auto;
         overflow: auto;
         overscroll-behavior: contain;
-        scrollbar-width: thin;
-        scrollbar-color: var(--color-border) transparent;
-        border-radius: var(--radius-sm);
+        scrollbar-width: none;
         cursor: grab;
         touch-action: none;
         user-select: none;
         -webkit-user-select: none;
+    }
+
+    .game__camera::-webkit-scrollbar {
+        display: none;
     }
 
     .game__camera--dragging {
@@ -142,10 +161,11 @@
         grid-column: 2;
         grid-row: 1 / span 2;
         --card-padding: var(--space-4);
+        --game-side-gap: var(--space-4);
 
         display: flex;
         flex-direction: column;
-        gap: var(--space-4);
+        gap: var(--game-side-gap);
     }
 
     .game__metrics {
@@ -163,19 +183,19 @@
         gap: var(--space-2);
     }
 
+    /* A section title, smaller than the page title. */
     .game__hand-heading {
         display: grid;
         grid-row: 1;
         grid-column: 1;
         align-items: center;
-        min-height: 40px;
+        min-height: 28px;
+        --heading-title-size: var(--text-lg);
     }
 
-    .game__hand-heading > .caption {
-        justify-self: start;
-        text-align: left;
-    }
-
+    /* A small circle in a large hit area: the button is 40px (44px on a phone), the circle inside it 28px.
+       Negative margins line the circle up with the content edge and keep the hit area out of the row height, so the
+       cards sit close under the heading. */
     .game__help-toggle {
         display: grid;
         grid-row: 1;
@@ -183,81 +203,60 @@
         place-items: center;
         align-self: center;
         justify-self: end;
+        position: relative;
+        isolation: isolate;
         flex: none;
         width: 40px;
         min-width: 40px;
         height: 40px;
+        margin: -6px -6px -6px 0;
         padding: 0;
-        border: 1px solid var(--color-border);
+        border: 0;
         border-radius: 50%;
         background: transparent;
-        color: var(--color-text-secondary);
+        color: var(--color-control-text);
+        font-size: var(--text-sm);
         cursor: pointer;
+        transition: color 140ms ease;
+    }
+
+    .game__help-toggle::before {
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        width: 28px;
+        height: 28px;
+        margin: auto;
+        border: 1px solid var(--color-control-border);
+        border-radius: 50%;
+        background: var(--color-control);
+        content: '';
         transition:
-            color 140ms ease,
             background 140ms ease,
             border-color 140ms ease;
     }
 
-    .game__help-toggle svg {
-        display: block;
-        width: 19px;
-        height: 19px;
-    }
-
     .game__help-toggle:hover {
-        border-color: var(--color-border-strong);
-        background: var(--color-surface-sunken);
         color: var(--color-text);
     }
 
+    .game__help-toggle:hover::before {
+        border-color: var(--color-control-border-hover);
+        background: var(--color-control-hover);
+    }
+
     .game__help-toggle:focus-visible {
+        outline: 0;
+    }
+
+    .game__help-toggle:focus-visible::before {
         outline: 2px solid var(--color-primary);
         outline-offset: 2px;
-    }
-
-    .game-help {
-        position: absolute;
-        z-index: 50;
-        top: calc(40px + var(--space-2) + 10px);
-        right: 0;
-        width: min(420px, calc(100vw - 32px));
-        max-height: min(66svh, 560px);
-        overflow: hidden;
-        padding: var(--space-4);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-xl);
-        background: #fff;
-        box-shadow: var(--shadow-float);
-        transform-origin: top right;
-        animation: game-help-in 120ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-    }
-
-    .dark-theme .game-help {
-        background: #292d32;
-    }
-
-    .game-help__head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-3);
-        margin-bottom: var(--space-3);
-    }
-
-    .game-help__head h3 {
-        margin: 0;
-        color: var(--color-text-strong);
-        font-size: var(--text-lg);
-        font-weight: var(--weight-semibold);
     }
 
     .game-help__content {
         display: grid;
         gap: var(--space-4);
-        max-height: calc(min(66svh, 560px) - 76px);
-        overflow-y: auto;
-        padding-right: var(--space-1);
         color: var(--color-text-secondary);
         font-size: var(--text-sm);
         line-height: var(--leading-normal);
@@ -269,10 +268,10 @@
         gap: var(--space-1);
     }
 
-    .game-help__content h4 {
+    .game-help__content h3 {
         margin: 0;
         color: var(--color-text-strong);
-        font-size: var(--text-sm);
+        font-size: var(--text-md);
         font-weight: var(--weight-semibold);
     }
 
@@ -284,15 +283,26 @@
         margin-top: var(--space-2);
     }
 
-    @keyframes game-help-in {
-        from {
-            opacity: 0;
-            transform: translateY(-5px) scale(0.985);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
+    .game-help__keys {
+        display: grid;
+        gap: var(--space-1);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .game-help__key {
+        display: inline-block;
+        min-width: 20px;
+        padding: 0 var(--space-1);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-xs);
+        background: var(--color-surface-sunken);
+        color: var(--color-text);
+        font-family: inherit;
+        font-size: var(--text-xs);
+        line-height: 18px;
+        text-align: center;
     }
 
     /* Equal columns: a drawn card of another width must not shift its neighbours. */
@@ -309,17 +319,27 @@
         gap: var(--space-4);
     }
 
+    /* Takes no room while the discard button is hidden: the negative margin cancels the panel gap, so the status sits
+       right under the hand. The button slides down with its gap and pushes the status lower. */
     .game__actions {
         display: flex;
-        justify-content: flex-start;
-        min-height: 0;
+        height: 0;
+        margin-bottom: calc(-1 * var(--game-side-gap));
+        transition:
+            height 180ms ease,
+            margin-bottom 180ms ease;
+    }
+
+    .game__actions:has(.game__exchange.is-visible) {
+        height: var(--control-sm);
+        margin-bottom: 0;
     }
 
     .game__exchange {
-        flex: none;
+        flex: 1;
         opacity: 0;
         visibility: hidden;
-        transform: translateY(8px);
+        transform: translateY(-100%);
         pointer-events: none;
         transition:
             opacity 180ms ease,
@@ -349,10 +369,30 @@
         box-shadow: var(--shadow-float);
     }
 
+    /* − and + are drawn with bars: font glyphs sit off the middle of the line, differently in each system font.
+       The text stays in the markup for screen readers; even sizes keep the bars on whole pixels of a 30px button. */
     .game__zoom-button {
         --btn-icon-size: 30px;
-        border-radius: 6px;
-        font-size: var(--text-lg);
+        position: relative;
+        border-radius: var(--radius-sm);
+        font-size: 0;
+    }
+
+    .game__zoom-button::before,
+    .game__zoom-button--in::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        width: 12px;
+        height: 2px;
+        margin: auto;
+        border-radius: 1px;
+        background: currentColor;
+    }
+
+    .game__zoom-button--in::after {
+        width: 2px;
+        height: 12px;
     }
 
     /* The current zoom, a plain label between the − and + buttons. */
@@ -366,7 +406,6 @@
 
     @media (max-height: 650px) and (min-width: 761px) {
         .game__boardbox {
-            height: calc(100svh - 155px);
             min-height: 360px;
         }
     }
@@ -384,58 +423,44 @@
     }
 
     @media (max-width: 760px) {
-        .game__zoom {
-            right: var(--space-2);
-            bottom: 58px;
-        }
-
-        .game__camera {
-            touch-action: pan-x pan-y;
-            -webkit-overflow-scrolling: touch;
-            cursor: default;
-        }
-
-        body.game-help-open .game__hand-section {
-            z-index: 50;
-        }
-
-        body.game-help-open .game-help {
-            z-index: 60;
-        }
-
-        body.game-help-open .page::before {
-            content: '';
+        /* The phone screen is a column the height of the viewport: the header, the board taking all the room left
+           and the side panel under it as a sheet with the hand, the status and the stats. */
+        .game {
             position: fixed;
-            z-index: 40;
             inset: 0;
-            background: rgb(20 22 26 / 30%);
-            -webkit-backdrop-filter: blur(4px);
-            backdrop-filter: blur(4px);
-            animation: game-help-backdrop-in 160ms ease both;
-        }
-
-        @keyframes game-help-backdrop-in {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        .game__subtitle-row {
-            align-items: flex-start;
-            gap: var(--space-2);
+            display: flex;
+            flex-direction: column;
+            padding: calc(var(--space-4) + env(safe-area-inset-top)) max(var(--space-3), env(safe-area-inset-right)) 0
+                max(var(--space-3), env(safe-area-inset-left));
         }
 
         .game__head {
             --heading-title-size: var(--text-xl);
 
-            margin-bottom: var(--space-2);
+            margin-bottom: var(--space-3);
+        }
+
+        .game__layout {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            gap: var(--space-2);
+            min-height: 0;
         }
 
         .game__subtitle {
             display: none;
+        }
+
+        /* Only the tutorial shows a subtitle on a phone; an empty row would leave a gap under the header. */
+        .game__subtitle-row:not(:has(.game__subtitle--tutorial)) {
+            display: none;
+        }
+
+        .game__subtitle-row {
+            align-items: flex-start;
+            gap: var(--space-2);
+            margin-bottom: 0;
         }
 
         .game__subtitle-row .game__subtitle--tutorial {
@@ -444,92 +469,70 @@
             padding: 7px 9px;
         }
 
-        .game__layout {
-            grid-template-columns: minmax(0, 1fr);
-            grid-template-rows: auto auto auto;
-            gap: var(--space-2);
-        }
-
-        .game__subtitle-row,
-        .game__boardbox,
-        .game__side {
-            grid-column: 1;
-            grid-row: auto;
-        }
-
-        .game__subtitle-row {
-            min-height: 30px;
-            margin-bottom: 0;
-        }
-
-        .game {
-            /* Room for the bottom sheet: its height grows with the cards, a card is (100vw - 57px) / 6 high
-               (see --hand-card-cell below); the rest is the handle, the caption, the paddings and a 16px gap. */
-            padding-bottom: calc((100vw - 57px) / 6 + 87px + env(safe-area-inset-bottom));
-        }
-
         .game__boardbox {
-            --card-padding: var(--space-2);
-            --card-radius: var(--radius-md);
+            --card-radius: var(--radius-xl);
 
-            height: clamp(250px, calc(100svh - 310px), 460px);
-            min-height: 250px;
+            flex: 1;
+            min-height: 0;
         }
 
+        .game__camera {
+            touch-action: pan-x pan-y;
+            -webkit-overflow-scrolling: touch;
+            cursor: default;
+        }
+
+        .game__zoom {
+            right: var(--space-2);
+            bottom: var(--space-2);
+        }
+
+        .game__layout:has(.game__exchange.is-visible) .game__zoom {
+            bottom: calc(var(--space-2) + var(--control-sm) + var(--space-2));
+        }
+
+        .game__placement-preview {
+            display: flex;
+            right: 8px;
+            bottom: 8px;
+            left: 8px;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .game__placement-label {
+            max-width: 112px;
+        }
+
+        /* A sheet as wide as the board and with its background, reaching the bottom of the screen: rounded like
+           the board at the top only. */
         .game__side {
-            --card-padding: var(--space-3);
-
-            gap: var(--space-3);
+            position: relative;
+            flex: none;
+            --notice-font-size: var(--text-md);
+            --card-padding: var(--space-3) var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom));
+            --card-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            --game-side-gap: var(--space-3);
         }
 
+        /* The stats go to the bottom of the sheet, under the status. */
         .game__metrics {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: var(--space-2);
+            order: 1;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 0;
         }
 
-        /* An Android-style bottom sheet that always stays open: edge to edge, rounded at the top only,
-           with a drag handle that only marks it as a sheet. */
         .game__hand-section {
-            position: fixed;
-            z-index: 30;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            display: grid;
             gap: var(--space-1);
-            padding: var(--space-2) max(var(--space-3), env(safe-area-inset-right))
-                calc(var(--space-2) + env(safe-area-inset-bottom)) max(var(--space-3), env(safe-area-inset-left));
-            border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
-            background: var(--color-surface-raised);
-            box-shadow: var(--shadow-sheet);
-            text-align: center;
-        }
-
-        .game-help {
-            top: auto;
-            right: max(var(--space-3), env(safe-area-inset-right));
-            bottom: calc(100% + 10px);
-            width: min(440px, calc(100vw - 24px));
-            max-height: min(62svh, 500px);
-            transform-origin: bottom right;
-        }
-
-        .game-help__content {
-            max-height: calc(min(62svh, 500px) - 76px);
-        }
-
-        .game__hand-section > .caption {
-            font-size: var(--text-xs);
-        }
-
-        .game__hand-heading {
-            min-height: 36px;
         }
 
         .game__help-toggle {
-            width: 40px;
-            min-width: 40px;
-            height: 40px;
+            width: 44px;
+            min-width: 44px;
+            height: 44px;
+            margin: -8px -8px -8px 0;
         }
 
         .game__hand {
@@ -552,24 +555,40 @@
             display: none;
         }
 
-        .game__placement-preview {
-            display: flex;
-            right: 8px;
-            bottom: 8px;
-            left: 8px;
-            justify-content: space-between;
-            gap: 6px;
+        /* The discard button floats over the bottom of the board like the placement panel and lifts the zoom the
+           same way: nothing in the layout changes its size when the button appears. It rises a little as it fades
+           in. The sheet sits a layout gap below the board. */
+        .game__actions,
+        .game__actions:has(.game__exchange.is-visible) {
+            position: absolute;
+            z-index: 6;
+            right: 0;
+            bottom: calc(100% + var(--space-2) + var(--space-2));
+            left: 0;
+            justify-content: center;
+            height: auto;
+            margin: 0;
+            pointer-events: none;
         }
 
-        .game__placement-label {
-            max-width: 112px;
+        .game__exchange {
+            flex: none;
+            box-shadow: var(--shadow-float);
+            transform: translateY(8px);
         }
-    }
 
-    @media (max-width: 380px) {
-        .game__boardbox {
-            height: 48svh;
-            min-height: 280px;
+        /* No status on a phone: the hints are in «?». */
+        .game__status {
+            display: none;
+        }
+
+        /* Text in the help is 2px larger on a phone. */
+        .game-help__content {
+            font-size: var(--text-md);
+        }
+
+        .game-help__key {
+            font-size: var(--text-sm);
         }
     }
 }

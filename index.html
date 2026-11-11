@@ -154,7 +154,7 @@
                             <button class="mode-option" data-start="5" type="button" disabled>
                                 <span class="mode-option__info">
                                     <strong class="mode-option__title">5 выходов</strong>
-                                    <small class="mode-option__hint">Стандартная партия</small>
+                                    <small class="mode-option__hint">Стандартная</small>
                                 </span>
                                 <span class="mode-option__check" aria-hidden="true">✓</span>
                             </button>
@@ -330,7 +330,7 @@
                             <span id="zoomLevel" class="game__zoom-level" aria-live="polite">100%</span>
                             <button
                                 id="zoomIn"
-                                class="btn btn--icon game__zoom-button"
+                                class="btn btn--icon game__zoom-button game__zoom-button--in"
                                 type="button"
                                 aria-label="Увеличить масштаб"
                                 title="Увеличить масштаб"
@@ -361,14 +361,24 @@
                     </div>
                     <aside class="card game__side">
                         <div class="game__metrics">
-                            <div class="stat"><span>В колоде</span><b id="deckcount" class="stat__value">0</b></div>
-                            <div class="stat"><span>Выходы</span><b id="openCount" class="stat__value">0</b></div>
-                            <div class="stat"><span>Ход</span><b id="turnCount" class="stat__value">0</b></div>
-                            <div class="stat"><span>Победы</span><b id="gameWins" class="stat__value">0</b></div>
+                            <div class="stat">
+                                <span class="stat__label">В колоде</span><b id="deckcount" class="stat__value">0</b>
+                            </div>
+                            <div class="stat">
+                                <span class="stat__label">Выходы</span><b id="openCount" class="stat__value">0</b>
+                            </div>
+                            <div class="stat">
+                                <span class="stat__label">Ход</span><b id="turnCount" class="stat__value">0</b>
+                            </div>
+                            <div class="stat">
+                                <span class="stat__label">Победы</span><b id="gameWins" class="stat__value">0</b>
+                            </div>
                         </div>
                         <div class="game__hand-section">
                             <div class="game__hand-heading">
-                                <div class="caption">Карты в руке</div>
+                                <div class="heading">
+                                    <h3 class="heading__title">Карты в руке</h3>
+                                </div>
                             </div>
                             <div id="hand" class="game__hand" role="radiogroup" aria-label="Карты в руке"></div>
                             <button
@@ -376,86 +386,11 @@
                                 class="game__help-toggle"
                                 type="button"
                                 aria-label="Открыть подсказки"
-                                aria-expanded="false"
-                                aria-controls="gameHelpPanel"
+                                aria-haspopup="dialog"
                                 title="Больше информации"
                             >
                                 ?
                             </button>
-                            <div
-                                id="gameHelpPanel"
-                                class="game-help hidden"
-                                role="dialog"
-                                aria-modal="false"
-                                aria-labelledby="gameHelpTitle"
-                            >
-                                <header class="game-help__head">
-                                    <h3 id="gameHelpTitle">Подсказки</h3>
-                                    <button
-                                        id="closeGameHelp"
-                                        class="btn btn--icon btn--close-icon"
-                                        type="button"
-                                        aria-label="Закрыть подсказки"
-                                    ></button>
-                                </header>
-                                <div class="game-help__content">
-                                    <section>
-                                        <h4>Как сделать ход</h4>
-                                        <p>
-                                            Выбери карту в руке — на поле появятся точки, где её можно разместить. На
-                                            компьютере наведи курсор на точку и щёлкни по ней, чтобы поставить карту. На
-                                            телефоне коснись точки, проверь предварительный вариант и подтверди
-                                            размещение кнопкой «Поставить».
-                                        </p>
-                                    </section>
-                                    <section>
-                                        <h4>Правила размещения</h4>
-                                        <p>
-                                            Новый участок должен соединяться с уже проложенным тоннелем, совпадать с ним
-                                            по открытым сторонам и не перекрывать другие карты. Если точки не появились,
-                                            у выбранной карты сейчас нет допустимого размещения.
-                                        </p>
-                                    </section>
-                                    <section>
-                                        <h4>Если ходов нет</h4>
-                                        <p>
-                                            Сбросить карты можно только тогда, когда ни одна карта в руке не имеет
-                                            доступного хода. После сброса ты получишь новые карты из колоды.
-                                        </p>
-                                    </section>
-                                    <section>
-                                        <h4>Управление</h4>
-                                        <p>
-                                            <strong>Компьютер:</strong> стрелки выбирают карту, Enter переходит к её
-                                            положениям на поле, стрелки переключают положения, Enter ставит карту. Esc
-                                            возвращает на шаг назад. Клавиши 1, 2 и 3 сразу переходят к положениям
-                                            выбранной карты. Масштаб меняется кнопками − и + или сочетанием Ctrl +
-                                            прокрутка колеса мыши.
-                                        </p>
-                                        <p>
-                                            <strong>Телефон:</strong> коснись карты, затем нужной точки на поле и нажми
-                                            «Поставить». Поле можно перемещать пальцем; карты в руке прокручиваются
-                                            горизонтально.
-                                        </p>
-                                    </section>
-                                    <section>
-                                        <h4>Мультиплеер</h4>
-                                        <p>
-                                            Все участники играют на одном общем поле. Размещать карты можно в свой ход;
-                                            следи за таймером хода. Создатель комнаты управляет началом новой партии и
-                                            реваншем.
-                                        </p>
-                                    </section>
-                                    <section>
-                                        <h4>Обучение</h4>
-                                        <p>
-                                            Основное задание уровня остаётся над полем. Здесь собраны дополнительные
-                                            правила и управление — их можно открыть в любой момент, не прерывая
-                                            обучение.
-                                        </p>
-                                    </section>
-                                </div>
-                            </div>
                         </div>
                         <div class="game__actions">
                             <button id="exchange" class="btn btn--sm game__exchange" type="button" aria-hidden="true">
@@ -466,7 +401,7 @@
                         <div id="tutorialGoal" class="notice notice--strong game__tutorial-goal hidden">
                             Цель: закрой все выходы и закончи игру.
                         </div>
-                        <div id="status" class="notice">Загрузка карт…</div>
+                        <div id="status" class="notice game__status">Загрузка карт…</div>
                     </aside>
                 </div>
             </section>
@@ -479,63 +414,168 @@
             aria-labelledby="welcomeTitle"
         >
             <section class="card card--dialog modal__dialog modal__dialog--welcome">
-                <header class="modal__head modal__head--welcome">
-                    <div class="heading__text">
-                        <p class="modal__eyebrow">BANDITO · ПЕРЕД ИГРОЙ</p>
-                        <h2 id="welcomeTitle" class="heading__title">Нужно обучение?</h2>
-                        <p class="heading__subtitle">Можно сразу начать игру или пройти короткие задания.</p>
+                <div class="modal__body">
+                    <header class="modal__head modal__head--welcome">
+                        <div class="heading__text">
+                            <p class="modal__eyebrow">BANDITO · ПЕРЕД ИГРОЙ</p>
+                            <h2 id="welcomeTitle" class="heading__title">Нужно обучение?</h2>
+                            <p class="heading__subtitle">Можно сразу начать игру или пройти короткие задания.</p>
+                        </div>
+                        <button
+                            id="closeWelcome"
+                            class="btn btn--icon btn--close-icon"
+                            type="button"
+                            aria-label="Закрыть"
+                        ></button>
+                    </header>
+                    <div class="welcome__actions">
+                        <button id="welcomeAlreadyPlayed" class="btn btn--lg welcome__choice" type="button">
+                            Нет, я уже играл
+                        </button>
+                        <button id="welcomeNewPlayer" class="btn btn--lg btn--primary welcome__choice" type="button">
+                            Да, пройти обучение
+                        </button>
                     </div>
-                    <button
-                        id="closeWelcome"
-                        class="btn btn--icon btn--close-icon"
-                        type="button"
-                        aria-label="Закрыть"
-                    ></button>
-                </header>
-                <div class="welcome__actions">
-                    <button id="welcomeAlreadyPlayed" class="btn btn--lg welcome__choice" type="button">
-                        Нет, я уже играл
-                    </button>
-                    <button id="welcomeNewPlayer" class="btn btn--lg btn--primary welcome__choice" type="button">
-                        Да, пройти обучение
-                    </button>
+                </div>
+            </section>
+        </div>
+        <div id="gameHelpModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="gameHelpTitle">
+            <section class="card card--dialog modal__dialog">
+                <div class="modal__body">
+                    <header class="modal__head">
+                        <div class="heading">
+                            <div class="heading__text">
+                                <h2 id="gameHelpTitle" class="heading__title">Подсказки</h2>
+                            </div>
+                        </div>
+                        <button
+                            id="closeGameHelp"
+                            class="btn btn--icon btn--close-icon"
+                            type="button"
+                            aria-label="Закрыть"
+                        ></button>
+                    </header>
+                    <div class="game-help__content">
+                        <section>
+                            <h3>Цель игры</h3>
+                            <p>Закрыть все выходы лабиринта.</p>
+                        </section>
+                        <!-- The help for the current input: touch or a mouse with the keyboard, picked as «?» opens. -->
+                        <section data-help-input="pointer">
+                            <h3>Как сделать ход</h3>
+                            <p>
+                                Выбери карту в руке — на поле появятся точки, куда её можно поставить, цвет точки
+                                обозначает поворот карты. Наведи курсор на точку, чтобы примерить карту, и щёлкни, чтобы
+                                поставить.
+                            </p>
+                            <p>
+                                Поле перетаскивается мышью, масштаб меняют кнопки
+                                <span class="game-help__key">−</span> и <span class="game-help__key">+</span>.
+                            </p>
+                        </section>
+                        <section data-help-input="touch">
+                            <h3>Как сделать ход</h3>
+                            <p>
+                                Коснись карты в руке — на поле появятся точки, куда её можно поставить, цвет точки
+                                обозначает поворот карты. Коснись точки, чтобы примерить карту, и нажми «Поставить».
+                            </p>
+                            <p>
+                                Поле двигается пальцем, масштаб меняют кнопки
+                                <span class="game-help__key">−</span> и <span class="game-help__key">+</span>.
+                            </p>
+                        </section>
+                        <section>
+                            <h3>Правила размещения</h3>
+                            <p>
+                                Новый участок должен соединяться с уже проложенным тоннелем, совпадать с ним по открытым
+                                сторонам и не перекрывать другие карты. Если точки не появились, выбранной карте сейчас
+                                некуда встать.
+                            </p>
+                        </section>
+                        <section>
+                            <h3>Если ходов нет</h3>
+                            <p>
+                                Сбросить карты можно только тогда, когда ни одна карта в руке не имеет доступного хода.
+                                После сброса ты получишь новые карты из колоды.
+                            </p>
+                        </section>
+                        <section data-help-input="pointer">
+                            <h3>Клавиатура</h3>
+                            <ul class="game-help__keys">
+                                <li>
+                                    <kbd class="game-help__key">←</kbd>
+                                    <kbd class="game-help__key">→</kbd> — выбрать карту, затем положение на поле
+                                </li>
+                                <li>
+                                    <kbd class="game-help__key">Enter</kbd> — перейти к положениям карты, поставить
+                                    карту
+                                </li>
+                                <li>
+                                    <kbd class="game-help__key">1</kbd> <kbd class="game-help__key">2</kbd>
+                                    <kbd class="game-help__key">3</kbd> — сразу перейти к положениям карты
+                                </li>
+                                <li><kbd class="game-help__key">Esc</kbd> — шаг назад</li>
+                                <li>
+                                    <kbd class="game-help__key">+</kbd>
+                                    <kbd class="game-help__key">−</kbd> или <kbd class="game-help__key">Ctrl</kbd> +
+                                    колесо мыши — масштаб
+                                </li>
+                            </ul>
+                        </section>
+                        <section>
+                            <h3>Мультиплеер</h3>
+                            <p>
+                                Все участники играют на одном общем поле. Размещать карты можно в свой ход; следи за
+                                таймером хода. Создатель комнаты управляет началом новой партии и реваншем.
+                            </p>
+                        </section>
+                        <section>
+                            <h3>Обучение</h3>
+                            <p>
+                                Основное задание уровня остаётся над полем. Здесь собраны дополнительные правила и
+                                управление — их можно открыть в любой момент, не прерывая обучение.
+                            </p>
+                        </section>
+                    </div>
                 </div>
             </section>
         </div>
         <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
             <section class="card card--dialog modal__dialog">
-                <header class="modal__head">
-                    <div class="heading">
-                        <div class="heading__text">
-                            <h2 id="settingsTitle" class="heading__title">Настройки</h2>
-                            <p class="heading__subtitle">Bandito · персонализация</p>
+                <div class="modal__body">
+                    <header class="modal__head">
+                        <div class="heading">
+                            <div class="heading__text">
+                                <h2 id="settingsTitle" class="heading__title">Настройки</h2>
+                                <p class="heading__subtitle">Bandito · персонализация</p>
+                            </div>
                         </div>
-                    </div>
-                    <button
-                        id="closeSettings"
-                        class="btn btn--icon btn--close-icon"
-                        type="button"
-                        aria-label="Закрыть"
-                    ></button>
-                </header>
-                <label class="toggle">
-                    <span class="item">
-                        <strong class="item__title">Ночная тема</strong>
-                        <small class="item__hint">Ночной фон и оформление Bandito</small>
-                    </span>
-                    <input id="darkTheme" class="toggle__input" type="checkbox" />
-                </label>
-                <label class="toggle">
-                    <span class="item">
-                        <strong class="item__title">Уменьшить анимации</strong>
-                        <small class="item__hint">Отключает лишние движения интерфейса</small>
-                    </span>
-                    <input id="reduceMotion" class="toggle__input" type="checkbox" />
-                </label>
-                <footer class="modal__footer">
-                    <span class="note note--sm">Настройки сохраняются автоматически</span>
-                    <button id="resetSettings" class="btn btn--sm" type="button">Сбросить</button>
-                </footer>
+                        <button
+                            id="closeSettings"
+                            class="btn btn--icon btn--close-icon"
+                            type="button"
+                            aria-label="Закрыть"
+                        ></button>
+                    </header>
+                    <label class="toggle">
+                        <span class="item">
+                            <strong class="item__title">Ночная тема</strong>
+                            <small class="item__hint">Ночной фон и оформление Bandito</small>
+                        </span>
+                        <input id="darkTheme" class="toggle__input" type="checkbox" />
+                    </label>
+                    <label class="toggle">
+                        <span class="item">
+                            <strong class="item__title">Уменьшить анимации</strong>
+                            <small class="item__hint">Отключает лишние движения интерфейса</small>
+                        </span>
+                        <input id="reduceMotion" class="toggle__input" type="checkbox" />
+                    </label>
+                    <footer class="modal__footer">
+                        <span class="note note--sm">Настройки сохраняются автоматически</span>
+                        <button id="resetSettings" class="btn btn--sm" type="button">Сбросить</button>
+                    </footer>
+                </div>
             </section>
         </div>
         <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>

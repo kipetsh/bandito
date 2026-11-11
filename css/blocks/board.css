@@ -9,9 +9,17 @@
         position: absolute;
         display: grid;
         background: var(--color-tile-cell);
-        /* Centred on the edge, so the outlines of adjacent pieces fall on the same line. */
-        outline: 1px solid var(--color-tile-outline);
-        outline-offset: -0.5px;
+    }
+
+    /* The frame lies on whole pixels: on the first row and column of the piece and just past its last ones. So
+       adjacent pieces draw their shared edge on the same pixels, and the line keeps its colour; a 1px line centred
+       on the edge would be smeared over two half-covered pixels that add up where pieces meet. */
+    .board__piece::before {
+        content: '';
+        position: absolute;
+        inset: 0 -1px -1px 0;
+        border: 1px solid var(--color-tile-outline);
+        pointer-events: none;
     }
 
     /* The last placed card (not the start one) is marked with a yellow dot in the centre of its bottom right cell:
@@ -37,10 +45,19 @@
         z-index: 5;
         top: 0;
         left: 0;
-        /* No border: it would shrink the grid and shift the cells off the placement spot. */
-        outline-style: dashed;
-        opacity: 0.62;
+        background: none;
         pointer-events: none;
+    }
+
+    /* The dashed frame lies inside the preview, so its gaps show the preview's cells and not the board past them. */
+    .board__piece--ghost::before {
+        inset: 0;
+        border-style: dashed;
+    }
+
+    /* Only the cells are see-through: the frame stays opaque over the frames of the pieces below. */
+    .board__piece--ghost > .board__cell {
+        opacity: 0.62;
     }
 
     .board__cell {

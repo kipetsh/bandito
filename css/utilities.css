@@ -4,6 +4,11 @@
         display: none;
     }
 
+    /* The page under an open modal stays still. */
+    .scroll-locked {
+        overflow: hidden;
+    }
+
     .visually-hidden {
         position: absolute;
         width: 1px;

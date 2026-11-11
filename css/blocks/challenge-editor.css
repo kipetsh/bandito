@@ -32,7 +32,7 @@
         overflow: hidden;
         border: 1px solid var(--color-border);
         border-radius: var(--radius-xl);
-        background: var(--color-surface-raised);
+        background: var(--color-surface-dialog);
         box-shadow: var(--shadow-dialog);
         animation: challenge-editor-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
@@ -173,7 +173,7 @@
         overflow: hidden;
         border: 1px solid var(--color-border-strong);
         border-radius: var(--radius-lg);
-        background: var(--color-surface-raised);
+        background: var(--color-surface-dialog);
         box-shadow: var(--shadow-dialog);
     }
 
