@@ -10,6 +10,8 @@ import {
     centerCamera,
     clone,
     focusHand,
+    selectPlayedSlot,
+    setSubtitle,
     startHand,
     opens,
     render,
@@ -252,16 +254,19 @@ function mpAttach(code) {
         }
         state.selected = previouslySelected === null ? -1 : state.hand.findIndex((c) => c.id === previouslySelected);
         // As in the solo game, the played card's slot (the drawn card or the card that moved in) stays selected,
-        // or after a keyboard turn gets focus.
+        // and after a keyboard turn gets focus.
         let focusSlot = -1;
         if (mpPlayedSlot && state.selected < 0 && previouslySelected !== null) {
             const slot = Math.min(mpPlayedSlot.index, state.hand.length - 1);
-            if (mpPlayedSlot.keepSelection) state.selected = slot;
-            else focusSlot = slot;
+            selectPlayedSlot(slot);
+            if (mpPlayedSlot.byKeyboard) focusSlot = slot;
             mpPlayedSlot = null;
         }
+        // The cards are disabled on another player's turn (an expired timer too): nothing stays selected.
+        if (g.turnUid !== mpUid) state.selected = -1;
         state.rotation = 0;
         $('#heading').textContent = 'Bandito · кооператив · ' + (g.exits || 6) + ' выходов · ' + code;
+        setSubtitle();
         render();
         const current = (room.players && room.players[g.turnUid] && room.players[g.turnUid].name) || 'игрок';
         // On the player's turn a selected card keeps the status of its placement, as in the solo game.
@@ -284,8 +289,9 @@ function mpAttach(code) {
         } else if (focusSlot >= 0) {
             focusHand(focusSlot);
         } else if (!wasMyTurn && g.turnUid === mpUid && !state.finished && document.activeElement === document.body) {
-            // The hand lost focus when its cards were disabled for the other players' turns: it gets it back.
-            focusHand();
+            // The hand lost focus when its cards were disabled for the other players' turns: it gets it back,
+            // with nothing selected, as at the start.
+            startHand();
         }
     };
     mpRoomRef.on('value', mpRoomListener, (e) => snackbar('Ошибка Firebase: ' + e.message, 'error'));
@@ -402,13 +408,22 @@ export async function loadPublicChallenges() {
         .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
 }
 function createPublicChallengeRecord(challenge, createdAt = Date.now()) {
-    if (!challenge || !Array.isArray(challenge.board) || !Array.isArray(challenge.hand) || !Array.isArray(challenge.deck)) {
+    if (
+        !challenge ||
+        !Array.isArray(challenge.board) ||
+        !Array.isArray(challenge.hand) ||
+        !Array.isArray(challenge.deck)
+    ) {
         throw new Error('Некорректные данные испытания.');
     }
     const record = {
         schemaVersion: 1,
-        title: String(challenge.title || '').trim().slice(0, 60),
-        description: String(challenge.description || '').trim().slice(0, 240),
+        title: String(challenge.title || '')
+            .trim()
+            .slice(0, 60),
+        description: String(challenge.description || '')
+            .trim()
+            .slice(0, 240),
         exits: Number(challenge.exits),
         board: challenge.board.map((piece) => ({
             id: Number(piece.id),
@@ -486,7 +501,9 @@ async function mpCreate() {
 }
 export async function mpJoin(codeOverride = null) {
     if (mpBusy) return;
-    const code = String(codeOverride ?? $('#mpCode').value).trim().toUpperCase();
+    const code = String(codeOverride ?? $('#mpCode').value)
+        .trim()
+        .toUpperCase();
     if (!/^[A-Z0-9]{6}$/.test(code)) {
         snackbar('Введи шестизначный код комнаты, например 779742', 'error');
         return;
@@ -584,14 +601,14 @@ export async function mpStart() {
 }
 // The slot of the card being played, kept selected when the room update brings the new hand.
 let mpPlayedSlot = null;
-export async function mpPlay(x, y, m, keepSelection = true) {
+export async function mpPlay(x, y, m, byKeyboard = false) {
     if (!mpRoomCode || state.finished || state.selected < 0 || mpBusy) return;
     if (mpRoomData?.game?.turnUid !== mpUid) {
         snackbar('Сейчас ход другого игрока', 'error');
         return;
     }
     mpBusy = true;
-    mpPlayedSlot = { index: state.selected, keepSelection };
+    mpPlayedSlot = { index: state.selected, byKeyboard };
     try {
         const card = state.hand[state.selected];
         const result = await mpRoomRef.child('game').transaction((g) => {

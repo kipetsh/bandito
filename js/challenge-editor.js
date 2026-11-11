@@ -9,6 +9,7 @@ import {
     state,
     validOnBoard,
 } from '#js/game.js';
+import { rememberOpener, returnFocus } from '#js/focus-return.js';
 import {
     deletePublicChallenge,
     loadPublicChallenges,
@@ -264,6 +265,7 @@ function showLibraryScreen() {
 
 function openLibrary() {
     if (!window.matchMedia('(min-width: 761px)').matches || editorMode) return;
+    rememberOpener(root, libraryButton);
     root.classList.remove('hidden');
     root.classList.remove('challenge-editor--picker-layer');
     root.setAttribute('aria-hidden', 'false');
@@ -328,6 +330,7 @@ function closeEditor() {
         return;
     }
     if (!root || root.classList.contains('hidden')) return;
+    returnFocus(root);
     root.classList.add('hidden');
     root.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('challenge-editor-open');
@@ -373,7 +376,8 @@ function handleRootClick(event) {
     }
     const pickerOpen = target.closest?.('[data-picker-open]');
     if (pickerOpen) {
-        openPicker(pickerOpen.dataset.pickerOpen);
+        const mode = pickerOpen.dataset.pickerOpen;
+        openPicker(mode, () => root.querySelector(`[data-picker-open="${mode}"]`));
         return;
     }
     if (target.closest?.('[data-picker-close]')) {
@@ -392,8 +396,9 @@ function handleRootClick(event) {
     }
     const handSlot = target.closest?.('[data-hand-slot]');
     if (handSlot) {
-        draft.activeHandSlot = Number(handSlot.dataset.handSlot);
-        openPicker('hand');
+        const slot = handSlot.dataset.handSlot;
+        draft.activeHandSlot = Number(slot);
+        openPicker('hand', () => root.querySelector(`[data-hand-slot="${slot}"]`));
         return;
     }
     const handClear = target.closest?.('[data-hand-clear]');
@@ -401,7 +406,8 @@ function handleRootClick(event) {
         clearHandSlot(Number(handClear.dataset.handClear));
         return;
     }
-    const catalogCard = target.closest?.('[data-card-id]');
+    // The cards in the game hand carry the same data attribute: they are not catalog cards.
+    const catalogCard = !target.closest?.('#hand') && target.closest?.('[data-card-id]');
     if (catalogCard) {
         chooseCatalogCard(Number(catalogCard.dataset.cardId));
         return;
@@ -627,8 +633,9 @@ function clearBoard() {
     renderEditor();
 }
 
-function openPicker(mode) {
+function openPicker(mode, opener) {
     pickerMode = mode;
+    rememberOpener(root.querySelector('[data-picker]'), opener);
     if (mode === 'hand') {
         const current = draft.hand[draft.activeHandSlot];
         if (current !== null) pickerSlot = draft.activeHandSlot;
@@ -657,6 +664,7 @@ function openPicker(mode) {
 
 function closePicker() {
     if (!root) return;
+    returnFocus(root.querySelector('[data-picker]'));
     root.querySelector('[data-picker]').classList.add('hidden');
     root.classList.remove('challenge-editor--picker-layer');
     pickerMode = null;

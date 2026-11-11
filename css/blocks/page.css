@@ -4,6 +4,9 @@
         position: relative;
         z-index: var(--z-content);
         max-width: 1720px;
+        /* A column, so the game screen can stretch to the bottom of the viewport. */
+        display: flex;
+        flex-direction: column;
         min-height: 100svh;
         margin: 0 auto;
         padding: var(--space-8) clamp(32px, 3vw, 48px) var(--space-14);

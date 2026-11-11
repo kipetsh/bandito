@@ -1,4 +1,5 @@
-/* Card in the player's hand: a bare miniature of its tunnels, without a frame or a caption.
+/* Card in the player's hand: a bare miniature of its tunnels, without a frame or a caption. It is a label around
+   a hidden radio, so it has no focus ring: the focused card is lit like a hovered one.
    It stands upright on wide screens and lies flat in the narrow bottom sheet (the matrix is turned in JS). */
 @layer blocks {
     .hand-card {
@@ -18,16 +19,13 @@
         border-radius: var(--radius-md);
         background: none;
         color: var(--color-text);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
     }
 
-    .hand-card:disabled {
+    .hand-card--disabled {
         opacity: 0.5;
         cursor: not-allowed;
-    }
-
-    /* No focus ring around the button: the focused card is lit like a hovered one. */
-    .hand-card:focus-visible {
-        outline: none;
     }
 
     /* The selected card slides up a little, as if pulled out of a fan of cards. The card pointed at (under

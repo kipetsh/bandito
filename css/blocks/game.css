@@ -71,11 +71,12 @@
         background: var(--color-surface-sunken);
     }
 
+    /* The buttons of a preview picked from the keyboard or with a tap; the zoom stays in the other corner. */
     .game__placement-preview {
         position: absolute;
         z-index: 12;
-        right: 14px;
         bottom: 14px;
+        left: 14px;
         display: flex;
         align-items: center;
         gap: var(--space-3);
@@ -153,18 +154,21 @@
         gap: var(--space-2) var(--space-4);
     }
 
+    /* The help toggle follows the hand in the DOM so that Tab reaches it after the cards,
+       and is placed back on the heading row by the grid. */
     .game__hand-section {
         position: relative;
         display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
         gap: var(--space-2);
     }
 
     .game__hand-heading {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-row: 1;
+        grid-column: 1;
         align-items: center;
         min-height: 40px;
-        column-gap: 28px;
     }
 
     .game__hand-heading > .caption {
@@ -174,7 +178,10 @@
 
     .game__help-toggle {
         display: grid;
+        grid-row: 1;
+        grid-column: 2;
         place-items: center;
+        align-self: center;
         justify-self: end;
         flex: none;
         width: 40px;
@@ -186,7 +193,10 @@
         background: transparent;
         color: var(--color-text-secondary);
         cursor: pointer;
-        transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+        transition:
+            color 140ms ease,
+            background 140ms ease,
+            border-color 140ms ease;
     }
 
     .game__help-toggle svg {
@@ -275,8 +285,14 @@
     }
 
     @keyframes game-help-in {
-        from { opacity: 0; transform: translateY(-5px) scale(0.985); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
+        from {
+            opacity: 0;
+            transform: translateY(-5px) scale(0.985);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
 
     /* Equal columns: a drawn card of another width must not shift its neighbours. */
@@ -288,6 +304,7 @@
 
         container-type: inline-size;
         display: grid;
+        grid-column: 1 / -1;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: var(--space-4);
     }
@@ -304,7 +321,10 @@
         visibility: hidden;
         transform: translateY(8px);
         pointer-events: none;
-        transition: opacity 180ms ease, transform 180ms ease, visibility 180ms;
+        transition:
+            opacity 180ms ease,
+            transform 180ms ease,
+            visibility 180ms;
     }
 
     .game__exchange.is-visible {
@@ -342,12 +362,6 @@
         min-width: 44px;
         color: var(--color-text);
         font-size: var(--text-sm);
-    }
-
-    @media (min-width: 761px) {
-        .game__placement-preview {
-            display: none;
-        }
     }
 
     @media (max-height: 650px) and (min-width: 761px) {
@@ -401,8 +415,12 @@
         }
 
         @keyframes game-help-backdrop-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
 
         .game__subtitle-row {
@@ -505,16 +523,7 @@
         }
 
         .game__hand-heading {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
             min-height: 36px;
-        }
-
-        .game__hand-heading > .caption {
-            grid-column: 1;
-        }
-
-        .game__help-toggle {
-            grid-column: 4;
         }
 
         .game__help-toggle {
