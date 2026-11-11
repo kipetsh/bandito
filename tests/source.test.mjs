@@ -244,7 +244,7 @@ test('settings modal reveals a static backdrop blur without animating the filter
     const keyframesEnd = css.indexOf('\n    .modal__dialog {', keyframesStart);
     const keyframes = css.slice(keyframesStart, keyframesEnd);
 
-    assert.ok(css.includes('content: "";'));
+    assert.match(css, /content: ['"]{2};/);
     assert.ok(css.includes('backdrop-filter: blur(4px);'));
     assert.ok(css.includes('-webkit-backdrop-filter: blur(4px);'));
     assert.ok(css.includes('settings-backdrop-in 120ms'));
