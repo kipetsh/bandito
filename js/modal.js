@@ -8,6 +8,7 @@ const closeTimers = new Map();
 const closeDelay = 140;
 
 export const isModalOpen = (modal) => open.has(modal);
+export const anyModalOpen = () => open.size > 0;
 
 export function openModal(modal, opener, focusTarget) {
     window.clearTimeout(closeTimers.get(modal));

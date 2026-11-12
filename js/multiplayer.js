@@ -1,5 +1,6 @@
 /* Firebase, lobby UI, room presence, and cooperative game flow. */
 import { $ } from '#js/dom.js';
+import { anyModalOpen } from '#js/modal.js';
 import { snackbar } from '#js/snackbar.js';
 import { getRoomPath, getRoomUrl } from '#js/room-url.js';
 import { leaveRoom, returnToGame } from '#js/room-seats.js';
@@ -135,7 +136,9 @@ function mpSwapPanel(showLobby) {
         coopContent.classList.toggle('hidden', showLobby);
         lobby.classList.toggle('hidden', !showLobby);
     };
-    if (document.startViewTransition) document.startViewTransition(apply);
+    // A view transition draws its snapshots of the page above everything, so over an open dialog (settings opened
+    // while a room from the link is still loading) it would flash on top of it: the panel then swaps at once.
+    if (document.startViewTransition && !anyModalOpen()) document.startViewTransition(apply);
     else apply();
 }
 function mpShowLobby(room) {
