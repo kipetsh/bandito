@@ -103,7 +103,7 @@ function initChallengeEditor() {
         '<div class="challenge-editor__backdrop"></div>' +
         '<section class="challenge-editor__dialog" role="dialog" aria-modal="true" aria-labelledby="challengeLibraryTitle">' +
         '<header class="challenge-editor__header">' +
-        '<div><p class="challenge-editor__eyebrow">BANDITO · СООБЩЕСТВО</p>' +
+        '<div><p class="caption challenge-editor__eyebrow">Bandito · Сообщество</p>' +
         '<h2 id="challengeLibraryTitle">Библиотека испытаний</h2></div>' +
         '<button class="btn btn--icon btn--close-icon" type="button" data-editor-close aria-label="Закрыть"></button>' +
         '</header>' +
@@ -184,9 +184,9 @@ function createEditorChrome() {
         '<h3>Инструменты</h3>' +
         '<div class="challenge-editor__tool-grid">' +
         '<button class="challenge-editor__tool" type="button" data-picker-open="board">' +
-        '<span class="icon icon--plus challenge-editor__tool-icon" aria-hidden="true"></span><small>Добавить</small></button>' +
+        '<span class="icon icon--plus challenge-editor__tool-icon" aria-hidden="true"></span><span class="challenge-editor__tool-label">Добавить</span></button>' +
         '<button class="challenge-editor__tool" type="button" data-tool="delete" disabled>' +
-        '<span class="icon icon--backspace challenge-editor__tool-icon" aria-hidden="true"></span><small>Удалить</small></button>' +
+        '<span class="icon icon--backspace challenge-editor__tool-icon" aria-hidden="true"></span><span class="challenge-editor__tool-label">Удалить</span></button>' +
         '</div></section>' +
         '<section class="challenge-editor__tool-group">' +
         '<div class="challenge-editor__tools-heading"><h3>Карты</h3></div>' +
