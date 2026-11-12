@@ -929,6 +929,18 @@ function focusPlacements() {
     if (placing() && input) input.focus({ preventScroll: true });
     else focusHand();
 }
+// While the keyboard focus is in the placements (after Enter or 1/2/3), the card being placed keeps its focus ring
+// in the hand. A pointer moving the focus there does not show it.
+function ringPlacedCard(on) {
+    const id = state.hand[state.selected]?.id;
+    for (const card of $('#hand').children)
+        card.classList.toggle('hand-card--ringed', on && Number(card.dataset.cardId) === id);
+}
+$('#placementOptions').addEventListener('focusin', (e) => ringPlacedCard(e.target.matches(':focus-visible')));
+$('#placementOptions').addEventListener(
+    'focusout',
+    (e) => !e.relatedTarget?.closest('#placementOptions') && ringPlacedCard(false)
+);
 // The arrows check the next placement natively: it is picked.
 $('#placementOptions').addEventListener('change', (e) => {
     const [x, y, r] = e.target.dataset.spot.split(',').map(Number),

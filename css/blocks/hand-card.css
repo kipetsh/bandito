@@ -41,10 +41,12 @@
         background: var(--color-tile-wall-hover);
     }
 
-    /* Keyboard focus adds a 2px ring right round the miniature's frame; the frame keeps its colour. The frame
+    /* Keyboard focus adds a 2px ring right round the miniature's frame; the frame keeps its colour. The card being
+       placed from the keyboard keeps the ring (--ringed, set by JS) while the focus is in the placements. The frame
        reaches half a pixel past the edge, so the shadow under it spreads 2.5px. The cards' paddings and the hand's
        own leave room for the ring. */
-    .hand-card:has(:focus-visible) .hand-card__mini {
+    .hand-card:has(:focus-visible) .hand-card__mini,
+    .hand-card--ringed .hand-card__mini {
         box-shadow: 0 0 0 2.5px var(--color-focus);
     }
 
