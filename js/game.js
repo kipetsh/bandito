@@ -591,12 +591,13 @@ export function render({ hand = true } = {}) {
             'board__piece' +
             (isLatest && p !== state.placed[0] ? ' board__piece--latest' : '') +
             (animateThis ? ' board__piece--fresh' : '');
-        if (challengeEditorMode) {
+        // In the editor a placed card is picked to be removed; the start card stays, so it is not pickable.
+        if (challengeEditorMode && pieceIndex > 0) {
             el.classList.add('challenge-editor__piece');
             el.dataset.editorPieceIndex = String(pieceIndex);
             el.tabIndex = 0;
             el.setAttribute('role', 'button');
-            el.setAttribute('aria-label', 'Выбрать карту ' + p.id + (pieceIndex === 0 ? ', стартовая' : ''));
+            el.setAttribute('aria-label', 'Выбрать карту ' + p.id);
             el.classList.toggle('challenge-editor__piece--selected', pieceIndex === challengeEditorSelectedPiece);
         }
         if (animateThis) state.animateLastPlacement = false;

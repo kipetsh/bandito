@@ -601,7 +601,7 @@ function handleEditorSelectPiece(event) {
 }
 
 function selectPiece(index) {
-    if (!draft.board[index]) return;
+    if (index === 0 || !draft.board[index]) return;
     draft.selectedPiece = index;
     draft.pendingCard = null;
     renderEditor();
