@@ -49,6 +49,10 @@
         --icon-image: url('@tabler-size/24/outline/menu-2.svg');
     }
 
+    .icon--minus {
+        --icon-image: url('@tabler-size/24/outline/minus.svg');
+    }
+
     .icon--plus {
         --icon-image: url('@tabler-size/24/outline/plus.svg');
     }

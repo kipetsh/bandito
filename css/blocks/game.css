@@ -315,30 +315,10 @@
         box-shadow: var(--shadow-float);
     }
 
-    /* − and + are drawn with bars: font glyphs sit off the middle of the line, differently in each system font.
-       The text stays in the markup for screen readers; even sizes keep the bars on whole pixels of a 30px button. */
+    /* − and + are icons: font glyphs sit off the middle of the line, differently in each system font. */
     .game__zoom-button {
         --btn-icon-size: 30px;
-        position: relative;
         border-radius: var(--radius-sm);
-        font-size: 0;
-    }
-
-    .game__zoom-button::before,
-    .game__zoom-button--in::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        width: 12px;
-        height: 2px;
-        margin: auto;
-        border-radius: 1px;
-        background: currentColor;
-    }
-
-    .game__zoom-button--in::after {
-        width: 2px;
-        height: 12px;
     }
 
     /* The current zoom, a plain label between the − and + buttons. */
