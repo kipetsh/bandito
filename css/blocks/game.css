@@ -165,9 +165,9 @@
         --heading-title-size: var(--text-lg);
     }
 
-    /* A small circle in a large hit area: the button is 40px (44px on a phone), the circle inside it 28px.
-       Negative margins line the circle up with the content edge and keep the hit area out of the row height, so the
-       cards sit close under the heading. */
+    /* A small icon in a large hit area: the button is 40px (44px on a phone), the icon inside it 24px with a 20px
+       circle. Negative margins line the circle up with the content edge and keep the hit area out of the row height,
+       so the cards sit close under the heading. */
     .game__help-toggle {
         display: grid;
         grid-row: 1;
@@ -179,7 +179,7 @@
         width: 40px;
         min-width: 40px;
         height: 40px;
-        margin: -6px -6px -6px 0;
+        margin: -8px -10px -8px 0;
         padding: 0;
         border: 0;
         border-radius: 50%;
@@ -187,8 +187,8 @@
         color: var(--color-text-muted);
         cursor: pointer;
         transition: color 140ms ease;
-        --icon-size: 32px;
-        --icon-image: url('@tabler-size/32/outline/help.svg');
+        --icon-size: 24px;
+        --icon-image: url('@tabler-size/24/outline/help.svg');
     }
 
     .game__help-toggle:hover {
@@ -478,7 +478,7 @@
             width: 44px;
             min-width: 44px;
             height: 44px;
-            margin: -8px -8px -8px 0;
+            margin: -10px -12px -10px 0;
         }
 
         .game__hand {

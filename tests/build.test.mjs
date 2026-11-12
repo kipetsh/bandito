@@ -180,6 +180,6 @@ test('an outline icon reaches the build with the stroke width of a 2px line at i
         ),
     ];
     assert.deepEqual(strokesOf('settings'), ['2']);
-    assert.deepEqual(strokesOf('help'), ['1.5']);
+    assert.deepEqual(strokesOf('help'), ['2']);
     assert.deepEqual(strokesOf('x'), ['3']);
 });
