@@ -513,10 +513,6 @@
         min-width: 0;
     }
 
-    .challenge-editor__description {
-        max-height: 120px;
-    }
-
     .challenge-editor__difficulty {
         width: 100%;
     }

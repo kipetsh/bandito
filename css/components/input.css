@@ -29,14 +29,6 @@
         border-radius: var(--radius-lg);
     }
 
-    /* Textarea: starts one line high like a text input and grows only downward. */
-    .input--multiline {
-        display: block;
-        /* A text input centres its line, a textarea does not: the padding puts one line in the middle. */
-        padding-block: calc((var(--control-md) - 2px - 1lh) / 2);
-        resize: vertical;
-    }
-
     .input--code {
         text-transform: uppercase;
     }

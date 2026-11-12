@@ -212,7 +212,7 @@ function createEditorChrome() {
         '<label class="challenge-editor__field"><span class="caption">Название испытания</span>' +
         '<input class="input" type="text" maxlength="60" placeholder="Например, узкий тоннель" data-field="title"></label>' +
         '<label class="challenge-editor__field"><span class="caption">Описание</span>' +
-        '<textarea class="input input--multiline challenge-editor__description" rows="1" maxlength="240" placeholder="Кратко опиши задачу" data-field="description"></textarea></label>' +
+        '<input class="input" type="text" maxlength="240" placeholder="Кратко опиши задачу" data-field="description"></label>' +
         '<div class="challenge-editor__difficulty-wrap"><span class="caption">Сложность</span>' +
         '<div class="lobby__difficulty challenge-editor__difficulty" role="group" aria-label="Сложность испытания">' +
         '<span class="lobby__difficulty-bubble" aria-hidden="true"></span>' +
