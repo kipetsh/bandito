@@ -41,11 +41,11 @@
         background: var(--color-tile-wall-hover);
     }
 
-    /* Keyboard focus paints the miniature's frame and a 2px ring right round it, so they read as one 3px line, like
-       a focused piece on the board. The cards' paddings and the hand's own leave room for the ring. */
+    /* Keyboard focus adds a 2px ring right round the miniature's frame; the frame keeps its colour. The frame
+       reaches half a pixel past the edge, so the shadow under it spreads 2.5px. The cards' paddings and the hand's
+       own leave room for the ring. */
     .hand-card:has(:focus-visible) .hand-card__mini {
-        outline: 3px solid var(--color-focus);
-        outline-offset: -1px;
+        box-shadow: 0 0 0 2.5px var(--color-focus);
     }
 
     /* The selected card has a thin bar under it, on the line of the bottom edges of the other cards: the lifted
