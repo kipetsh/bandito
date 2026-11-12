@@ -158,9 +158,28 @@ test('only the used Tabler icons reach the build, and every icon path resolved',
     const content = files.map((file) => readFileSync(file, 'utf8')).join('\n');
 
     // Vite only warns about a url() it cannot resolve and leaves it as is, so a typo in an icon name shows up here.
-    assert.ok(!content.includes('@tabler/icons/'), 'An icon path did not resolve to a file in @tabler/icons');
+    assert.ok(!content.includes('@tabler-size/'), 'An icon path did not resolve to a file in @tabler/icons');
 
     const icons = new Set([...content.matchAll(/icon-tabler-([a-z0-9-]+)/g)].map((match) => match[1]));
     assert.ok(icons.size > 0, 'No Tabler icons were found in the build');
     assert.ok(icons.size < 40, `The build carries ${icons.size} Tabler icons; only the used ones should get there`);
+});
+
+test('an outline icon reaches the build with the stroke width of a 2px line at its display size', () => {
+    const css = walkFiles(buildDirectory)
+        .filter((file) => file.endsWith('.css'))
+        .map((file) => readFileSync(file, 'utf8'))
+        .join('\n');
+    // -webkit-mask and mask repeat the same url, so the widths are compared as a set.
+    const strokesOf = (name) => [
+        ...new Set(
+            [...css.matchAll(/data:image\/svg\+xml,[^)]*/g)]
+                .filter((match) => match[0].includes('icon-tabler-' + name + "'"))
+                .map((match) => match[0].match(/stroke-width='([\d.]+)'/)[1])
+                .sort()
+        ),
+    ];
+    assert.deepEqual(strokesOf('settings'), ['2']);
+    assert.deepEqual(strokesOf('help'), ['1.5']);
+    assert.deepEqual(strokesOf('x'), ['3']);
 });

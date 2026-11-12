@@ -1,8 +1,13 @@
 import { defineConfig } from 'vite';
+import { tablerSize, tablerSizeAlias } from './tools/vite-tabler-size.mjs';
 
 export default defineConfig({
     // Relative paths keep the build working on GitHub Pages project URLs.
     base: './',
+    plugins: [tablerSize()],
+    resolve: {
+        alias: [tablerSizeAlias],
+    },
     build: {
         outDir: 'build',
         emptyOutDir: true,

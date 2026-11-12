@@ -201,8 +201,6 @@
         place-items: center;
         align-self: center;
         justify-self: end;
-        position: relative;
-        isolation: isolate;
         flex: none;
         width: 40px;
         min-width: 40px;
@@ -212,44 +210,20 @@
         border: 0;
         border-radius: 50%;
         background: transparent;
-        color: var(--color-control-text);
+        color: var(--color-text-muted);
         cursor: pointer;
         transition: color 140ms ease;
-        --icon-size: 16px;
-    }
-
-    .game__help-toggle::before {
-        position: absolute;
-        z-index: -1;
-        inset: 0;
-        width: 28px;
-        height: 28px;
-        margin: auto;
-        border: 1px solid var(--color-control-border);
-        border-radius: 50%;
-        background: var(--color-control);
-        content: '';
-        transition:
-            background 140ms ease,
-            border-color 140ms ease;
+        --icon-size: 32px;
+        --icon-image: url('@tabler-size/32/outline/help.svg');
     }
 
     .game__help-toggle:hover {
         color: var(--color-text);
     }
 
-    .game__help-toggle:hover::before {
-        border-color: var(--color-control-border-hover);
-        background: var(--color-control-hover);
-    }
-
     .game__help-toggle:focus-visible {
-        outline: 0;
-    }
-
-    .game__help-toggle:focus-visible::before {
         outline: 2px solid var(--color-primary);
-        outline-offset: 2px;
+        outline-offset: -2px;
     }
 
     .game-help__content {

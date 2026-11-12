@@ -1,6 +1,7 @@
 /*
- * One-colour SVG icon from assets/icons, drawn as a mask in the text colour. The context sets the size with
- * --icon-size; spacing and alignment come from the parent. An icon with a second colour adds ::after with its own
+ * One-colour SVG icon drawn as a mask in the text colour. The context sets the size with --icon-size; spacing and
+ * alignment come from the parent. Modifiers below are made for the default 24px; a context that shows an icon at
+ * another size sets --icon-image itself, with the same size in the @tabler-size path. An icon with a second colour adds ::after with its own
  * mask, painted in --icon-detail-color. Without its own mask ::after would fill the whole box, so only such icons get it.
  */
 @layer components {
@@ -36,19 +37,27 @@
         --icon-image: url('../../assets/icons/multiplayer.svg');
     }
 
-    .icon--more {
-        --icon-image: url('@tabler/icons/outline/dots.svg');
+    .icon--backspace {
+        --icon-image: url('@tabler-size/24/outline/backspace.svg');
+    }
+
+    .icon--eraser {
+        --icon-image: url('@tabler-size/24/outline/eraser.svg');
+    }
+
+    .icon--menu-2 {
+        --icon-image: url('@tabler-size/24/outline/menu-2.svg');
     }
 
     .icon--plus {
-        --icon-image: url('@tabler/icons/outline/plus.svg');
+        --icon-image: url('@tabler-size/24/outline/plus.svg');
     }
 
     .icon--question {
-        --icon-image: url('@tabler/icons/outline/question-mark.svg');
+        --icon-image: url('@tabler-size/24/outline/question-mark.svg');
     }
 
     .icon--settings {
-        --icon-image: url('@tabler/icons/outline/settings.svg');
+        --icon-image: url('@tabler-size/24/outline/settings.svg');
     }
 }

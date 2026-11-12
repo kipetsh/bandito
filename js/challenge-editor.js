@@ -110,7 +110,7 @@ function initChallengeEditor() {
         '<section class="challenge-editor__library-screen" data-library-screen>' +
         '<div class="challenge-editor__section-head">' +
         '<div class="challenge-editor__library-actions">' +
-        '<button class="btn btn--primary" type="button" data-new-challenge>＋ Новое испытание</button>' +
+        '<button class="btn btn--primary" type="button" data-new-challenge><span class="icon icon--plus" aria-hidden="true"></span>Новое испытание</button>' +
         '<button class="btn" type="button" data-library-refresh>Обновить</button></div></div>' +
         '<div class="challenge-editor__library-list" data-library-list></div></section>' +
         '</div></section>' +
@@ -183,9 +183,9 @@ function createEditorChrome() {
         '<h3>Инструменты</h3>' +
         '<div class="challenge-editor__tool-grid">' +
         '<button class="challenge-editor__tool" type="button" data-picker-open="board">' +
-        '<span class="challenge-editor__tool-icon" aria-hidden="true">＋</span><small>Добавить</small></button>' +
+        '<span class="icon icon--plus challenge-editor__tool-icon" aria-hidden="true"></span><small>Добавить</small></button>' +
         '<button class="challenge-editor__tool" type="button" data-tool="delete" disabled>' +
-        '<span class="challenge-editor__tool-icon" aria-hidden="true">⌫</span><small>Удалить</small></button>' +
+        '<span class="icon icon--backspace challenge-editor__tool-icon" aria-hidden="true"></span><small>Удалить</small></button>' +
         '</div></section>' +
         '<section class="challenge-editor__tool-group">' +
         '<div class="challenge-editor__tools-heading"><h3>Карты</h3></div>' +
@@ -201,7 +201,7 @@ function createEditorChrome() {
         '<div class="challenge-editor__deck-summary"><div data-deck-preview></div>' +
         '<p class="challenge-editor__deck-count" data-deck-count>В колоде: 0 карт</p></div>' +
         '</section>' +
-        '<button class="btn challenge-editor__clear-board" type="button" data-clear-board>♧ Очистить поле</button>' +
+        '<button class="btn challenge-editor__clear-board" type="button" data-clear-board><span class="icon icon--eraser" aria-hidden="true"></span>Очистить поле</button>' +
         '<p class="note challenge-editor__status" data-editor-status>Укажи название испытания, чтобы сохранить его.</p>';
     side.append(editorPanel);
 
@@ -692,8 +692,9 @@ function renderPicker() {
         button.setAttribute('aria-label', pickerMode === 'deck' ? 'Изменить состав колоды' : 'Добавить карту');
         if (pickerMode === 'deck') {
             const mark = document.createElement('span');
-            mark.className = 'challenge-editor__catalog-mark';
-            mark.textContent = selected ? '✓' : '+';
+            mark.className =
+                'icon challenge-editor__catalog-mark' + (selected ? ' challenge-editor__catalog-mark--selected' : '');
+            mark.setAttribute('aria-hidden', 'true');
             button.append(mark);
         }
         grid.append(button);
@@ -750,7 +751,7 @@ function renderHandSlots() {
             id === null ? 'Добавить карту в слот ' + (index + 1) : 'Изменить карту в слоте ' + (index + 1)
         );
         if (id === null) {
-            button.innerHTML = '<span class="challenge-editor__hand-plus" aria-hidden="true">＋</span>';
+            button.innerHTML = '<span class="icon icon--plus challenge-editor__hand-plus" aria-hidden="true"></span>';
         } else {
             const card = cardById(id);
             button.append(createCardPreview(card.matrix));
@@ -761,7 +762,7 @@ function renderHandSlots() {
             clear.type = 'button';
             clear.className = 'challenge-editor__remove';
             clear.dataset.handClear = String(index);
-            clear.textContent = '×';
+            clear.innerHTML = '<span class="icon" aria-hidden="true"></span>';
             clear.setAttribute('aria-label', 'Убрать карту из слота ' + (index + 1));
             slot.append(clear);
         }

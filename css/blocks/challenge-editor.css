@@ -225,9 +225,12 @@
         top: 8px;
         right: 8px;
         color: var(--color-text-strong);
-        font-size: var(--text-sm);
-        font-weight: var(--weight-bold);
-        line-height: 1;
+        --icon-size: 16px;
+        --icon-image: url('@tabler-size/16/outline/plus.svg');
+    }
+
+    .challenge-editor__catalog-mark--selected {
+        --icon-image: url('@tabler-size/16/outline/check.svg');
     }
 
     .challenge-editor__picker-footer {
@@ -418,8 +421,6 @@
 
     .challenge-editor__tool-icon {
         color: var(--color-text-strong);
-        font-size: 21px;
-        line-height: 1;
     }
 
     .challenge-editor__tool small {
@@ -481,21 +482,21 @@
 
     .challenge-editor__hand-plus {
         color: var(--color-text-secondary);
-        font-size: 20px;
-        line-height: 1;
     }
 
     .challenge-editor__remove {
-        min-width: 24px;
-        min-height: 22px;
-        padding: 2px 6px;
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        padding: 0;
         border: 0;
         border-radius: var(--radius-full);
         background: var(--color-surface-selected);
         color: var(--color-text-secondary);
-        font: inherit;
-        font-size: 11px;
         cursor: pointer;
+        --icon-size: 16px;
+        --icon-image: url('@tabler-size/16/outline/x.svg');
     }
 
     .challenge-editor__deck-summary {
