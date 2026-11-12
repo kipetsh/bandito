@@ -569,6 +569,8 @@ export function render({ hand = true } = {}) {
         scrollLeft = viewX - left,
         scrollTop = viewY - top;
     boardOrigin = { x: -left, y: -top, c, w: viewW, h: viewH };
+    // A picked card in the editor is picked again with the arrows: the focus comes back to it after the redraw.
+    const focusedPiece = document.activeElement?.closest?.('[data-editor-piece-index]')?.dataset.editorPieceIndex;
     b.innerHTML = '';
     b.style.width = right - left + 'px';
     b.style.height = bottom - top + 'px';
@@ -591,14 +593,20 @@ export function render({ hand = true } = {}) {
             'board__piece' +
             (isLatest && p !== state.placed[0] ? ' board__piece--latest' : '') +
             (animateThis ? ' board__piece--fresh' : '');
-        // In the editor a placed card is picked to be removed; the start card stays, so it is not pickable.
+        // In the editor a placed card is picked to be removed; the start card stays, so it is not pickable. The cards
+        // are one group of hidden radios: Tab comes in once, the arrows pick the next card.
+        let pieceInput = null;
         if (challengeEditorMode && pieceIndex > 0) {
             el.classList.add('challenge-editor__piece');
             el.dataset.editorPieceIndex = String(pieceIndex);
-            el.tabIndex = 0;
-            el.setAttribute('role', 'button');
-            el.setAttribute('aria-label', 'Выбрать карту ' + p.id);
             el.classList.toggle('challenge-editor__piece--selected', pieceIndex === challengeEditorSelectedPiece);
+            pieceInput = document.createElement('input');
+            pieceInput.type = 'radio';
+            pieceInput.name = 'editorPiece';
+            pieceInput.className = 'visually-hidden';
+            pieceInput.checked = pieceIndex === challengeEditorSelectedPiece;
+            pieceInput.setAttribute('aria-label', 'Карта ' + p.id);
+            el.append(pieceInput);
         }
         if (animateThis) state.animateLastPlacement = false;
         el.style.cssText = `left:${padX + (p.x - minX) * c}px;top:${padY + (p.y - minY) * c}px;width:${w * c}px;height:${h * c}px;grid-template-columns:repeat(${w},${c}px);grid-template-rows:repeat(${h},${c}px)`;
@@ -608,6 +616,7 @@ export function render({ hand = true } = {}) {
             el.append(q);
         });
         b.append(el);
+        if (pieceInput && String(pieceIndex) === focusedPiece) pieceInput.focus({ preventScroll: true });
     }
     const canAct = !mpRoomCode || mpRoomData?.game?.turnUid === mpUid;
     const hasMoves = canAct && !state.finished && state.hand.length > 0 && canPlayAny();
@@ -1013,17 +1022,22 @@ boardEl.addEventListener('click', (e) => {
     } else if (isPreviewed(target)) play(target.x, target.y, target.m);
     else setPreview(target);
 });
-boardEl.addEventListener('keydown', (e) => {
-    if (!challengeEditorMode || (e.key !== 'Enter' && e.key !== ' ')) return;
+// The arrows check the next card in the editor natively and pick it; Enter or Space picks the focused card.
+function pickEditorPiece(e) {
     const piece = e.target.closest('[data-editor-piece-index]');
-    if (!piece) return;
-    e.preventDefault();
+    if (!challengeEditorMode || !piece) return;
+    if (e.type === 'keydown') {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+    }
     window.dispatchEvent(
         new CustomEvent('bandito:editor-select-piece', {
             detail: { index: Number(piece.dataset.editorPieceIndex) },
         })
     );
-});
+}
+boardEl.addEventListener('keydown', pickEditorPiece);
+boardEl.addEventListener('change', pickEditorPiece);
 
 // A pin stands at the centre of its future card. Rotations that share a centre are spread, in px of the current zoom.
 // A pair goes along the long axis of its card, ±pairSpread cells from the centre. Cards lie on a 3-cell grid,

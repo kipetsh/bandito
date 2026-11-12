@@ -25,13 +25,12 @@
         pointer-events: none;
     }
 
-    /* A card that takes focus (a picked card in the editor) draws the ring right round its frame: the frame sticks
+    /* A card whose hidden radio takes focus (a picked card in the editor) draws the ring right round its frame: the frame sticks
        out 1px to the right and below, so a ring on the card itself would sit off it there. The card rises above its
        neighbours, so they do not cover the ring. */
-    .board__piece:focus-visible {
+    .board__piece:has(:focus-visible) {
         --board-piece-ring: var(--color-focus);
         z-index: 6;
-        outline: none;
     }
 
     /* The last placed card (not the start one) is marked with a yellow dot in the centre of its bottom right cell:

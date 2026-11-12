@@ -119,13 +119,16 @@ function initChallengeEditor() {
         '<section class="challenge-editor__picker hidden" data-picker role="dialog" aria-modal="true" aria-label="Каталог карт">' +
         '<header class="challenge-editor__picker-head"><h3 data-picker-title>Выбери карту</h3>' +
         '<button class="btn btn--icon btn--close-icon" type="button" data-picker-close aria-label="Закрыть каталог"></button></header>' +
-        '<div class="challenge-editor__picker-grid" data-picker-grid></div>' +
+        '<div class="challenge-editor__picker-grid" data-picker-grid aria-label="Карты"></div>' +
         '<footer class="challenge-editor__picker-footer" data-picker-footer>' +
         '<button class="btn btn--sm" type="button" data-picker-close>Готово</button>' +
         '<button class="btn btn--sm challenge-editor__picker-clear" type="button" data-deck-clear>Очистить колоду</button></footer></section>';
     document.body.append(root);
 
     root.addEventListener('click', handleRootClick);
+    const pickerGrid = root.querySelector('[data-picker-grid]');
+    pickerGrid.addEventListener('keydown', handlePickerKeydown);
+    pickerGrid.addEventListener('change', handlePickerChange);
     play.addEventListener('click', handleRootClick);
     play.addEventListener('input', handleRootInput);
     window.addEventListener('keydown', handleEditorKeydown);
@@ -385,7 +388,7 @@ function handleRootClick(event) {
     const pickerOpen = target.closest?.('[data-picker-open]');
     if (pickerOpen) {
         const mode = pickerOpen.dataset.pickerOpen;
-        openPicker(mode, () => root.querySelector(`[data-picker-open="${mode}"]`));
+        openPicker(mode, () => document.querySelector(`[data-picker-open="${mode}"]`));
         return;
     }
     if (target.closest?.('[data-picker-close]')) {
@@ -401,18 +404,12 @@ function handleRootClick(event) {
     if (handSlot) {
         const slot = handSlot.dataset.handSlot;
         draft.activeHandSlot = Number(slot);
-        openPicker('hand', () => root.querySelector(`[data-hand-slot="${slot}"]`));
+        openPicker('hand', () => document.querySelector(`[data-hand-slot="${slot}"]`));
         return;
     }
     const handClear = target.closest?.('[data-hand-clear]');
     if (handClear) {
         clearHandSlot(Number(handClear.dataset.handClear));
-        return;
-    }
-    // The cards in the game hand carry the same data attribute: they are not catalog cards.
-    const catalogCard = !target.closest?.('#hand') && target.closest?.('[data-card-id]');
-    if (catalogCard) {
-        chooseCatalogCard(Number(catalogCard.dataset.cardId));
         return;
     }
     if (target.closest?.('[data-clear-board]')) {
@@ -659,6 +656,7 @@ function openPicker(mode, opener) {
         root.setAttribute('aria-hidden', 'false');
     }
     renderPicker();
+    focusPicker();
 }
 
 function closePicker() {
@@ -673,43 +671,96 @@ function closePicker() {
     }
 }
 
+// The catalog is a group of radios for one card (the board, a hand slot) and of checkboxes for the deck. Either way
+// it is one stop for Tab, the arrows move between the cards, and Tab goes on to the buttons below.
 function renderPicker() {
     const grid = root.querySelector('[data-picker-grid]');
     grid.replaceChildren();
+    const several = pickerMode === 'deck';
+    grid.setAttribute('role', several ? 'group' : 'radiogroup');
     const boardIds = new Set(draft.board.map((piece) => piece.id));
     const handIds = new Set(
         draft.hand.filter((id, index) => id !== null && (pickerMode !== 'hand' || index !== pickerSlot))
     );
+    const current = pickerMode === 'hand' ? draft.hand[pickerSlot] : null;
     tunnelCards().forEach((card) => {
         if (boardIds.has(card.id) || handIds.has(card.id)) return;
-        const selected = draft.deck.has(card.id);
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'challenge-editor__catalog-card' + (pickerMode === 'deck' && selected ? ' is-selected' : '');
-        button.dataset.cardId = String(card.id);
-        button.append(createCardPreview(card.matrix, 'challenge-editor__catalog-preview', 20));
-        button.setAttribute('aria-label', pickerMode === 'deck' ? 'Изменить состав колоды' : 'Добавить карту');
-        if (pickerMode === 'deck') {
+        const label = document.createElement('label');
+        label.className = 'challenge-editor__catalog-card';
+        const input = document.createElement('input');
+        input.type = several ? 'checkbox' : 'radio';
+        input.name = 'catalogCard';
+        input.value = String(card.id);
+        input.className = 'visually-hidden';
+        input.checked = several ? draft.deck.has(card.id) : card.id === current;
+        input.setAttribute('aria-label', 'Карта ' + card.id);
+        label.append(input, createCardPreview(card.matrix, 'challenge-editor__catalog-preview', 20));
+        if (several) {
             const mark = document.createElement('span');
-            mark.className =
-                'icon challenge-editor__catalog-mark' + (selected ? ' challenge-editor__catalog-mark--selected' : '');
+            mark.className = 'icon challenge-editor__catalog-mark';
             mark.setAttribute('aria-hidden', 'true');
-            button.append(mark);
+            label.append(mark);
         }
-        grid.append(button);
+        grid.append(label);
     });
+    if (several) rovePickerFocus(pickerInputs()[0]);
+}
+
+const pickerInputs = () => [...root.querySelectorAll('[data-picker-grid] input')];
+
+// Checkboxes are each a Tab stop natively: only the one the arrows came to stays in the Tab order.
+function rovePickerFocus(active) {
+    for (const input of pickerInputs()) input.tabIndex = input === active ? 0 : -1;
+}
+
+// The card that takes focus when the catalog opens: the checked radio, else the first card.
+function focusPicker() {
+    const inputs = pickerInputs();
+    (inputs.find((input) => input.type === 'radio' && input.checked) || inputs[0])?.focus();
+}
+
+// The arrows check the next radio natively, which only marks it: a card goes to the board or the hand with a click,
+// Enter or Space. Over the checkboxes the arrows move the focus the same way, Space toggles them natively.
+let pickerArrow = false;
+function handlePickerKeydown(event) {
+    const input = event.target;
+    if (!input.matches?.('input')) return;
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    if (input.type === 'radio') {
+        if (step) {
+            pickerArrow = true;
+            setTimeout(() => (pickerArrow = false));
+        } else if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            chooseCatalogCard(Number(input.value));
+        }
+        return;
+    }
+    if (!step) return;
+    event.preventDefault();
+    const inputs = pickerInputs(),
+        next = inputs[(inputs.indexOf(input) + step + inputs.length) % inputs.length];
+    rovePickerFocus(next);
+    next.focus();
+}
+
+function handlePickerChange(event) {
+    const input = event.target;
+    if (input.type === 'checkbox') {
+        rovePickerFocus(input);
+        toggleDeckCard(Number(input.value), input.checked);
+    } else if (!pickerArrow) chooseCatalogCard(Number(input.value));
+}
+
+function toggleDeckCard(id, inDeck) {
+    if (inDeck) draft.deck.add(id);
+    else draft.deck.delete(id);
+    renderDeck();
+    updateSaveButton();
 }
 
 function chooseCatalogCard(id) {
     if (!cardById(id)) return;
-    if (pickerMode === 'deck') {
-        if (draft.deck.has(id)) draft.deck.delete(id);
-        else draft.deck.add(id);
-        renderPicker();
-        renderDeck();
-        updateSaveButton();
-        return;
-    }
     if (pickerMode === 'hand') {
         const previous = draft.hand[pickerSlot];
         if (previous !== null) draft.deck.add(previous);

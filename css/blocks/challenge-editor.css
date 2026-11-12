@@ -206,10 +206,17 @@
         cursor: pointer;
     }
 
+    /* A label around a hidden radio or checkbox: the checked card is lit like a hovered one, and the focus ring goes
+       on the card. */
     .challenge-editor__catalog-card:hover,
-    .challenge-editor__catalog-card.is-selected {
+    .challenge-editor__catalog-card:has(:checked) {
         border-color: var(--color-border-strong);
         background: var(--color-surface-selected);
+    }
+
+    .challenge-editor__catalog-card:has(:focus-visible) {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
     }
 
     .challenge-editor__catalog-preview {
@@ -225,7 +232,7 @@
         --icon-image: url('@tabler-size/16/outline/plus.svg');
     }
 
-    .challenge-editor__catalog-mark--selected {
+    .challenge-editor__catalog-card:has(:checked) .challenge-editor__catalog-mark {
         --icon-image: url('@tabler-size/16/outline/check.svg');
     }
 
