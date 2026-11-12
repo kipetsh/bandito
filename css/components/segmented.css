@@ -85,16 +85,12 @@
             opacity var(--duration-fast);
     }
 
-    /* Focus sits on the checked radio, so the ring is the bubble's own border, 2px inward: it never covers the
-       container border. An option focused without a checked one gets the same ring inside its own box. */
-    .segmented:has(:checked:focus-visible) .segmented__bubble {
-        border-width: 2px;
-        border-color: var(--color-focus);
-    }
-
+    /* Focus sits on the checked radio, so the ring goes round the bubble and slides with it. The bubble is 4px
+       inside the container border, so a 2px ring 2px off it fits without touching that border. */
+    .segmented:has(:checked:focus-visible) .segmented__bubble,
     .segmented__option:has(:focus-visible:not(:checked)) {
         outline: 2px solid var(--color-focus);
-        outline-offset: -2px;
+        outline-offset: 2px;
     }
 
     .segmented__option:hover:not(:has(:disabled)),

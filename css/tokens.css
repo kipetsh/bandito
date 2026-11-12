@@ -123,6 +123,7 @@
         --color-on-soft: #573722;
         --color-focus: #b98a62;
         --color-selection: #53634c;
+        --color-on-selection: #fff;
 
         /* Status */
         --color-success: #718568;
@@ -226,6 +227,7 @@
         --color-on-soft: var(--color-control-text);
         --color-focus: #9aa1a9;
         --color-selection: #9aa1a9;
+        --color-on-selection: #17191c;
 
         --color-success: #8fb487;
         --color-success-surface: #2f3a2e;

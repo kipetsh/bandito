@@ -10,10 +10,39 @@
         cursor: pointer;
     }
 
+    /* Drawn in CSS: Chrome keeps a native checkbox square, so its focus ring could not follow the rounded box. */
     .toggle__input {
+        display: grid;
         flex: none;
+        place-items: center;
         width: 20px;
         height: 20px;
         margin: 0;
+        border: 1px solid var(--color-border-strong);
+        border-radius: var(--radius-xs);
+        background: var(--color-field);
+        cursor: pointer;
+        appearance: none;
+        transition:
+            background-color var(--duration-fast),
+            border-color var(--duration-fast);
+    }
+
+    .toggle__input::after {
+        width: 16px;
+        height: 16px;
+        background-color: var(--color-on-selection);
+        content: '';
+        opacity: 0;
+        mask: url('@tabler-size/16/outline/check.svg') center / contain no-repeat;
+    }
+
+    .toggle__input:checked {
+        border-color: var(--color-selection);
+        background: var(--color-selection);
+    }
+
+    .toggle__input:checked::after {
+        opacity: 1;
     }
 }

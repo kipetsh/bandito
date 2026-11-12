@@ -332,6 +332,9 @@
         gap: var(--space-3);
         min-width: 0;
         min-height: 0;
+        /* Room for the focus ring (2px past a 2px gap) that the scrolling box would otherwise clip. */
+        margin: calc(-1 * var(--space-1));
+        padding: var(--space-1);
         overflow: auto;
     }
 
