@@ -214,11 +214,11 @@ function createEditorChrome() {
         '<label class="challenge-editor__field"><span class="caption">Описание</span>' +
         '<input class="input" type="text" maxlength="240" placeholder="Кратко опиши задачу" data-field="description"></label>' +
         '<div class="challenge-editor__difficulty-wrap"><span class="caption">Сложность</span>' +
-        '<div class="lobby__difficulty challenge-editor__difficulty" role="group" aria-label="Сложность испытания">' +
-        '<span class="lobby__difficulty-bubble" aria-hidden="true"></span>' +
-        '<button class="lobby__difficulty-option" type="button" data-editor-exits="2" aria-pressed="false">Лёгкая</button>' +
-        '<button class="lobby__difficulty-option is-active" type="button" data-editor-exits="5" aria-pressed="true">Стандартная</button>' +
-        '<button class="lobby__difficulty-option" type="button" data-editor-exits="6" aria-pressed="false">Сложная</button>' +
+        '<div class="segmented" role="radiogroup" aria-label="Сложность испытания">' +
+        '<span class="segmented__bubble" aria-hidden="true"></span>' +
+        '<label class="segmented__option"><input class="visually-hidden" type="radio" name="editorExits" value="2" data-editor-exits>Лёгкая</label>' +
+        '<label class="segmented__option"><input class="visually-hidden" type="radio" name="editorExits" value="5" data-editor-exits>Стандартная</label>' +
+        '<label class="segmented__option"><input class="visually-hidden" type="radio" name="editorExits" value="6" data-editor-exits>Сложная</label>' +
         '</div></div>';
     play.insertBefore(editorMetadata, play.querySelector('.game__layout'));
 }
@@ -353,6 +353,10 @@ function handleEditorKeydown(event) {
 
 function handleRootInput(event) {
     if (!editorMode || !draft) return;
+    if (event.target.matches?.('[data-editor-exits]')) {
+        changeDifficulty(Number(event.target.value));
+        return;
+    }
     const field = event.target.dataset.field;
     if (field === 'title') draft.title = event.target.value.slice(0, 60);
     if (field === 'description') draft.description = event.target.value.slice(0, 240);
@@ -382,11 +386,6 @@ function handleRootClick(event) {
     }
     if (target.closest?.('[data-picker-close]')) {
         closePicker();
-        return;
-    }
-    const exits = target.closest?.('[data-editor-exits]');
-    if (exits) {
-        changeDifficulty(Number(exits.dataset.editorExits));
         return;
     }
     const tool = target.closest?.('[data-tool]');
@@ -454,7 +453,7 @@ function changeDifficulty(exits) {
     draft.board = [{ id: start.id, x: 0, y: 0, rotation: 0, m: clone(start.matrix) }];
     draft.pendingCard = null;
     draft.selectedPiece = null;
-    snackbar('Смена сложности сбросила раскладку поля.');
+    snackbar('Смена сложности сбросила раскладку поля');
     renderEditor();
 }
 
@@ -501,13 +500,8 @@ function renderEditor() {
     const description = document.querySelector('#play [data-field="description"]');
     if (document.activeElement !== title) title.value = draft.title;
     if (document.activeElement !== description) description.value = draft.description;
-    const index = { 2: 0, 5: 1, 6: 2 }[draft.exits];
-    const difficulty = document.querySelector('#play .challenge-editor__difficulty');
-    difficulty.style.setProperty('--difficulty-index', index);
-    document.querySelectorAll('#play [data-editor-exits]').forEach((button) => {
-        const active = Number(button.dataset.editorExits) === draft.exits;
-        button.classList.toggle('is-active', active);
-        button.setAttribute('aria-pressed', String(active));
+    document.querySelectorAll('#play [data-editor-exits]').forEach((input) => {
+        input.checked = Number(input.value) === draft.exits;
     });
     renderBoardControls();
     renderHandSlots();

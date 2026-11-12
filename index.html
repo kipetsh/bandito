@@ -24,6 +24,7 @@
         <link rel="stylesheet" href="css/components/avatar.css" />
         <link rel="stylesheet" href="css/components/presence.css" />
         <link rel="stylesheet" href="css/components/toggle.css" />
+        <link rel="stylesheet" href="css/components/segmented.css" />
         <link rel="stylesheet" href="css/components/item.css" />
         <link rel="stylesheet" href="css/components/menu.css" />
         <link rel="stylesheet" href="css/components/stat.css" />
@@ -221,28 +222,24 @@
                             <h3 class="heading__title">Выбери сложность</h3>
                         </div>
                     </div>
-                    <div class="lobby__difficulty" role="group" aria-label="Сложность партии">
-                        <span class="lobby__difficulty-bubble" aria-hidden="true"></span>
-                        <button class="lobby__difficulty-option" type="button" data-difficulty="2" aria-pressed="false">
-                            Лёгкая
-                        </button>
-                        <button
-                            class="lobby__difficulty-option is-active"
-                            type="button"
-                            data-difficulty="5"
-                            aria-pressed="true"
+                    <div class="segmented" role="radiogroup" aria-label="Сложность партии">
+                        <span class="segmented__bubble" aria-hidden="true"></span>
+                        <label class="segmented__option"
+                            ><input class="visually-hidden" type="radio" name="mpDifficulty" value="2" />Лёгкая</label
                         >
-                            Стандартная
-                        </button>
-                        <button class="lobby__difficulty-option" type="button" data-difficulty="6" aria-pressed="false">
-                            Сложная
-                        </button>
+                        <label class="segmented__option"
+                            ><input
+                                class="visually-hidden"
+                                type="radio"
+                                name="mpDifficulty"
+                                value="5"
+                                checked
+                            />Стандартная</label
+                        >
+                        <label class="segmented__option"
+                            ><input class="visually-hidden" type="radio" name="mpDifficulty" value="6" />Сложная</label
+                        >
                     </div>
-                    <select id="mpExits" class="select lobby__select" aria-label="Сложность партии" hidden>
-                        <option value="2">2 выхода · лёгкая партия</option>
-                        <option value="5" selected>5 выходов · стандартная партия</option>
-                        <option value="6">6 выходов · сложная партия</option>
-                    </select>
                 </div>
                 <footer class="lobby__footer">
                     <p id="mpLobbyMessage" class="note" aria-live="polite">Ждём подключения игроков.</p>

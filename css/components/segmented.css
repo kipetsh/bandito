@@ -1,0 +1,103 @@
+/* Segmented control: a native radio group drawn as one pill with a sliding bubble under the checked option.
+   Markup: .segmented > span.segmented__bubble + label.segmented__option > input.segmented__input + text.
+   The bubble follows the checked radio in CSS, so the script only checks a radio. Up to four options. */
+@layer components {
+    .segmented {
+        --segmented-count: 3;
+        --segmented-index: 0;
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(var(--segmented-count), minmax(0, 1fr));
+        align-items: center;
+        gap: 2px;
+        width: 100%;
+        min-width: 0;
+        padding: var(--space-1);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-full);
+        background: var(--color-surface-sunken);
+        isolation: isolate;
+    }
+
+    .segmented:has(> .segmented__option:nth-of-type(2):last-of-type) {
+        --segmented-count: 2;
+    }
+
+    .segmented:has(> .segmented__option:nth-of-type(4)) {
+        --segmented-count: 4;
+    }
+
+    .segmented:has(> .segmented__option:nth-of-type(2) > :checked) {
+        --segmented-index: 1;
+    }
+
+    .segmented:has(> .segmented__option:nth-of-type(3) > :checked) {
+        --segmented-index: 2;
+    }
+
+    .segmented:has(> .segmented__option:nth-of-type(4) > :checked) {
+        --segmented-index: 3;
+    }
+
+    .segmented__bubble {
+        position: absolute;
+        z-index: 0;
+        top: var(--space-1);
+        bottom: var(--space-1);
+        left: var(--space-1);
+        width: calc((100% - 2 * var(--space-1)) / var(--segmented-count));
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-full);
+        background: var(--color-surface-raised);
+        box-shadow:
+            0 3px 10px #00000018,
+            inset 0 1px 0 #ffffff30;
+        transform: translateX(calc(var(--segmented-index) * 100%));
+        transition:
+            transform 280ms cubic-bezier(0.22, 0.85, 0.28, 1),
+            background-color 180ms ease,
+            box-shadow 180ms ease;
+        pointer-events: none;
+    }
+
+    .segmented:not(:has(:checked)) .segmented__bubble {
+        opacity: 0;
+    }
+
+    .segmented__option {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        min-height: 42px;
+        padding: var(--space-2) var(--space-3);
+        border-radius: var(--radius-full);
+        color: var(--color-text-secondary);
+        font-size: var(--text-sm);
+        font-weight: var(--weight-semibold);
+        white-space: nowrap;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        transition:
+            color var(--duration-fast),
+            opacity var(--duration-fast);
+    }
+
+    .segmented__option:has(:focus-visible) {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+    }
+
+    .segmented__option:hover:not(:has(:disabled)),
+    .segmented__option:has(:checked) {
+        color: var(--color-text-strong);
+    }
+
+    .segmented__option:has(:disabled) {
+        opacity: 0.68;
+        cursor: default;
+    }
+}

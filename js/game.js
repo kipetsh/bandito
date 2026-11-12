@@ -1472,9 +1472,8 @@ export function showEndScreen(won) {
     if (rematch)
         rematch.onclick = () => {
             const choice = select.value;
-            $('#mpExits').value = choice;
             layer.remove();
-            mpStart();
+            mpStart(choice);
         };
     const retry = layer.querySelector('[data-end="retry"]');
     if (retry)

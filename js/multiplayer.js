@@ -63,18 +63,15 @@ function mpName() {
 function mpCode() {
     return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
+const difficultyInputs = () => [...document.querySelectorAll('input[name="mpDifficulty"]')];
+function mpChosenDifficulty() {
+    return difficultyInputs().find((input) => input.checked)?.value || '5';
+}
 function mpSyncDifficulty(value, disabled = false) {
     const selected = ['2', '5', '6'].includes(String(value)) ? String(value) : '5';
-    const index = { 2: 0, 5: 1, 6: 2 }[selected];
-    const group = document.querySelector('.lobby__difficulty');
-    const select = $('#mpExits');
-    if (select) select.value = selected;
-    if (group) group.style.setProperty('--difficulty-index', index);
-    document.querySelectorAll('[data-difficulty]').forEach((button) => {
-        const active = button.dataset.difficulty === selected;
-        button.classList.toggle('is-active', active);
-        button.setAttribute('aria-pressed', String(active));
-        button.disabled = disabled;
+    difficultyInputs().forEach((input) => {
+        input.checked = input.value === selected;
+        input.disabled = disabled;
     });
 }
 async function mpSetDifficulty(value) {
@@ -89,10 +86,8 @@ async function mpSetDifficulty(value) {
         }
     }
 }
-document.querySelectorAll('[data-difficulty]').forEach((button) => {
-    button.addEventListener('click', () => {
-        if (!button.disabled) mpSetDifficulty(button.dataset.difficulty);
-    });
+difficultyInputs().forEach((input) => {
+    input.addEventListener('change', () => mpSetDifficulty(input.value));
 });
 mpSyncDifficulty(5);
 const lobbyNameInput = $('#mpName');
@@ -144,7 +139,7 @@ function mpSwapPanel(showLobby) {
     else apply();
 }
 function mpShowLobby(room) {
-    const chosenDifficulty = room.settings?.exits || $('#mpExits').value || 5;
+    const chosenDifficulty = room.settings?.exits || mpChosenDifficulty();
     mpSyncDifficulty(chosenDifficulty, room.owner !== mpUid);
     $('#menu').classList.remove('hidden');
     $('#play').classList.add('hidden');
@@ -578,13 +573,12 @@ export async function mpJoin(codeOverride = null) {
         mpBusy = false;
     }
 }
-export async function mpStart() {
+export async function mpStart(chosen = mpChosenDifficulty()) {
     if (!mpRoomCode || mpRoomData?.owner !== mpUid) return;
     state.challenge = null;
     mpCelebrated = false;
     state.animateLastPlacement = false;
-    const chosen = $('#mpExits').value;
-    const n = chosen === '2' ? 2 : chosen === '5' ? 5 : 6;
+    const n = { 2: 2, 5: 5 }[chosen] || 6;
     const startId = { 2: 75, 5: 72, 6: 71 }[n];
     const s = state.all.find((c) => c.id === startId);
     if (!s) {
@@ -742,7 +736,7 @@ export async function leaveMultiplayer(showMenu = true) {
 }
 $('#mpCreate').onclick = mpCreate;
 $('#mpJoin').onclick = () => mpJoin();
-$('#mpStart').onclick = mpStart;
+$('#mpStart').onclick = () => mpStart();
 $('#mpLeave').onclick = () => leaveMultiplayer();
 $('#mpCopyCode').onclick = async () => {
     if (!mpRoomCode) return;

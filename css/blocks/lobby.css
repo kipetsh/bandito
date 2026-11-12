@@ -127,82 +127,6 @@
         box-shadow: none;
     }
 
-    .lobby__select {
-        flex: none;
-    }
-
-    .lobby__difficulty {
-        --difficulty-index: 1;
-        position: relative;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        align-items: center;
-        gap: 2px;
-        width: 100%;
-        min-width: 0;
-        padding: 4px;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-full);
-        background: var(--color-surface-sunken);
-        isolation: isolate;
-    }
-
-    .lobby__difficulty-bubble {
-        position: absolute;
-        z-index: 0;
-        top: 4px;
-        bottom: 4px;
-        left: 4px;
-        width: calc((100% - 8px) / 3);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-full);
-        background: var(--color-surface-raised);
-        box-shadow:
-            0 3px 10px #00000018,
-            inset 0 1px 0 #ffffff30;
-        transform: translateX(calc(var(--difficulty-index) * 100%));
-        transition:
-            transform 280ms cubic-bezier(.22, .85, .28, 1),
-            background-color 180ms ease,
-            box-shadow 180ms ease;
-        pointer-events: none;
-    }
-
-    .lobby__difficulty-option {
-        position: relative;
-        z-index: 1;
-        min-width: 0;
-        min-height: 42px;
-        padding: var(--space-2) var(--space-3);
-        border: 0;
-        border-radius: var(--radius-full);
-        background: transparent;
-        color: var(--color-text-secondary);
-        font: inherit;
-        font-size: var(--text-sm);
-        font-weight: var(--weight-semibold);
-        white-space: nowrap;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-        transition: color var(--duration-fast), opacity var(--duration-fast);
-    }
-
-    .lobby__difficulty-option:focus:not(:focus-visible) { outline: none; }
-
-    .lobby__difficulty-option:hover:not(:disabled) {
-        color: var(--color-text-strong);
-    }
-
-    .lobby__difficulty-option.is-active {
-        color: var(--color-text-strong);
-    }
-
-    .lobby__difficulty-option:disabled {
-        opacity: 0.68;
-        cursor: default;
-    }
-
     .lobby__footer {
         display: flex;
         align-items: center;
@@ -233,16 +157,6 @@
     @media (max-width: 420px) {
         .lobby__player-list {
             grid-template-columns: minmax(0, 1fr);
-        }
-
-        .lobby__difficulty {
-            width: 100%;
-            min-width: 0;
-        }
-
-        .lobby__difficulty-option {
-            padding-inline: var(--space-1);
-            font-size: var(--text-xs);
         }
     }
 }

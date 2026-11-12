@@ -513,10 +513,6 @@
         min-width: 0;
     }
 
-    .challenge-editor__difficulty {
-        width: 100%;
-    }
-
     .challenge-editor__status {
         margin: 0;
         padding: 8px 10px;
