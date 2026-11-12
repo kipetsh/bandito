@@ -526,16 +526,6 @@
         min-width: 0;
     }
 
-    .challenge-editor__status {
-        margin: 0;
-        padding: 8px 10px;
-        border-radius: var(--radius-md);
-        background: var(--color-surface-sunken);
-        color: var(--color-text-secondary);
-        font-size: var(--text-xs);
-        line-height: var(--leading-normal);
-    }
-
     .challenge-editor__piece {
         cursor: pointer;
     }

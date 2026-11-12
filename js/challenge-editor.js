@@ -204,7 +204,7 @@ function createEditorChrome() {
         '<p class="challenge-editor__deck-count" data-deck-count>В колоде: 0 карт</p></div>' +
         '</section>' +
         '<button class="btn challenge-editor__clear-board" type="button" data-clear-board><span class="icon icon--eraser" aria-hidden="true"></span>Очистить поле</button>' +
-        '<p class="note challenge-editor__status" data-editor-status>Укажи название испытания, чтобы сохранить его.</p>';
+        '<p class="notice" data-editor-status>Укажи название испытания, чтобы сохранить его.</p>';
     side.append(editorPanel);
 
     editorMetadata = document.createElement('section');
