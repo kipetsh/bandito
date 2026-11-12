@@ -13,12 +13,13 @@
 
     /* The frame lies on whole pixels: on the first row and column of the piece and just past its last ones. So
        adjacent pieces draw their shared edge on the same pixels, and the line keeps its colour; a 1px line centred
-       on the edge would be smeared over two half-covered pixels that add up where pieces meet. */
+       on the edge would be smeared over two half-covered pixels that add up where pieces meet. Its colour is public:
+       --board-piece-outline. */
     .board__piece::before {
         content: '';
         position: absolute;
         inset: 0 -1px -1px 0;
-        border: 1px solid var(--color-tile-outline);
+        border: 1px solid var(--board-piece-outline, var(--color-tile-outline));
         pointer-events: none;
     }
 

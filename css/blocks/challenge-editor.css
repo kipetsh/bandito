@@ -540,10 +540,11 @@
         cursor: pointer;
     }
 
+    /* The picked card keeps its frame and only recolours it; it lies above its neighbours, so the shared edges
+       take the new colour too. */
     .challenge-editor__piece--selected {
+        --board-piece-outline: var(--color-tile-picked-outline);
         z-index: 6;
-        outline: 2px solid var(--color-focus);
-        outline-offset: 2px;
     }
 
     @media (max-width: 980px) and (min-width: 761px) {
