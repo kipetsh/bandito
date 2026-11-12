@@ -1,10 +1,10 @@
 /* Start screen: two cards side by side. */
 @layer blocks {
-    .menu {
+    .home {
         padding: var(--space-2) 0 var(--space-8);
     }
 
-    .menu__grid {
+    .home__grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: stretch;
@@ -13,48 +13,48 @@
         margin: 0 auto;
     }
 
-    .menu__card {
+    .home__card {
         --card-padding: var(--space-6);
         --card-radius: var(--radius-xl);
 
         position: relative;
     }
 
-    .menu__card--solo {
+    .home__card--solo {
         display: flex;
         flex-direction: column;
     }
 
     @media (min-width: 761px) {
-        .menu--lobby-open .menu__card--solo {
+        .home--lobby-open .home__card--solo {
             align-self: start;
         }
     }
 
-    .menu__card--solo .mode-list {
+    .home__card--solo .mode-list {
         width: 100%;
         margin-top: var(--space-3);
         margin-bottom: 0;
         align-self: center;
     }
 
-    .menu__card--solo .mode-option {
+    .home__card--solo .mode-option {
         height: var(--mode-option-height, 128px);
     }
 
-    .menu__card-head {
+    .home__card-head {
         --heading-gap: var(--space-4);
 
         margin-bottom: var(--space-6);
     }
 
-    .menu__card-head .heading__icon {
+    .home__card-head .heading__icon {
         flex: 0 0 64px;
         width: 64px;
         height: 64px;
     }
 
-    .menu__card--solo::before {
+    .home__card--solo::before {
         content: '';
         position: absolute;
         top: -22px;
@@ -68,7 +68,7 @@
         pointer-events: none;
     }
 
-    .menu__status {
+    .home__status {
         width: 100%;
         min-height: 20px;
         margin-top: var(--space-3);
@@ -76,7 +76,7 @@
     }
 
     @media (max-width: 1050px) and (min-width: 761px) {
-        .menu__grid {
+        .home__grid {
             --heading-title-size: var(--text-xl);
             --heading-gap: var(--space-3);
             --mode-list-gap: var(--space-2);
@@ -88,13 +88,13 @@
             max-width: 940px;
         }
 
-        .menu__card {
+        .home__card {
             --card-padding: var(--space-5);
         }
     }
 
     @media (max-width: 760px) {
-        .menu__grid {
+        .home__grid {
             --mode-list-gap: var(--space-2);
             --mode-option-height: 64px;
             --mode-option-title-size: clamp(10px, 3.1vw, 13px);
@@ -105,26 +105,26 @@
             max-width: 650px;
         }
 
-        .menu__card {
+        .home__card {
             --card-padding: var(--space-5);
         }
     }
 
     @media (max-width: 560px) {
-        .menu__grid {
+        .home__grid {
             gap: var(--space-3);
         }
 
-        .menu__card {
+        .home__card {
             --card-padding: var(--space-4);
             --card-radius: var(--radius-lg);
         }
 
-        .menu__card-head {
+        .home__card-head {
             margin-bottom: var(--space-4);
         }
 
-        .menu__card-head .heading__icon {
+        .home__card-head .heading__icon {
             flex: 0 0 64px;
             width: 64px;
             height: 64px;
@@ -132,14 +132,14 @@
     }
 
     @media (max-width: 360px) {
-        .menu__grid {
+        .home__grid {
             --heading-title-size: var(--text-xl);
             --heading-gap: var(--space-2);
             --mode-option-title-size: var(--text-sm);
             --mode-option-hint-size: var(--text-xs);
         }
 
-        .menu__card {
+        .home__card {
             --card-padding: var(--space-4) var(--space-3);
         }
     }

@@ -163,6 +163,74 @@ test('the entry point loads every application module without runtime errors', as
     });
 });
 
+test('a menu opens from its toggle and closes on an action, a click outside and Esc', async () => {
+    const listeners = [];
+    const fakeDocument = {
+        activeElement: null,
+        addEventListener: (type, handler, capture = false) => listeners.push({ type, handler, capture }),
+    };
+    const element = (id, parent = null) => {
+        const el = {
+            id,
+            parent,
+            attributes: {},
+            handlers: {},
+            classList: createClassList(),
+            setAttribute: (name, value) => (el.attributes[name] = value),
+            addEventListener: (type, handler) => (el.handlers[type] = handler),
+            contains: (other) => other === el || (!!other?.parent && el.contains(other.parent)),
+            closest: (selector) => (selector === 'button' && id.startsWith('button') ? el : null),
+            focus: () => (fakeDocument.activeElement = el),
+        };
+        return el;
+    };
+    const fire = (type, event, target) => {
+        target.handlers[type]?.(event);
+        target.parent?.handlers[type]?.(event);
+        listeners.filter((l) => l.type === type).forEach((l) => l.handler(event));
+    };
+    const toggle = element('button-toggle');
+    const popover = element('popover');
+    const action = element('button-action', popover);
+    const outside = element('outside');
+    popover.classList.add('hidden');
+
+    await withGlobals({ document: fakeDocument }, async () => {
+        const { createMenu, hideMenus } = await import(moduleUrl('js/menu.js'));
+        const menu = createMenu(toggle, popover);
+        const click = (target) => fire('click', { target }, target);
+
+        click(toggle);
+        assert.equal(menu.isOpen(), true);
+        assert.equal(toggle.attributes['aria-expanded'], 'true');
+        click(toggle);
+        assert.equal(menu.isOpen(), false);
+
+        click(toggle);
+        click(action);
+        assert.equal(menu.isOpen(), false, 'an action closes the menu');
+
+        click(toggle);
+        click(outside);
+        assert.equal(menu.isOpen(), false, 'a click outside closes the menu');
+
+        click(toggle);
+        action.focus();
+        let stopped = false;
+        const escape = { key: 'Escape', target: action, preventDefault() {}, stopPropagation: () => (stopped = true) };
+        listeners.filter((l) => l.type === 'keydown' && l.capture).forEach((l) => l.handler(escape));
+        assert.equal(menu.isOpen(), false, 'Esc closes the menu');
+        assert.equal(stopped, true, 'Esc does not reach the page handlers');
+        await Promise.resolve();
+        assert.equal(fakeDocument.activeElement, toggle, 'focus returns to the toggle');
+
+        click(toggle);
+        hideMenus();
+        assert.equal(menu.isOpen(), false);
+        assert.equal(toggle.attributes['aria-expanded'], 'false');
+    });
+});
+
 test('a pressed mouse pointer does not clear the placement preview', async () => {
     const { shouldClearPlacementPreview } = await import(moduleUrl('js/game.js'));
     const mouseHover = { pointerType: 'mouse', buttons: 0 };

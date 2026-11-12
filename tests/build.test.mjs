@@ -130,9 +130,9 @@ test('all source images are emitted once as optimized, hashed WebP assets', () =
 
 test('game mode icons use the icon set in the production build', () => {
     const html = readFileSync(resolve(buildDirectory, 'index.html'), 'utf8');
-    const soloStart = html.indexOf('<section class="card card--glass menu__card menu__card--solo">');
+    const soloStart = html.indexOf('<section class="card card--glass home__card home__card--solo">');
     const soloEnd = html.indexOf('</section>', soloStart);
-    const multiplayerStart = html.indexOf('<section id="coopCard" class="card card--glass menu__card">');
+    const multiplayerStart = html.indexOf('<section id="coopCard" class="card card--glass home__card">');
     const multiplayerEnd = html.indexOf('</section>', multiplayerStart);
     const soloCard = html.slice(soloStart, soloEnd);
     const multiplayerCard = html.slice(multiplayerStart, multiplayerEnd);

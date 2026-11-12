@@ -81,7 +81,7 @@
             --card-padding: var(--space-4);
         }
 
-        #coopCard .menu__card-head {
+        #coopCard .home__card-head {
             margin-bottom: var(--space-3);
         }
 

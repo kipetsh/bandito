@@ -1,6 +1,7 @@
 /* Single-player rules, board rendering, controls, and end screens. */
 import { $ } from '#js/dom.js';
 import { rememberOpener, returnFocus } from '#js/focus-return.js';
+import { createMenu } from '#js/menu.js';
 import { closeModal, isModalOpen, openModal } from '#js/modal.js';
 import { applySettings, saveSettings } from '#js/settings.js';
 import { snackbar } from '#js/snackbar.js';
@@ -14,6 +15,8 @@ import {
     mpStopTimer,
     mpUid,
 } from '#js/multiplayer.js';
+
+const gameMenu = createMenu($('#gameMenuToggle'), $('#gameMenu'));
 
 // Current game state; multiplayer.js replaces it from the room snapshot.
 export const state = {
@@ -365,8 +368,7 @@ export async function beginChallenge(challenge) {
     $('#menu').classList.add('hidden');
     $('#mpLobby').classList.add('hidden');
     $('#play').classList.remove('hidden');
-    $('#gameMenu').classList.add('hidden');
-    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+    gameMenu.hide();
     $('#heading').textContent = 'Bandito · ' + state.challenge.title;
     $('#tutorialGoal').classList.add('hidden');
     setSubtitle(state.challenge.description || 'Пользовательское испытание · закрой все выходы.');
@@ -437,8 +439,7 @@ async function startTutorial(levelNumber) {
     $('#heading').textContent = 'Обучение · ' + levelNumber + ' уровень';
     $('#tutorialGoal').classList.remove('hidden');
     setSubtitle(level.subtitle, true);
-    $('#gameMenu').classList.add('hidden');
-    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+    gameMenu.hide();
     status(level.status);
     render();
     centerCamera();
@@ -1224,19 +1225,6 @@ $('#placementConfirm').onclick = (e) => {
     play(x, y, rotated(state.hand[state.selected].m, r), e.detail === 0);
 };
 $('#placementCancel').onclick = () => leavePlacements();
-function closeGameMenu() {
-    if ($('#gameMenu').classList.contains('hidden')) return;
-    returnFocus($('#gameMenu'));
-    $('#gameMenu').classList.add('hidden');
-    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
-}
-$('#gameMenuToggle').onclick = () => {
-    if (!$('#gameMenu').classList.contains('hidden')) return closeGameMenu();
-    rememberOpener($('#gameMenu'), $('#gameMenuToggle'));
-    $('#gameMenu').classList.remove('hidden');
-    $('#gameMenuToggle').setAttribute('aria-expanded', 'true');
-};
-
 const gameHelpModal = $('#gameHelpModal');
 $('#gameHelpToggle').onclick = () => {
     // The help describes the current input only: touch, or a mouse with the keyboard.
@@ -1248,9 +1236,6 @@ $('#gameHelpToggle').onclick = () => {
 $('#closeGameHelp').onclick = () => closeModal(gameHelpModal);
 gameHelpModal.addEventListener('click', (e) => {
     if (e.target === gameHelpModal) closeModal(gameHelpModal);
-});
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.game__menu')) closeGameMenu();
 });
 // 100% is a 24px cell, on narrow screens 18px; a game starts at 100%. The zoom changes the cell by 2px
 // from about 50% to about 150%: 12–36px on the desktop, 8–28px (44–156%) on narrow screens.
@@ -1354,9 +1339,6 @@ document.addEventListener('keydown', (e) => {
     } else if (['1', '2', '3'].includes(e.key)) {
         // A card and its placements at once.
         confirmCard(Number(e.key) - 1);
-    } else if (e.key === 'Escape' && !$('#gameMenu').classList.contains('hidden')) {
-        closeGameMenu();
-        e.preventDefault();
     } else if (e.key === 'Escape' && state.selected >= 0) {
         // One step back: from the placements to the cards, from a selected card to none.
         if (placing()) leavePlacements();
@@ -1440,8 +1422,7 @@ export function showEndScreen(won) {
                 layer.classList.add('is-closing');
                 window.setTimeout(() => {
                     resetEndScreen();
-                    $('#gameMenu').classList.add('hidden');
-                    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+                    gameMenu.hide();
                     $('#play').classList.add('hidden');
                     document
                         .querySelectorAll('.game__subtitle')
@@ -1615,8 +1596,7 @@ $('#exchange').onclick = () => {
     if ($('#exchange').disabled) startHand();
 };
 $('#newgame').onclick = async () => {
-    $('#gameMenu').classList.add('hidden');
-    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+    gameMenu.hide();
     state.placementPreview = null;
     if (mpRoomCode) {
         if (mpRoomData?.owner !== mpUid) {
@@ -1632,8 +1612,7 @@ $('#newgame').onclick = async () => {
 $('#leaveLobby').onclick = async () => {
     state.tutorial = null;
     state.challenge = null;
-    $('#gameMenu').classList.add('hidden');
-    $('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+    gameMenu.hide();
     state.placementPreview = null;
     if (mpRoomCode) {
         await leaveMultiplayer();

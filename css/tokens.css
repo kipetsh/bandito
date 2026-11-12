@@ -63,6 +63,7 @@
         /* Layers */
         --z-decor: 0;
         --z-content: 1;
+        --z-popover: 20;
         --z-confetti: 1000;
         --z-end-screen: 1200;
         --z-modal: 3000;

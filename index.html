@@ -25,6 +25,7 @@
         <link rel="stylesheet" href="css/components/presence.css" />
         <link rel="stylesheet" href="css/components/toggle.css" />
         <link rel="stylesheet" href="css/components/item.css" />
+        <link rel="stylesheet" href="css/components/menu.css" />
         <link rel="stylesheet" href="css/components/stat.css" />
         <link rel="stylesheet" href="css/components/divider.css" />
         <link rel="stylesheet" href="css/components/notice.css" />
@@ -40,7 +41,7 @@
         <link rel="stylesheet" href="css/blocks/brand.css" />
         <link rel="stylesheet" href="css/blocks/settings-launcher.css" />
         <link rel="stylesheet" href="css/blocks/modal.css" />
-        <link rel="stylesheet" href="css/blocks/menu.css" />
+        <link rel="stylesheet" href="css/blocks/home.css" />
         <link rel="stylesheet" href="css/blocks/coop.css" />
         <link rel="stylesheet" href="css/blocks/lobby.css" />
         <link rel="stylesheet" href="css/blocks/challenge-editor.css" />
@@ -78,7 +79,7 @@
             aria-hidden="true"
         />
         <main class="page">
-            <section id="menu" class="menu">
+            <section id="menu" class="home">
                 <button
                     id="openTutorial"
                     class="btn btn--icon btn--glass tutorial-launcher"
@@ -112,9 +113,9 @@
                         <p class="brand__tagline">Прокладывай тоннели, закрой все выходы</p>
                     </div>
                 </header>
-                <div class="menu__grid">
-                    <section class="card card--glass menu__card menu__card--solo">
-                        <div class="heading menu__card-head">
+                <div class="home__grid">
+                    <section class="card card--glass home__card home__card--solo">
+                        <div class="heading home__card-head">
                             <span class="heading__icon" aria-hidden="true"><span class="icon icon--solo"></span></span>
                             <div class="heading__text">
                                 <h2 class="heading__title">Одиночная игра</h2>
@@ -144,10 +145,10 @@
                                 <span class="mode-option__check" aria-hidden="true">✓</span>
                             </button>
                         </div>
-                        <p id="loadstate" class="note menu__status">Загружаю колоду…</p>
+                        <p id="loadstate" class="note home__status">Загружаю колоду…</p>
                     </section>
-                    <section id="coopCard" class="card card--glass menu__card">
-                        <div class="heading menu__card-head">
+                    <section id="coopCard" class="card card--glass home__card">
+                        <div class="heading home__card-head">
                             <span class="heading__icon" aria-hidden="true"
                                 ><span class="icon icon--multiplayer"></span
                             ></span>
@@ -258,7 +259,7 @@
                             <h2 id="heading" class="heading__title"></h2>
                         </div>
                     </div>
-                    <div class="game__menu">
+                    <div class="menu game__menu">
                         <button
                             id="gameMenuToggle"
                             class="btn btn--icon game__menu-toggle"
@@ -269,9 +270,9 @@
                         >
                             <span class="icon icon--menu-2" aria-hidden="true"></span>
                         </button>
-                        <div id="gameMenu" class="game__menu-popover hidden">
-                            <button id="newgame" class="game__menu-item" type="button">Новая партия</button>
-                            <button id="leaveLobby" class="game__menu-item" type="button">Выйти в лобби</button>
+                        <div id="gameMenu" class="menu__popover hidden">
+                            <button id="newgame" class="menu__item" type="button">Новая партия</button>
+                            <button id="leaveLobby" class="menu__item" type="button">Выйти в лобби</button>
                         </div>
                     </div>
                 </header>

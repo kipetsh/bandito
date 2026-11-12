@@ -10,6 +10,7 @@ import {
     validOnBoard,
 } from '#js/game.js';
 import { rememberOpener, returnFocus } from '#js/focus-return.js';
+import { hideMenus } from '#js/menu.js';
 import {
     deletePublicChallenge,
     loadPublicChallenges,
@@ -91,7 +92,7 @@ function initChallengeEditor() {
     libraryButton.addEventListener('click', openLibrary);
 
     launchGroup.append(launchButton, libraryButton);
-    const menuGrid = menu.querySelector('.menu__grid');
+    const menuGrid = menu.querySelector('.home__grid');
     if (menuGrid) menuGrid.after(launchGroup);
     else menu.append(launchGroup);
 
@@ -238,8 +239,7 @@ function showEditor() {
     createEditorChrome();
 
     document.querySelector('#heading').textContent = 'Bandito · редактор испытаний';
-    document.querySelector('#gameMenu').classList.add('hidden');
-    document.querySelector('#gameMenuToggle').setAttribute('aria-expanded', 'false');
+    hideMenus();
 
     renderEditor();
     window.requestAnimationFrame(() => centerCamera());
