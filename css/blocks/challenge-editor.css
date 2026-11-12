@@ -565,12 +565,6 @@
         width: 100%;
     }
 
-    .challenge-editor__difficulty .lobby__difficulty-option {
-        padding-right: 4px;
-        padding-left: 4px;
-        font-size: 10px;
-    }
-
     .challenge-editor__status {
         margin: 0;
         padding: 8px 10px;
