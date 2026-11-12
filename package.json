@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
+    "@tabler/icons": "3.51.0",
     "eslint": "9.39.4",
     "eslint-config-prettier": "10.1.8",
     "globals": "17.4.0",

@@ -129,15 +129,6 @@
             width: 64px;
             height: 64px;
         }
-
-        .menu__card-head .heading__icon img {
-            width: 64px;
-            height: 64px;
-        }
-
-        .menu__card-head .heading__icon--solo img {
-            transform: scale(0.9);
-        }
     }
 
     @media (max-width: 360px) {

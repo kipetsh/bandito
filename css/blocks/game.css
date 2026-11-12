@@ -49,8 +49,6 @@
 
     .game__menu-toggle {
         min-width: 42px;
-        font-size: 25px;
-        line-height: 1;
     }
 
     .game__menu-popover {
@@ -215,9 +213,9 @@
         border-radius: 50%;
         background: transparent;
         color: var(--color-control-text);
-        font-size: var(--text-sm);
         cursor: pointer;
         transition: color 140ms ease;
+        --icon-size: 16px;
     }
 
     .game__help-toggle::before {

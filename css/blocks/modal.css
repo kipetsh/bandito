@@ -180,7 +180,7 @@
     }
 }
 
-/* Flaticon close icon 5254940; source: flaticon.com/free-icon/close_5254940. */
+/* The cross is a mask, so it takes the button's text colour. */
 @layer blocks {
     .btn--close-icon {
         display: grid;
@@ -194,7 +194,7 @@
         width: 17px;
         height: 17px;
         background-color: currentColor;
-        -webkit-mask: url('https://cdn-icons-png.flaticon.com/512/5254/5254940.png') center / contain no-repeat;
-        mask: url('https://cdn-icons-png.flaticon.com/512/5254/5254940.png') center / contain no-repeat;
+        -webkit-mask: url('@tabler/icons/outline/x.svg') center / contain no-repeat;
+        mask: url('@tabler/icons/outline/x.svg') center / contain no-repeat;
     }
 }

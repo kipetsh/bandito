@@ -79,7 +79,7 @@ function initChallengeEditor() {
     launchButton = document.createElement('button');
     launchButton.type = 'button';
     launchButton.className = 'btn btn--soft challenge-editor-launch';
-    launchButton.textContent = 'Создать испытание';
+    launchButton.innerHTML = '<span class="icon icon--plus" aria-hidden="true"></span>Создать испытание';
     launchButton.disabled = true;
     launchButton.addEventListener('click', openEditor);
 

@@ -15,8 +15,6 @@
 
     .tutorial-launcher {
         right: calc(var(--space-4) + 48px + var(--space-2));
-        font-size: 20px;
-        font-weight: var(--weight-semibold);
     }
 
     @media (max-width: 760px) {

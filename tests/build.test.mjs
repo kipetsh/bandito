@@ -128,7 +128,7 @@ test('all source images are emitted once as optimized, hashed WebP assets', () =
     assert.ok(!references.includes('assets/images/bandito-'), 'Unhashed theme image references remain in built files');
 });
 
-test('game mode icons remain inline SVGs in the production build', () => {
+test('game mode icons use the icon set in the production build', () => {
     const html = readFileSync(resolve(buildDirectory, 'index.html'), 'utf8');
     const soloStart = html.indexOf('<section class="card card--glass menu__card menu__card--solo">');
     const soloEnd = html.indexOf('</section>', soloStart);
@@ -142,10 +142,8 @@ test('game mode icons remain inline SVGs in the production build', () => {
         multiplayerStart >= 0 && multiplayerEnd > multiplayerStart,
         'Multiplayer card is missing from the production build'
     );
-    assert.ok(soloCard.includes('<svg viewBox="0 0 48 48">'), 'Solo game SVG icon is missing');
-    assert.ok(multiplayerCard.includes('<svg viewBox="0 0 52 48">'), 'Multiplayer SVG icon is missing');
-    assert.ok(!html.includes('solo-organic-circle.webp'), 'The obsolete solo raster icon is still referenced');
-    assert.ok(!html.includes('multiplayer-stars.webp'), 'The obsolete multiplayer raster icon is still referenced');
+    assert.ok(soloCard.includes('class="icon icon--solo"'), 'Solo game icon is missing');
+    assert.ok(multiplayerCard.includes('class="icon icon--multiplayer"'), 'Multiplayer icon is missing');
 });
 
 function walkFiles(directory) {
@@ -154,3 +152,15 @@ function walkFiles(directory) {
         return entry.isDirectory() ? walkFiles(path) : [path];
     });
 }
+
+test('only the used Tabler icons reach the build, and every icon path resolved', () => {
+    const files = walkFiles(buildDirectory).filter((file) => /\.(?:css|js|html)$/.test(file));
+    const content = files.map((file) => readFileSync(file, 'utf8')).join('\n');
+
+    // Vite only warns about a url() it cannot resolve and leaves it as is, so a typo in an icon name shows up here.
+    assert.ok(!content.includes('@tabler/icons/'), 'An icon path did not resolve to a file in @tabler/icons');
+
+    const icons = new Set([...content.matchAll(/icon-tabler-([a-z0-9-]+)/g)].map((match) => match[1]));
+    assert.ok(icons.size > 0, 'No Tabler icons were found in the build');
+    assert.ok(icons.size < 40, `The build carries ${icons.size} Tabler icons; only the used ones should get there`);
+});

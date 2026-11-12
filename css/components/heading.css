@@ -17,15 +17,8 @@
         width: 56px;
         height: 56px;
         color: var(--color-icon);
-    }
-
-    .heading__icon svg {
-        width: 52px;
-        height: 48px;
-    }
-
-    .heading__icon-detail {
-        fill: var(--color-surface-selected);
+        --icon-size: 100%;
+        --icon-detail-color: var(--color-surface-selected);
     }
 
     .heading__text {

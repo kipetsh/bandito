@@ -1,0 +1,54 @@
+/*
+ * One-colour SVG icon from assets/icons, drawn as a mask in the text colour. The context sets the size with
+ * --icon-size; spacing and alignment come from the parent. An icon with a second colour adds ::after with its own
+ * mask, painted in --icon-detail-color. Without its own mask ::after would fill the whole box, so only such icons get it.
+ */
+@layer components {
+    .icon {
+        position: relative;
+        display: block;
+        flex: none;
+        width: var(--icon-size, 24px);
+        height: var(--icon-size, 24px);
+    }
+
+    .icon::before,
+    .icon--solo::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-color: currentColor;
+        -webkit-mask: var(--icon-image) center / contain no-repeat;
+        mask: var(--icon-image) center / contain no-repeat;
+    }
+
+    .icon--solo {
+        --icon-image: url('../../assets/icons/solo.svg');
+    }
+
+    .icon--solo::after {
+        --icon-image: url('../../assets/icons/solo-star.svg');
+
+        background-color: var(--icon-detail-color, currentColor);
+    }
+
+    .icon--multiplayer {
+        --icon-image: url('../../assets/icons/multiplayer.svg');
+    }
+
+    .icon--more {
+        --icon-image: url('@tabler/icons/outline/dots.svg');
+    }
+
+    .icon--plus {
+        --icon-image: url('@tabler/icons/outline/plus.svg');
+    }
+
+    .icon--question {
+        --icon-image: url('@tabler/icons/outline/question-mark.svg');
+    }
+
+    .icon--settings {
+        --icon-image: url('@tabler/icons/outline/settings.svg');
+    }
+}
