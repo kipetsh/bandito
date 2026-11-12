@@ -1,5 +1,5 @@
 /* Card in the player's hand: a bare miniature of its tunnels, without a frame or a caption. It is a label around
-   a hidden radio: the focused card is lit like a hovered one and its miniature takes the focus ring.
+   a hidden radio: the focused card keeps its colours, its miniature takes the focus ring.
    It stands upright on wide screens and lies flat in the narrow bottom sheet (the matrix is turned in JS). */
 @layer blocks {
     .hand-card {
@@ -29,8 +29,8 @@
         cursor: not-allowed;
     }
 
-    /* The selected card slides up a little, as if pulled out of a fan of cards. The card pointed at (under
-       a hovering pointer or the keyboard focus, JS keeps one) stays in place and is only lit. */
+    /* The selected card slides up a little, as if pulled out of a fan of cards. The card under a hovering
+       pointer stays in place and is only lit. */
     .hand-card--selected .hand-card__mini {
         transform: translateY(calc(-1 * var(--space-2)));
     }

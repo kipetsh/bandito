@@ -727,14 +727,9 @@ function renderHand(canAct) {
             input.className = 'visually-hidden';
             input.setAttribute('aria-label', 'Карта ' + card.id);
             label.append(input);
-            // A hovering pointer and focus from the keyboard (Tab, arrows) point at the card; touch does not hover.
+            // A hovering pointer points at the card; touch does not hover. The keyboard focus only rings the card.
             label.addEventListener('pointerenter', (e) => e.pointerType !== 'touch' && pointCard(card.id));
             label.addEventListener('pointerleave', () => pointedCardId === card.id && pointCard(null));
-            input.addEventListener('focus', () => input.matches(':focus-visible') && pointCard(card.id));
-            input.addEventListener(
-                'blur',
-                () => pointedCardId === card.id && !label.matches(':hover') && pointCard(null)
-            );
         }
         const input = label.querySelector('input'),
             disabled = state.finished || !canAct;
@@ -763,9 +758,7 @@ function renderHand(canAct) {
     });
 }
 const handInputs = () => [...$('#hand').querySelectorAll('input')];
-// The card under a hovering pointer or under the keyboard focus, whichever came last: a hover over another card
-// takes the highlight from the card the arrows moved to, as one mouse cursor would. The lit card shows that
-// the hand has focus.
+// The card under a hovering pointer (lit).
 let pointedCardId = null;
 function pointCard(id) {
     pointedCardId = id;
@@ -1172,14 +1165,13 @@ function focusCard(i) {
     focusingHand = false;
 }
 
-// A game starts with nothing selected and focus on the first card, which is pointed at (lit) as if Tab moved to it,
-// whether the game was started with the mouse or the keyboard. On another player's turn the cards are disabled and
-// get nothing. On touch nothing is pointed at: the player picks a card with a tap.
+// A game starts with nothing selected and focus on the first card, whether the game was started with the mouse or
+// the keyboard. On another player's turn the cards are disabled and get nothing. On touch nothing gets focus: the
+// player picks a card with a tap.
 export function startHand() {
     const first = handInputs()[0];
     if (!first || first.disabled || touchInput) return;
     focusCard(0);
-    pointCard(state.hand[0].id);
 }
 
 // Focus goes to card i, by default to the selected card, else to the first one.
