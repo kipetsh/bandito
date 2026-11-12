@@ -542,7 +542,7 @@
 
     /* The picked card is highlighted like a focused one and lies above its neighbours. */
     .challenge-editor__piece--selected {
-        --board-piece-ring: var(--color-focus);
+        --board-piece-ring: var(--color-tile-picked);
         z-index: 6;
     }
 
