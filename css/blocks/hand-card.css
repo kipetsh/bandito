@@ -1,5 +1,5 @@
 /* Card in the player's hand: a bare miniature of its tunnels, without a frame or a caption. It is a label around
-   a hidden radio, so it has no focus ring: the focused card is lit like a hovered one.
+   a hidden radio: the focused card is lit like a hovered one and its miniature takes the focus ring.
    It stands upright on wide screens and lies flat in the narrow bottom sheet (the matrix is turned in JS). */
 @layer blocks {
     .hand-card {
@@ -39,6 +39,13 @@
     .hand-card--pointed .hand-card__cell--wall {
         border-color: var(--color-tile-wall-hover);
         background: var(--color-tile-wall-hover);
+    }
+
+    /* Keyboard focus paints the miniature's frame and a 2px ring right round it, so they read as one 3px line, like
+       a focused piece on the board. The cards' paddings and the hand's own leave room for the ring. */
+    .hand-card:has(:focus-visible) .hand-card__mini {
+        outline: 3px solid var(--color-focus);
+        outline-offset: -1px;
     }
 
     /* The selected card has a thin bar under it, on the line of the bottom edges of the other cards: the lifted
