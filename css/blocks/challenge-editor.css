@@ -410,17 +410,6 @@
         line-height: 1.1;
     }
 
-    .challenge-editor__selected-card {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        min-height: 86px;
-        padding: var(--space-2);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-md);
-        background: var(--color-surface-sunken);
-    }
-
     .challenge-editor__hand-slots {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -586,10 +575,6 @@
 
         .challenge-editor__tool {
             min-height: 50px;
-        }
-
-        .challenge-editor__selected-card {
-            min-height: 66px;
         }
 
         .challenge-editor__hand-slot {

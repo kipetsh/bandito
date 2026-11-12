@@ -193,10 +193,6 @@ function createEditorChrome() {
         '<span class="icon icon--backspace challenge-editor__tool-icon" aria-hidden="true"></span><span class="challenge-editor__tool-label">Удалить</span></button>' +
         '</div></section>' +
         '<section class="challenge-editor__tool-group">' +
-        '<div class="challenge-editor__tools-heading"><h3>Карты</h3></div>' +
-        '<div class="challenge-editor__selected-card hidden" data-selected-card></div>' +
-        '</section>' +
-        '<section class="challenge-editor__tool-group">' +
         '<div class="challenge-editor__tools-heading"><h3>Стартовая рука</h3></div>' +
         '<div class="challenge-editor__hand-slots" data-hand-slots></div>' +
         '</section>' +
@@ -551,19 +547,8 @@ function createCardPreview(matrix, className = '', cellSize = 6) {
 }
 
 function renderBoardControls() {
-    const selected = draft.selectedPiece === null ? null : draft.board[draft.selectedPiece];
-    const pending = draft.pendingCard === null ? null : cardById(draft.pendingCard);
-    const card = pending || (selected ? cardById(selected.id) : null);
-    const preview = document.querySelector('#play [data-selected-card]');
-    const remove = document.querySelector('#play [data-tool="delete"]');
-    preview.replaceChildren();
-    preview.classList.toggle('hidden', !card);
-    if (card) {
-        const matrix = pending ? card.matrix : rotateMatrix(card.matrix, selected.rotation);
-        preview.append(createCardPreview(matrix));
-    }
-    const canDelete = Boolean(selected && draft.selectedPiece > 0 && !pending);
-    remove.disabled = !canDelete;
+    const canDelete = draft.selectedPiece !== null && draft.selectedPiece > 0 && draft.pendingCard === null;
+    document.querySelector('#play [data-tool="delete"]').disabled = !canDelete;
 }
 
 function confirmPendingPlacement(option) {
