@@ -442,8 +442,10 @@
         color: var(--color-text-strong);
         font: inherit;
         cursor: pointer;
+        transition: background 120ms ease;
     }
 
+    .challenge-editor__hand-slot:hover,
     .challenge-editor__hand-slot.is-active {
         border-style: solid;
         background: var(--color-surface-selected);
@@ -464,8 +466,16 @@
         background: var(--color-surface-selected);
         color: var(--color-text-secondary);
         cursor: pointer;
+        transition:
+            background 120ms ease,
+            color 120ms ease;
         --icon-size: 16px;
         --icon-image: url('@tabler-size/16/outline/x.svg');
+    }
+
+    .challenge-editor__remove:hover {
+        background: var(--color-border);
+        color: var(--color-text-strong);
     }
 
     .challenge-editor__deck-summary {

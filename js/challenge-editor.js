@@ -119,9 +119,9 @@ function initChallengeEditor() {
         '<header class="challenge-editor__picker-head"><h3 data-picker-title>Выбери карту</h3>' +
         '<button class="btn btn--icon btn--close-icon" type="button" data-picker-close aria-label="Закрыть каталог"></button></header>' +
         '<div class="challenge-editor__picker-grid" data-picker-grid></div>' +
-        '<footer class="challenge-editor__picker-footer">' +
+        '<footer class="challenge-editor__picker-footer" data-picker-footer>' +
         '<button class="btn btn--sm" type="button" data-picker-close>Готово</button>' +
-        '<button class="btn btn--sm challenge-editor__picker-clear hidden" type="button" data-deck-clear>Очистить колоду</button></footer></section>';
+        '<button class="btn btn--sm challenge-editor__picker-clear" type="button" data-deck-clear>Очистить колоду</button></footer></section>';
     document.body.append(root);
 
     root.addEventListener('click', handleRootClick);
@@ -640,7 +640,8 @@ function openPicker(mode, opener) {
         }
     }
     const picker = root.querySelector('[data-picker]');
-    root.querySelector('[data-deck-clear]').classList.toggle('hidden', mode !== 'deck');
+    // Only the deck takes several cards at once: a card for the board or the hand closes the picker by itself.
+    root.querySelector('[data-picker-footer]').classList.toggle('hidden', mode !== 'deck');
     const pickerTitles = {
         board: 'Добавить карту на поле',
         hand: 'Выбрать карту в руку',
@@ -796,9 +797,9 @@ function updateSaveButton() {
     status.hidden = issues.length === 0;
     if (issues.length) {
         status.textContent =
-            issues.length === 1 && !draft.title.trim()
-                ? 'Добавь название испытания в панели под заголовком.'
-                : 'Заверши размещение карты и укажи название.';
+            draft.pendingCard !== null
+                ? 'Выбери положение карты на поле.'
+                : 'Добавь название испытания в панели под заголовком.';
     }
 }
 
