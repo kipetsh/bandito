@@ -291,37 +291,12 @@
     .challenge-editor__metadata-bar {
         display: grid;
         grid-template-columns: minmax(160px, 1fr) minmax(180px, 1.25fr) minmax(230px, 1.15fr);
-        align-items: end;
-        gap: var(--space-3);
+        gap: var(--space-2) var(--space-3);
         margin-bottom: var(--space-3);
         padding: var(--space-3) var(--space-4);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-lg);
         background: var(--color-surface-raised);
-    }
-
-    .challenge-editor__metadata-bar .challenge-editor__field {
-        min-width: 0;
-        font-size: var(--text-sm);
-    }
-
-    .challenge-editor__metadata-bar .input {
-        min-width: 0;
-        min-height: 40px;
-    }
-
-    .challenge-editor__metadata-bar textarea {
-        min-height: 40px;
-        max-height: 80px;
-        resize: vertical;
-    }
-
-    .challenge-editor__metadata-bar .challenge-editor__difficulty-wrap {
-        gap: 6px;
-    }
-
-    .challenge-editor__metadata-bar .challenge-editor__difficulty {
-        min-height: 40px;
     }
 
     .challenge-editor__layout {
@@ -527,29 +502,19 @@
         cursor: pointer;
     }
 
-    .challenge-editor__metadata-fields {
-        display: grid;
-        gap: var(--space-2);
-        padding-top: var(--space-3);
-    }
-
-    .challenge-editor__field {
-        display: grid;
-        gap: 5px;
-        color: var(--color-text-secondary);
-        font-size: var(--text-xs);
-        font-weight: var(--weight-semibold);
-    }
-
-    .challenge-editor__metadata-fields textarea {
-        min-height: 54px;
-        resize: vertical;
-    }
-
+    /* Each field takes two rows of the bar, so the captions share one line and the controls another,
+       although the difficulty switch is taller than a text input. */
+    .challenge-editor__field,
     .challenge-editor__difficulty-wrap {
         display: grid;
-        gap: 6px;
+        grid-row: span 2;
+        grid-template-rows: subgrid;
+        align-items: center;
         min-width: 0;
+    }
+
+    .challenge-editor__description {
+        max-height: 120px;
     }
 
     .challenge-editor__difficulty {

@@ -14,6 +14,8 @@
         padding: var(--space-2) var(--space-3);
         border-radius: var(--radius-md);
         font-size: var(--text-md);
+        font-weight: var(--weight-regular);
+        line-height: var(--leading-normal);
     }
 
     .input::placeholder {
@@ -25,6 +27,14 @@
         min-height: var(--control-lg);
         padding: var(--space-3) var(--space-4);
         border-radius: var(--radius-lg);
+    }
+
+    /* Textarea: starts one line high like a text input and grows only downward. */
+    .input--multiline {
+        display: block;
+        /* A text input centres its line, a textarea does not: the padding puts one line in the middle. */
+        padding-block: calc((var(--control-md) - 2px - 1lh) / 2);
+        resize: vertical;
     }
 
     .input--code {
