@@ -64,8 +64,9 @@ test('room URLs preserve the GitHub Pages project path and support root hosting'
     );
 });
 
-test('a player who leaves a running game returns the hand under the deck and draws a new one on coming back', async () => {
+test('a player who leaves a running game gets their own cards back from the deck', async () => {
     const { leaveRoom, returnToGame } = await import(moduleUrl('js/room-seats.js'));
+    const ids = (cards) => cards.map((card) => card.id);
     const room = {
         owner: 'anna',
         players: { anna: { name: 'Аня' }, boris: { name: 'Боря' } },
@@ -81,31 +82,50 @@ test('a player who leaves a running game returns the hand under the deck and dra
     const left = leaveRoom(structuredClone(room), 'boris', 1000);
     assert.deepEqual(Object.keys(left.players), ['anna']);
     assert.deepEqual(Object.keys(left.game.hands), ['anna']);
-    assert.deepEqual(
-        left.game.deck.map((card) => card.id),
-        [10, 9, 1, 2, 3, 4],
-        'the hand goes under the deck'
-    );
-    assert.deepEqual(left.game.left.boris, { at: 1000 });
+    assert.deepEqual(ids(left.game.deck), [10, 9, 1, 2, 3, 4], 'the hand goes under the deck');
+    assert.deepEqual(left.game.left.boris, { cards: [10, 9], at: 1000 });
     assert.equal(left.game.turnUid, 'anna');
 
-    const back = returnToGame(left.game, 'boris');
-    assert.deepEqual(
-        back.hands.boris.map((card) => card.id),
-        [4, 3, 2],
-        'the new hand comes from the top of the deck'
-    );
-    assert.deepEqual(
-        back.deck.map((card) => card.id),
-        [10, 9, 1]
-    );
+    const back = returnToGame(structuredClone(left.game), 'boris');
+    assert.deepEqual(ids(back.hands.boris), [10, 9], 'the same cards come back');
+    assert.deepEqual(ids(back.deck), [1, 2, 3, 4]);
     assert.deepEqual(back.left, {});
     assert.equal(returnToGame(back, 'vera'), undefined, 'a stranger was not in the game');
+
+    const drawn = structuredClone(left.game);
+    drawn.deck = [{ id: 9 }, { id: 1 }, { id: 2 }];
+    assert.deepEqual(ids(returnToGame(drawn, 'boris').hands.boris), [9, 2], 'a card drawn by others is replaced');
+
+    const empty = structuredClone(left.game);
+    empty.deck = [];
+    const watching = returnToGame(empty, 'boris');
+    assert.equal(watching.hands.boris, undefined, 'with no cards the player only watches');
+    assert.ok(watching.left.boris, 'and can come back again after a reload');
 
     const finished = structuredClone(room);
     finished.game.finished = true;
     assert.equal(leaveRoom(finished, 'boris').game.left, undefined);
     assert.equal(leaveRoom({ owner: 'anna', players: { anna: {} } }, 'anna'), null, 'the last player removes the room');
+});
+
+test('a game ends when the player who leaves held the last cards in hand', async () => {
+    const { leaveRoom } = await import(moduleUrl('js/room-seats.js'));
+    const room = leaveRoom(
+        {
+            owner: 'anna',
+            players: { anna: {}, boris: {} },
+            game: {
+                started: true,
+                finished: false,
+                deck: [],
+                board: [{ id: 71, x: 0, y: 0, m: [[0]] }],
+                hands: { anna: [], boris: [{ id: 10 }] },
+                turnUid: 'boris',
+            },
+        },
+        'boris'
+    );
+    assert.equal(room.game.finished, true, 'nobody can draw the returned hand from the deck');
 });
 
 function createStorage() {

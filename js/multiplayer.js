@@ -508,13 +508,13 @@ async function mpCreate() {
     }
 }
 // A running game takes back only its own player: after a reload the hand is still there,
-// after leaving the room it draws a new hand from the deck.
+// after leaving the room it comes back from the deck.
 async function mpReturnToGame(roomRef, game) {
     if (game.hands?.[mpUid]) return true;
     if (!game.left?.[mpUid]) return false;
     // An empty local cache comes first: returning it lets Firebase retry with the server data.
     const result = await roomRef.child('game').transaction((g) => (g ? returnToGame(g, mpUid) : g));
-    return result.committed && !result.snapshot.val()?.left?.[mpUid];
+    return result.committed && !!result.snapshot.val();
 }
 export async function mpJoin(codeOverride = null) {
     if (mpBusy) return;
