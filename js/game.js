@@ -1216,7 +1216,7 @@ function clearSelection() {
 }
 
 // Focus leaving the hand and the placement controls from the keyboard (Tab to the zoom buttons) drops the selection:
-// the bar, the spots and the preview disappear. The help button lies between the placement buttons and the hand.
+// the bar, the spots and the preview disappear. The help button lies next to the placements in the Tab order.
 // A mouse click outside keeps it: the card waits for a click on the board. A render and a blur of the window have
 // no next element and keep the selection.
 function dropSelectionOnFocusLeave(e) {
@@ -1330,11 +1330,55 @@ cameraEl.addEventListener(
     },
     { passive: false }
 );
+// Tab walks the screen in its own order, not in the DOM order the phone layout needs: the menu, «?», the placements,
+// «Поставить», «Отмена», the hand, «Сбросить карты», the zoom, and round to the menu: in the DOM the zoom is followed
+// by the placements and the hand. A radio group is one stop, entered at its checked radio. From the page itself Tab
+// enters at the menu, Shift+Tab at the zoom. Shift+Tab from the menu, and Tab from other elements, go on natively.
+function tabStops() {
+    const hand = handInputs(),
+        card = hand[state.selected]?.disabled === false ? hand[state.selected] : hand.find((i) => !i.disabled),
+        placements = [...$('#placementOptions').children],
+        placement =
+            placing() &&
+            (placements.find((i) => i.checked) ||
+                placements.find((i) => i.dataset.spot === previewSpot()) ||
+                placements[0]);
+    const shown = (el) =>
+        el && !el.disabled && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+    return [
+        $('#gameMenuToggle'),
+        $('#gameHelpToggle'),
+        placement,
+        $('#placementConfirm'),
+        $('#placementCancel'),
+        card,
+        $('#exchange'),
+        $('#zoomOut'),
+        $('#zoomIn'),
+    ].filter(shown);
+}
+function moveTabFocus(e) {
+    const active = document.activeElement,
+        stops = tabStops(),
+        at = stops.findIndex((el) => el === active || (el.type === 'radio' && el.name === active?.name)),
+        next =
+            active === document.body
+                ? stops.at(e.shiftKey ? -1 : 0)
+                : at < 0
+                  ? null
+                  : e.shiftKey
+                    ? stops[at - 1]
+                    : stops[(at + 1) % stops.length];
+    if (!next) return;
+    e.preventDefault();
+    next.focus({ preventScroll: true });
+}
 document.addEventListener('keydown', (e) => {
     if (challengeEditorMode || $('#play').classList.contains('hidden') || e.altKey || e.ctrlKey || e.metaKey) return;
     if (isModalOpen(settingsModal) || isModalOpen(gameHelpModal)) return;
     // Text fields keep their keys; the hand and the placements are radios and are handled here.
     if (e.target.closest?.('input:not([type="radio"]),textarea,select,[contenteditable="true"]')) return;
+    if (e.key === 'Tab') return moveTabFocus(e);
     // The arrows are native: they check the next card or placement.
     const press = e.key === 'Enter' || e.key === ' ',
         handIndex = e.target.closest?.('#hand') ? handInputs().indexOf(e.target) : -1,
