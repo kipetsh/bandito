@@ -165,10 +165,9 @@
         --color-pin-hover: #d7e3ce;
         --color-pin-ring: #fff;
         --color-latest-mark: #e8b42a;
-        /* The bar under the selected card in the hand: the colour of the card's walls. */
-        --color-hand-mark: var(--color-tile-wall);
-        /* A card picked on the board in the editor: the bar's dark wall colour would merge with the card's own walls. */
-        --color-tile-picked: var(--color-focus);
+        /* The bar under the selected card in the hand, and the frame of a card picked on the board in the editor. */
+        --color-hand-mark: var(--color-focus);
+        --color-tile-picked: var(--color-hand-mark);
         --shadow-pin: 0 1px 3px #0002;
 
         /* Decor */
