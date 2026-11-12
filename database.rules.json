@@ -1,0 +1,12 @@
+{
+  /* Incomplete: only the challenges branch is known. The rules for rooms and the rest of the database are still
+     only in the Firebase console. Do not deploy this file as is: it would replace them. */
+  "rules": {
+    "challenges": {
+      ".read": "auth != null",
+      "$challengeId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || (data.exists() && data.child('ownerUid').val() === auth.uid && (!newData.exists() || newData.child('ownerUid').val() === auth.uid)))"
+      }
+    }
+  }
+}
