@@ -14,6 +14,7 @@ import { hideMenus } from '#js/menu.js';
 import {
     deletePublicChallenge,
     loadPublicChallenges,
+    mpLeaveForSolo,
     ownsPublicChallenge,
     savePublicChallenge,
     updatePublicChallenge,
@@ -223,7 +224,10 @@ function createEditorChrome() {
     play.insertBefore(editorMetadata, play.querySelector('.game__layout'));
 }
 
-function showEditor() {
+async function showEditor() {
+    // A room, even one still loading from the link, would take the screen back and leave the board without
+    // placements, since the board waits for the room's turn.
+    await mpLeaveForSolo();
     editorMode = true;
     gameSnapshot = { ...state };
     root.classList.add('hidden');

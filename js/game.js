@@ -8,6 +8,7 @@ import { snackbar } from '#js/snackbar.js';
 import {
     leaveMultiplayer,
     mpExchange,
+    mpLeaveForSolo,
     mpPlay,
     mpRoomCode,
     mpRoomData,
@@ -227,7 +228,7 @@ async function begin(n) {
     resetEndScreen();
     // The solo modes stay clickable next to the coop lobby: a solo game leaves the room first,
     // otherwise the room's turn order keeps every card in the hand disabled.
-    if (mpRoomCode) await leaveMultiplayer();
+    await mpLeaveForSolo();
     mpStopTimer();
     state.exits = n;
     let s = state.all.find((c) => c.id === (n === 2 ? 75 : n === 6 ? 71 : 72));
@@ -336,7 +337,7 @@ export async function beginChallenge(challenge) {
         const card = cardById.get(Number(id));
         return { id: card.id, m: clone(card.matrix) };
     });
-    if (mpRoomCode) await leaveMultiplayer();
+    await mpLeaveForSolo();
     mpStopTimer();
     resetEndScreen();
     state.tutorial = null;
@@ -408,7 +409,7 @@ async function startTutorial(levelNumber) {
     rememberWelcomeChoice();
     returnFocus(welcomeModal);
     resetEndScreen();
-    if (mpRoomCode) await leaveMultiplayer();
+    await mpLeaveForSolo();
     mpStopTimer();
     const cardFor = (id) => {
         const card = state.all.find((item) => item.id === id);

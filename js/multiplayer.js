@@ -48,6 +48,10 @@ export let mpUid = null,
     mpRoomCode = null,
     mpRoomData = null;
 const mpReadyMessage = 'Кооператив готов. Создай комнату или введи код.';
+// A join from the link loads for a while. Leaving for a solo mode bumps the attempt, so the join gives its seat
+// back instead of opening the lobby over the game or the editor.
+let mpJoinAttempt = 0,
+    mpJoining = false;
 function updateRoomUrl(code = null) {
     if (!['http:', 'https:'].includes(window.location.protocol)) return;
     window.history.replaceState(window.history.state, '', getRoomPath(code, window.location.pathname));
@@ -524,11 +528,14 @@ export async function mpJoin(codeOverride = null) {
         return;
     }
     mpBusy = true;
+    mpJoining = true;
+    const attempt = ++mpJoinAttempt;
     mpMessage('Подключаюсь к комнате…');
     let roomRef = null,
         added = false;
     try {
         await mpEnsureAuth();
+        if (attempt !== mpJoinAttempt) return;
         roomRef = mpDb.ref('rooms/' + code);
         await roomRef.child('players/' + mpUid).set({ name: mpName(), online: true, joinedAt: Date.now() });
         added = true;
@@ -562,6 +569,11 @@ export async function mpJoin(codeOverride = null) {
             snackbar('В этой комнате уже идёт партия. Подключиться можно после её завершения', 'error');
             return;
         }
+        if (attempt !== mpJoinAttempt) {
+            await roomRef.transaction((current) => (current ? leaveRoom(current, mpUid) : current));
+            added = false;
+            return;
+        }
         mpAttach(code);
         mpMessage('Ты в комнате ' + code);
     } catch (e) {
@@ -574,6 +586,7 @@ export async function mpJoin(codeOverride = null) {
         snackbar('Не удалось войти: ' + e.message, 'error');
     } finally {
         mpBusy = false;
+        mpJoining = false;
     }
 }
 export async function mpStart(chosen = mpChosenDifficulty()) {
@@ -701,6 +714,16 @@ export async function mpExchange() {
     } finally {
         mpBusy = false;
     }
+}
+// Solo modes and the editor leave the room first, also one still joining from the link: otherwise the lobby
+// replaces them once the room loads.
+export async function mpLeaveForSolo() {
+    if (mpJoining) {
+        mpJoinAttempt++;
+        updateRoomUrl(null);
+        mpMessage(mpReadyMessage);
+    }
+    if (mpRoomCode) await leaveMultiplayer();
 }
 export async function leaveMultiplayer(showMenu = true) {
     const ref = mpRoomRef,
