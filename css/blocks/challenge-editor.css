@@ -540,10 +540,9 @@
         cursor: pointer;
     }
 
-    /* The picked card keeps its frame and only recolours it; it lies above its neighbours, so the shared edges
-       take the new colour too. */
+    /* The picked card gets the keyboard focus ring round its frame and lies above its neighbours. */
     .challenge-editor__piece--selected {
-        --board-piece-outline: var(--color-tile-picked-outline);
+        --board-piece-ring: 2px solid var(--color-focus);
         z-index: 6;
     }
 

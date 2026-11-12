@@ -13,13 +13,14 @@
 
     /* The frame lies on whole pixels: on the first row and column of the piece and just past its last ones. So
        adjacent pieces draw their shared edge on the same pixels, and the line keeps its colour; a 1px line centred
-       on the edge would be smeared over two half-covered pixels that add up where pieces meet. Its colour is public:
-       --board-piece-outline. */
+       on the edge would be smeared over two half-covered pixels that add up where pieces meet. A ring right round
+       the frame is public: --board-piece-ring (the focus and a picked card in the editor). */
     .board__piece::before {
         content: '';
         position: absolute;
         inset: 0 -1px -1px 0;
-        border: 1px solid var(--board-piece-outline, var(--color-tile-outline));
+        border: 1px solid var(--color-tile-outline);
+        outline: var(--board-piece-ring, none);
         pointer-events: none;
     }
 
@@ -27,12 +28,9 @@
        out 1px to the right and below, so a ring on the card itself would sit off it there. The card rises above its
        neighbours, so they do not cover the ring. */
     .board__piece:focus-visible {
+        --board-piece-ring: 2px solid var(--color-focus);
         z-index: 6;
         outline: none;
-    }
-
-    .board__piece:focus-visible::before {
-        outline: 2px solid var(--color-focus);
     }
 
     /* The last placed card (not the start one) is marked with a yellow dot in the centre of its bottom right cell:

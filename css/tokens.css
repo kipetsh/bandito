@@ -165,8 +165,6 @@
         --color-pin-hover: #d7e3ce;
         --color-pin-ring: #fff;
         --color-latest-mark: #e8b42a;
-        /* The frame of a card picked on the board in the editor: deeper than the yellow mark to show on white cells. */
-        --color-tile-picked-outline: #e07a00;
         /* The bar under the selected card in the hand: the colour of the card's walls. */
         --color-hand-mark: var(--color-tile-wall);
         --shadow-pin: 0 1px 3px #0002;
@@ -264,7 +262,6 @@
         --color-pin-3: #a78ac9;
         --color-pin-hover: transparent;
         --color-latest-mark: #f0c24b;
-        --color-tile-picked-outline: var(--color-latest-mark);
         --color-hand-mark: var(--color-latest-mark);
         --shadow-pin: 0 1px 6px #000a;
     }
