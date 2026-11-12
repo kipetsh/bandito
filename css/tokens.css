@@ -94,6 +94,8 @@
         --color-surface-icon: #ead3aecc;
         /* Dialogs, popovers and menus are opaque; only the game board and side panels are translucent. */
         --color-surface-dialog: #fff;
+        /* A hovered item on a dialog or menu surface. */
+        --color-surface-dialog-hover: var(--color-surface-sunken);
         --color-field: #fffaf1cc;
 
         /* Borders */
@@ -198,6 +200,7 @@
         --color-surface-selected: #393e45e6;
         --color-surface-icon: #34383ee6;
         --color-surface-dialog: #292d32;
+        --color-surface-dialog-hover: var(--color-surface-selected);
         --color-field: #202328e6;
 
         --color-border: #464b52;
