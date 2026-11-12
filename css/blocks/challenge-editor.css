@@ -540,9 +540,9 @@
         cursor: pointer;
     }
 
-    /* The picked card gets a solid saturated frame and lies above its neighbours. */
+    /* The picked card is highlighted like a focused one and lies above its neighbours. */
     .challenge-editor__piece--selected {
-        --board-piece-frame: var(--color-tile-picked);
+        --board-piece-ring: var(--color-tile-picked);
         z-index: 6;
     }
 

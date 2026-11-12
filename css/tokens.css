@@ -167,9 +167,8 @@
         --color-latest-mark: #e8b42a;
         /* The bar under the selected card in the hand: the colour of the card's walls. */
         --color-hand-mark: var(--color-tile-wall);
-        /* A card picked on the board in the editor (a saturated frame) and the soft ring of a focused board card. */
-        --color-tile-picked: #2f6fde;
-        --color-tile-focus: #b9d1f7;
+        /* A card picked on the board in the editor: the bar's dark wall colour would merge with the card's own walls. */
+        --color-tile-picked: var(--color-focus);
         --shadow-pin: 0 1px 3px #0002;
 
         /* Decor */
@@ -266,8 +265,7 @@
         --color-pin-hover: transparent;
         --color-latest-mark: #f0c24b;
         --color-hand-mark: var(--color-latest-mark);
-        --color-tile-picked: #4b8cf5;
-        --color-tile-focus: #2b4870;
+        --color-tile-picked: var(--color-hand-mark);
         --shadow-pin: 0 1px 6px #000a;
     }
 }
