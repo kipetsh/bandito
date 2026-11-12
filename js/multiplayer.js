@@ -2,6 +2,7 @@
 import { $ } from '#js/dom.js';
 import { snackbar } from '#js/snackbar.js';
 import { getRoomPath, getRoomUrl } from '#js/room-url.js';
+import { leaveRoom, returnToGame } from '#js/room-seats.js';
 import {
     canPlayAny,
     chooseCardMessage,
@@ -499,6 +500,15 @@ async function mpCreate() {
         mpBusy = false;
     }
 }
+// A running game takes back only its own player: after a reload the hand is still there,
+// after leaving it waits in game.left.
+async function mpReturnToGame(roomRef, game) {
+    if (game.hands?.[mpUid]) return true;
+    if (!game.left?.[mpUid]) return false;
+    // An empty local cache comes first: returning it lets Firebase retry with the server data.
+    const result = await roomRef.child('game').transaction((g) => (g ? returnToGame(g, mpUid) : g));
+    return result.committed && !!result.snapshot.val()?.hands?.[mpUid];
+}
 export async function mpJoin(codeOverride = null) {
     if (mpBusy) return;
     const code = String(codeOverride ?? $('#mpCode').value)
@@ -539,7 +549,7 @@ export async function mpJoin(codeOverride = null) {
             snackbar('В комнате уже максимальное количество игроков', 'error');
             return;
         }
-        if (room.game?.started && !room.game.finished) {
+        if (room.game?.started && !room.game.finished && !(await mpReturnToGame(roomRef, room.game))) {
             await roomRef.child('players/' + mpUid).remove();
             added = false;
             mpMessage(mpReadyMessage);
@@ -697,49 +707,7 @@ export async function leaveMultiplayer(showMenu = true) {
     if (ref && listener) ref.off('value', listener);
     if (ref && uid) {
         try {
-            await ref.transaction((room) => {
-                if (!room || !room.players || !room.players[uid]) return;
-                delete room.players[uid];
-                const remaining = Object.keys(room.players);
-                if (!remaining.length) return null;
-                if (room.owner === uid) room.owner = remaining[0];
-                const game = room.game;
-                if (game?.hands) delete game.hands[uid];
-                if (game?.started && !game.finished) {
-                    if (game.turnUid === uid) {
-                        game.turnUid = remaining[0];
-                        game.turnStartedAt = Date.now();
-                    }
-                    const noDeck = !(game.deck || []).length;
-                    const noHands = Object.values(game.hands || {}).every((cards) => !cards.length);
-                    if (noDeck && noHands) {
-                        let openings = 0;
-                        const tileAt = (x, y) => {
-                            for (const p of game.board || []) {
-                                const w = p.m[0].length,
-                                    h = p.m.length;
-                                if (x >= p.x && x < p.x + w && y >= p.y && y < p.y + h) return p.m[y - p.y][x - p.x];
-                            }
-                            return null;
-                        };
-                        for (const p of game.board || []) {
-                            for (let y = 0; y < p.m.length; y++)
-                                for (let x = 0; x < p.m[y].length; x++)
-                                    if (p.m[y][x] === 1)
-                                        for (const [dx, dy] of [
-                                            [0, -1],
-                                            [0, 1],
-                                            [-1, 0],
-                                            [1, 0],
-                                        ])
-                                            if (tileAt(p.x + x + dx, p.y + y + dy) === null) openings++;
-                        }
-                        game.finished = true;
-                        game.won = openings === 0;
-                    }
-                }
-                return room;
-            });
+            await ref.transaction((room) => leaveRoom(room, uid));
         } catch (e) {
             snackbar('Не удалось обновить комнату при выходе: ' + e.message, 'error');
         }
@@ -755,6 +723,8 @@ export async function leaveMultiplayer(showMenu = true) {
     state.deck = [];
     state.selected = -1;
     state.challenge = null;
+    // The result screen lies over the whole page: without this it stays on top of the start screen.
+    resetEndScreen();
     $('#play').classList.add('hidden');
     mpSwapPanel(false);
     if (showMenu) $('#menu').classList.remove('hidden');

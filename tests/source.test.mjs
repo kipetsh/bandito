@@ -64,6 +64,38 @@ test('room URLs preserve the GitHub Pages project path and support root hosting'
     );
 });
 
+test('a player who leaves a running game gets the same hand back by the code, a finished game keeps nothing', async () => {
+    const { leaveRoom, returnToGame } = await import(moduleUrl('js/room-seats.js'));
+    const hand = [{ id: 10 }, { id: 9 }];
+    const room = {
+        owner: 'anna',
+        players: { anna: { name: 'Аня' }, boris: { name: 'Боря' } },
+        game: {
+            started: true,
+            finished: false,
+            deck: [{ id: 1 }],
+            hands: { anna: [{ id: 3 }], boris: hand },
+            turnUid: 'boris',
+        },
+    };
+
+    const left = leaveRoom(structuredClone(room), 'boris', 1000);
+    assert.deepEqual(Object.keys(left.players), ['anna']);
+    assert.deepEqual(Object.keys(left.game.hands), ['anna']);
+    assert.deepEqual(left.game.left.boris, { hand, at: 1000 });
+    assert.equal(left.game.turnUid, 'anna');
+
+    const back = returnToGame(left.game, 'boris');
+    assert.deepEqual(back.hands.boris, hand);
+    assert.deepEqual(back.left, {});
+    assert.equal(returnToGame(back, 'vera'), undefined, 'a stranger has no hand to return');
+
+    const finished = structuredClone(room);
+    finished.game.finished = true;
+    assert.equal(leaveRoom(finished, 'boris').game.left, undefined);
+    assert.equal(leaveRoom({ owner: 'anna', players: { anna: {} } }, 'anna'), null, 'the last player removes the room');
+});
+
 function createStorage() {
     const storage = new Map();
     return {
