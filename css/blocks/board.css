@@ -13,14 +13,15 @@
 
     /* The frame lies on whole pixels: on the first row and column of the piece and just past its last ones. So
        adjacent pieces draw their shared edge on the same pixels, and the line keeps its colour; a 1px line centred
-       on the edge would be smeared over two half-covered pixels that add up where pieces meet. A ring right round
-       the frame is public: --board-piece-ring (the focus and a picked card in the editor). */
+       on the edge would be smeared over two half-covered pixels that add up where pieces meet. The highlight colour
+       is public: --board-piece-ring paints the frame and a 2px ring right round it, so they read as one 3px line
+       (the focus and a picked card in the editor). */
     .board__piece::before {
         content: '';
         position: absolute;
         inset: 0 -1px -1px 0;
-        border: 1px solid var(--color-tile-outline);
-        outline: var(--board-piece-ring, none);
+        border: 1px solid var(--board-piece-ring, var(--color-tile-outline));
+        outline: 2px solid var(--board-piece-ring, transparent);
         pointer-events: none;
     }
 
@@ -28,7 +29,7 @@
        out 1px to the right and below, so a ring on the card itself would sit off it there. The card rises above its
        neighbours, so they do not cover the ring. */
     .board__piece:focus-visible {
-        --board-piece-ring: 2px solid var(--color-focus);
+        --board-piece-ring: var(--color-focus);
         z-index: 6;
         outline: none;
     }
