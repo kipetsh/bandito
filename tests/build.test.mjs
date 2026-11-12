@@ -165,7 +165,7 @@ test('only the used Tabler icons reach the build, and every icon path resolved',
     assert.ok(icons.size < 40, `The build carries ${icons.size} Tabler icons; only the used ones should get there`);
 });
 
-test('an outline icon reaches the build with the stroke width of a 2px line at its display size', () => {
+test('an outline icon reaches the build with the stroke width of a 1.5px line at its display size', () => {
     const css = walkFiles(buildDirectory)
         .filter((file) => file.endsWith('.css'))
         .map((file) => readFileSync(file, 'utf8'))
@@ -179,7 +179,7 @@ test('an outline icon reaches the build with the stroke width of a 2px line at i
                 .sort()
         ),
     ];
-    assert.deepEqual(strokesOf('settings'), ['2']);
-    assert.deepEqual(strokesOf('help'), ['2']);
-    assert.deepEqual(strokesOf('x'), ['3']);
+    assert.deepEqual(strokesOf('settings'), ['1.5']);
+    assert.deepEqual(strokesOf('help'), ['1.5']);
+    assert.deepEqual(strokesOf('x'), ['2.25']);
 });

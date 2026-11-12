@@ -1,6 +1,6 @@
 // Tabler draws outline icons with stroke-width 2 on a 24 canvas, and a mask scales the line together with the icon.
 // In CSS, url('@tabler-size/<px>/<style>/<name>.svg') points to a copy of the package icon made for display at <px>:
-// <px> is a multiple of 8. An outline copy gets the stroke width that gives a 2px line on screen, a filled copy stays as is.
+// <px> is a multiple of 8. An outline copy gets the stroke width that gives a 1.5px line on screen, a filled copy stays as is.
 // The copy is written to node_modules/.cache when a stylesheet mentions it, before Vite resolves the url.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -9,7 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 const require = createRequire(import.meta.url);
 const reference = /@tabler-size\/(\d+)\/(outline|filled)\/([a-z0-9-]+)\.svg/g;
 const cacheDirectory = resolve('node_modules/.cache/tabler-size');
-const screenLine = 2;
+const screenLine = 1.5;
 const canvas = 24;
 
 function writeVariant(size, style, name) {
