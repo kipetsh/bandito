@@ -23,6 +23,18 @@
         pointer-events: none;
     }
 
+    /* A card that takes focus (a picked card in the editor) draws the ring right round its frame: the frame sticks
+       out 1px to the right and below, so a ring on the card itself would sit off it there. The card rises above its
+       neighbours, so they do not cover the ring. */
+    .board__piece:focus-visible {
+        z-index: 6;
+        outline: none;
+    }
+
+    .board__piece:focus-visible::before {
+        outline: 2px solid var(--color-focus);
+    }
+
     /* The last placed card (not the start one) is marked with a yellow dot in the centre of its bottom right cell:
        half a cell across, so it scales with the zoom. The card's frame stays the same. */
     .board__piece--latest::after {
