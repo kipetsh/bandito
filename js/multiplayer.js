@@ -216,6 +216,13 @@ function mpAttach(code) {
             return;
         }
         const wasMyTurn = mpRoomData?.game?.turnUid === mpUid;
+        // A refused join adds the player for a moment: only a player of the running game or the lobby is announced.
+        const previous = Object.entries(mpRoomData?.players || {});
+        const running = room.game?.started && !room.game.finished;
+        for (const [id, player] of previous) {
+            if (id === mpUid || room.players?.[id] || previous.length > 4) continue;
+            if (!running || room.game.left?.[id]) snackbar('Игрок ' + (player.name || 'Игрок') + ' вышел из комнаты');
+        }
         mpRoomData = room;
         if (!room.game || !room.game.started) {
             mpShowLobby(room);
@@ -501,13 +508,13 @@ async function mpCreate() {
     }
 }
 // A running game takes back only its own player: after a reload the hand is still there,
-// after leaving it waits in game.left.
+// after leaving the room it draws a new hand from the deck.
 async function mpReturnToGame(roomRef, game) {
     if (game.hands?.[mpUid]) return true;
     if (!game.left?.[mpUid]) return false;
     // An empty local cache comes first: returning it lets Firebase retry with the server data.
     const result = await roomRef.child('game').transaction((g) => (g ? returnToGame(g, mpUid) : g));
-    return result.committed && !!result.snapshot.val()?.hands?.[mpUid];
+    return result.committed && !result.snapshot.val()?.left?.[mpUid];
 }
 export async function mpJoin(codeOverride = null) {
     if (mpBusy) return;
@@ -707,7 +714,9 @@ export async function leaveMultiplayer(showMenu = true) {
     if (ref && listener) ref.off('value', listener);
     if (ref && uid) {
         try {
-            await ref.transaction((room) => leaveRoom(room, uid));
+            // The room listener is already off, so the local cache may be empty: returning it makes Firebase
+            // retry with the server data instead of cancelling the leave.
+            await ref.transaction((room) => (room ? leaveRoom(room, uid) : room));
         } catch (e) {
             snackbar('Не удалось обновить комнату при выходе: ' + e.message, 'error');
         }

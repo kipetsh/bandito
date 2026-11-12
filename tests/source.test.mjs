@@ -64,17 +64,16 @@ test('room URLs preserve the GitHub Pages project path and support root hosting'
     );
 });
 
-test('a player who leaves a running game gets the same hand back by the code, a finished game keeps nothing', async () => {
+test('a player who leaves a running game returns the hand under the deck and draws a new one on coming back', async () => {
     const { leaveRoom, returnToGame } = await import(moduleUrl('js/room-seats.js'));
-    const hand = [{ id: 10 }, { id: 9 }];
     const room = {
         owner: 'anna',
         players: { anna: { name: 'Аня' }, boris: { name: 'Боря' } },
         game: {
             started: true,
             finished: false,
-            deck: [{ id: 1 }],
-            hands: { anna: [{ id: 3 }], boris: hand },
+            deck: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }],
+            hands: { anna: [{ id: 5 }], boris: [{ id: 10 }, { id: 9 }] },
             turnUid: 'boris',
         },
     };
@@ -82,13 +81,26 @@ test('a player who leaves a running game gets the same hand back by the code, a 
     const left = leaveRoom(structuredClone(room), 'boris', 1000);
     assert.deepEqual(Object.keys(left.players), ['anna']);
     assert.deepEqual(Object.keys(left.game.hands), ['anna']);
-    assert.deepEqual(left.game.left.boris, { hand, at: 1000 });
+    assert.deepEqual(
+        left.game.deck.map((card) => card.id),
+        [10, 9, 1, 2, 3, 4],
+        'the hand goes under the deck'
+    );
+    assert.deepEqual(left.game.left.boris, { at: 1000 });
     assert.equal(left.game.turnUid, 'anna');
 
     const back = returnToGame(left.game, 'boris');
-    assert.deepEqual(back.hands.boris, hand);
+    assert.deepEqual(
+        back.hands.boris.map((card) => card.id),
+        [4, 3, 2],
+        'the new hand comes from the top of the deck'
+    );
+    assert.deepEqual(
+        back.deck.map((card) => card.id),
+        [10, 9, 1]
+    );
     assert.deepEqual(back.left, {});
-    assert.equal(returnToGame(back, 'vera'), undefined, 'a stranger has no hand to return');
+    assert.equal(returnToGame(back, 'vera'), undefined, 'a stranger was not in the game');
 
     const finished = structuredClone(room);
     finished.game.finished = true;

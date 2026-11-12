@@ -9,9 +9,11 @@ export function leaveRoom(room, uid, now = Date.now()) {
     if (!remaining.length) return null;
     if (room.owner === uid) room.owner = remaining[0];
     const game = room.game;
-    // A player who leaves a running game by accident can come back by the code: the hand waits for them.
-    if (game?.started && !game.finished && game.hands?.[uid]?.length) {
-        game.left = { ...game.left, [uid]: { hand: game.hands[uid], at: now } };
+    // The hand of a player who leaves a running game goes under the deck, so its cards stay in the game,
+    // and the room remembers the player: they can come back by the code and draw a new hand.
+    if (game?.started && !game.finished) {
+        game.deck = [...(game.hands?.[uid] || []), ...(game.deck || [])];
+        game.left = { ...game.left, [uid]: { at: now } };
     }
     if (game?.hands) delete game.hands[uid];
     if (game?.started && !game.finished) {
@@ -50,11 +52,14 @@ export function leaveRoom(room, uid, now = Date.now()) {
     return room;
 }
 
-// The game with the player's hand back from game.left, or undefined when there is nothing to return.
-export function returnToGame(game, uid) {
-    const left = game.left?.[uid];
-    if (!game.started || game.finished || !left) return;
-    game.hands = { ...game.hands, [uid]: left.hand };
+// The game with a new hand drawn for a player who left it, or undefined when the player was not in it.
+export function returnToGame(game, uid, handSize = 3) {
+    if (!game.started || game.finished || !game.left?.[uid]) return;
+    const deck = game.deck || [];
+    const hand = [];
+    while (hand.length < handSize && deck.length) hand.push(deck.pop());
+    game.deck = deck;
+    game.hands = { ...game.hands, [uid]: hand };
     delete game.left[uid];
     return game;
 }
