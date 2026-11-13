@@ -181,10 +181,10 @@
         border-bottom: 1px solid var(--color-border);
     }
 
-    /* Three upright cards in a row. */
+    /* Two flat cards in a row. */
     .challenge-editor__picker-grid {
         display: grid;
-        grid-template-columns: repeat(3, max-content);
+        grid-template-columns: repeat(2, max-content);
         align-content: start;
         gap: var(--space-2);
         min-height: 0;
@@ -198,9 +198,11 @@
         place-items: center;
         min-width: 0;
         padding: var(--space-2);
-        border: 1px solid var(--color-border);
+        /* A free or used card stands bare; the frame shows on hover and on the checked card. The border stays
+           transparent, so the card does not move when it shows. */
+        border: 1px solid transparent;
         border-radius: var(--radius-md);
-        background: var(--color-surface);
+        background: none;
         color: var(--color-text);
         text-align: left;
         font: inherit;

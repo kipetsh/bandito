@@ -687,7 +687,7 @@ function renderPicker() {
         ...draft.hand.filter((id, index) => id !== null && (pickerMode !== 'hand' || index !== pickerSlot)),
     ]);
     const current = pickerMode === 'hand' ? draft.hand[pickerSlot] : null;
-    // The cards stand upright and are as large as in the hand: a hand place is three cells wide.
+    // The cards lie flat, with the cells as large as in the hand: a hand place is three cells wide.
     const cell =
         document.querySelector('#play [data-hand-slots] .hand-card').firstElementChild.getBoundingClientRect().width /
             3 +
@@ -708,7 +708,7 @@ function renderPicker() {
         input.disabled = used;
         input.checked = several ? !used && draft.deck.has(id) : id === current;
         input.setAttribute('aria-label', 'Карта #' + id);
-        label.append(input, createHandMini(rotateMatrix(matrix, 1), cell));
+        label.append(input, createHandMini(matrix, cell));
         return label;
     }
 }
