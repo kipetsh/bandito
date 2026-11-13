@@ -681,7 +681,7 @@ function renderPicker() {
     if (several) rovePickerFocus(pickerInputs()[0]);
 
     // A shape's tile: a radio for its last free copy (the highest number goes first, the tile keeps its lowest) or for
-    // the hand slot's own card, or a checkbox for all of them.
+    // the hand slot's own card, or a checkbox that counts its copies in the deck.
     function catalogCard(copies, shown) {
         const free = copies.filter((id) => !taken.has(id));
         if (!free.length) return null;
@@ -693,11 +693,8 @@ function renderPicker() {
         input.value = String(free.includes(current) ? current : free.at(-1));
         input.dataset.cardIds = free.join(' ');
         input.className = 'visually-hidden';
-        const inDeck = free.filter((id) => draft.deck.has(id)).length;
-        input.checked = several ? inDeck === free.length : free.includes(current);
-        input.indeterminate = several && inDeck > 0 && inDeck < free.length;
-        const numbers = free.map((id) => '#' + id);
-        input.setAttribute('aria-label', 'Карта ' + numbers.join(', '));
+        input.checked = !several && free.includes(current);
+        input.setAttribute('aria-label', 'Карта ' + free.map((id) => '#' + id).join(', '));
         label.append(input, createCardPreview(shown, 'challenge-editor__catalog-preview', 20));
         if (free.length > 1) {
             const count = document.createElement('span');
@@ -707,10 +704,12 @@ function renderPicker() {
             label.append(count);
         }
         if (several) {
-            const mark = document.createElement('span');
-            mark.className = 'icon challenge-editor__catalog-mark';
-            mark.setAttribute('aria-hidden', 'true');
-            label.append(mark);
+            const marks = document.createElement('span');
+            marks.className = 'challenge-editor__catalog-marks';
+            marks.setAttribute('aria-hidden', 'true');
+            marks.dataset.deckMarks = '';
+            label.append(marks);
+            showDeckCopies(input);
         }
         return label;
     }
@@ -774,18 +773,37 @@ function handlePickerChange(event) {
     const input = event.target;
     if (input.type === 'checkbox') {
         rovePickerFocus(input);
-        toggleDeckCards(input.dataset.cardIds.split(' ').map(Number), input.checked);
+        addDeckCopy(input.dataset.cardIds.split(' ').map(Number));
+        showDeckCopies(input);
     } else if (!pickerArrow) chooseCatalogCard(Number(input.value));
 }
 
-// A shape's checkbox takes all its free copies into the deck or out of it.
-function toggleDeckCards(ids, inDeck) {
-    for (const id of ids) {
-        if (inDeck) draft.deck.add(id);
-        else draft.deck.delete(id);
-    }
+// A shape's checkbox adds one more of its free copies to the deck, the lowest number first; once all of them are in,
+// it takes them all out.
+function addDeckCopy(ids) {
+    const next = ids.find((id) => !draft.deck.has(id));
+    if (next === undefined) for (const id of ids) draft.deck.delete(id);
+    else draft.deck.add(next);
     renderDeck();
     updateSaveButton();
+}
+
+// A deck tile has a check for each of its copies in the deck, or a plus when there are none; the checkbox is checked
+// with all of them in and mixed with some.
+function showDeckCopies(input) {
+    const ids = input.dataset.cardIds.split(' ').map(Number),
+        inDeck = ids.filter((id) => draft.deck.has(id)).length;
+    input.checked = inDeck === ids.length;
+    input.indeterminate = inDeck > 0 && inDeck < ids.length;
+    const marks = input.closest('label').querySelector('[data-deck-marks]');
+    marks.replaceChildren(
+        ...Array.from({ length: Math.max(inDeck, 1) }, () => {
+            const mark = document.createElement('span');
+            mark.className =
+                'icon challenge-editor__catalog-mark' + (inDeck ? ' challenge-editor__catalog-mark--in' : '');
+            return mark;
+        })
+    );
 }
 
 function chooseCatalogCard(id) {

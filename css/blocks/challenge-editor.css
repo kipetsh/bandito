@@ -209,7 +209,8 @@
     /* A label around a hidden radio or checkbox: the checked card is lit like a hovered one, and the focus ring goes
        on the card. */
     .challenge-editor__catalog-card:hover,
-    .challenge-editor__catalog-card:has(:checked) {
+    .challenge-editor__catalog-card:has(:checked),
+    .challenge-editor__catalog-card:has(:indeterminate) {
         border-color: var(--color-border-strong);
         background: var(--color-surface-selected);
     }
@@ -229,22 +230,23 @@
         place-self: start;
     }
 
-    .challenge-editor__catalog-mark {
+    /* The deck tile's marks stand in its corner one under another. */
+    .challenge-editor__catalog-marks {
         position: absolute;
         top: 8px;
         right: 8px;
+        display: flex;
+        flex-direction: column;
         color: var(--color-text-strong);
+    }
+
+    .challenge-editor__catalog-mark {
         --icon-size: 16px;
         --icon-image: url('@tabler-size/16/outline/plus.svg');
     }
 
-    .challenge-editor__catalog-card:has(:checked) .challenge-editor__catalog-mark {
+    .challenge-editor__catalog-mark--in {
         --icon-image: url('@tabler-size/16/outline/check.svg');
-    }
-
-    /* Some of the shape's copies are in the deck, some are not. */
-    .challenge-editor__catalog-card:has(:indeterminate) .challenge-editor__catalog-mark {
-        --icon-image: url('@tabler-size/16/outline/minus.svg');
     }
 
     .challenge-editor__picker-footer {
