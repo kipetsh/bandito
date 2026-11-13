@@ -370,7 +370,7 @@ test('the card data is structurally valid and contains all supported starting ca
     assert.equal(starts.get(71), 6, 'Six-exit start card is missing');
 });
 
-test('the shapes table groups every tunnel card with its copies and its mirror image', () => {
+test('the pairs table lists every tunnel shape once, beside its mirror image or a similar shape', () => {
     const data = JSON.parse(readFileSync(resolve(projectRoot, 'resources/bandido-matrices/cards.json'), 'utf8'));
     const matrices = new Map(data.cards.filter((card) => card.kind === 'tunnel').map((card) => [card.id, card.matrix]));
     const key = (m) => m.map((row) => row.join('')).join('/');
@@ -378,19 +378,29 @@ test('the shapes table groups every tunnel card with its copies and its mirror i
     const flipped = (m) => m.map((row) => [...row].reverse());
     // The same card up to the 180° turn that keeps a card lying lengthwise.
     const same = (a, b) => key(a) === key(b) || key(a) === key(turned(b));
+    const symmetric = (m) => same(m, flipped(m));
+    const kinds = ['mirror', 'similar', 'single'];
     const listed = [];
-    let previous = 0;
-    for (const { copies, mirror } of data.shapes) {
-        const first = matrices.get(copies[0]);
-        for (const id of copies) assert.ok(same(matrices.get(id), first), `Card ${id} is not a copy of ${copies[0]}`);
-        for (const id of mirror)
-            assert.ok(same(matrices.get(id), flipped(first)), `Card ${id} is not the mirror of ${copies[0]}`);
-        const symmetric = mirror[0] === copies[0];
-        assert.equal(symmetric, same(first, flipped(first)), `Card ${copies[0]} has a wrong mirror`);
-        assert.ok(Math.min(...copies) < (symmetric ? Infinity : Math.min(...mirror)), 'The lower shape goes first');
-        assert.ok(Math.min(...copies) > previous, 'Shapes are sorted by their lowest card');
-        previous = Math.min(...copies);
-        listed.push(...copies, ...(symmetric ? [] : mirror));
+    let previous = [0, 0];
+    for (const { kind, shapes } of data.pairs) {
+        assert.equal(shapes.length, kind === 'single' ? 1 : 2, `A ${kind} entry has a wrong number of shapes`);
+        for (const copies of shapes)
+            for (const id of copies)
+                assert.ok(same(matrices.get(id), matrices.get(copies[0])), `Card ${id} is not a copy of ${copies[0]}`);
+        const [first, second] = shapes.map((copies) => matrices.get(copies[0]));
+        if (kind === 'mirror') {
+            assert.ok(!symmetric(first), `Card ${shapes[0][0]} is symmetric`);
+            assert.ok(same(second, flipped(first)), `Card ${shapes[1][0]} is not the mirror of ${shapes[0][0]}`);
+        } else
+            for (const m of [first, second].filter(Boolean))
+                assert.ok(symmetric(m), `A ${kind} shape is not symmetric`);
+        const lowest = shapes.map((copies) => Math.min(...copies));
+        if (shapes[1]) assert.ok(lowest[0] < lowest[1], 'The lower shape goes first');
+        const order = [kinds.indexOf(kind), lowest[0]];
+        assert.ok(order[0] >= 0, `Unknown kind ${kind}`);
+        assert.ok(order[0] > previous[0] || (order[0] === previous[0] && order[1] > previous[1]), 'Pairs are sorted');
+        previous = order;
+        listed.push(...shapes.flat());
     }
     assert.deepEqual(
         listed.sort((a, b) => a - b),
@@ -398,7 +408,7 @@ test('the shapes table groups every tunnel card with its copies and its mirror i
         'Every tunnel card is listed once'
     );
     // Copies of different shapes are different cards.
-    const shapes = data.shapes.flatMap(({ copies, mirror }) => (mirror[0] === copies[0] ? [copies] : [copies, mirror]));
+    const shapes = data.pairs.flatMap((pair) => pair.shapes);
     for (const [i, a] of shapes.entries())
         for (const b of shapes.slice(i + 1))
             assert.ok(!same(matrices.get(a[0]), matrices.get(b[0])), `Cards ${a[0]} and ${b[0]} are copies`);

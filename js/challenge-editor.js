@@ -658,9 +658,9 @@ function closePicker() {
 
 // The catalog is a group of radios for one card (the board, a hand slot) and of checkboxes for the deck. Either way
 // it is one stop for Tab, the arrows move between the cards, and Tab goes on to the buttons below.
-// The catalog shows each tunnel shape once, numbered with its copies still free, and its mirror image right of it.
-// The rows keep the order of the shapes in cards.json, by the lowest number of the pair, whichever copies are left;
-// a symmetric shape, and a shape whose mirror is all used, leave the right cell empty.
+// The catalog shows each tunnel shape once, numbered with its copies still free, in the pairs of cards.json: a shape
+// and its mirror image first, then two similar symmetric shapes. The rows keep that order whichever copies are left; a
+// single shape, and one whose pair is all used, leave the other cell empty.
 function renderPicker() {
     const grid = root.querySelector('[data-picker-grid]');
     grid.replaceChildren();
@@ -671,22 +671,17 @@ function renderPicker() {
         ...draft.hand.filter((id, index) => id !== null && (pickerMode !== 'hand' || index !== pickerSlot)),
     ]);
     const current = pickerMode === 'hand' ? draft.hand[pickerSlot] : null;
-    for (const shape of state.shapes) {
-        const matrix = cardById(shape.copies[0]).matrix,
-            symmetric = shape.mirror[0] === shape.copies[0],
-            left = catalogCard(shape.copies, matrix),
-            right = symmetric
-                ? null
-                : catalogCard(
-                      shape.mirror,
-                      matrix.map((row) => [...row].reverse())
-                  );
+    for (const { kind, shapes } of state.pairs) {
+        const matrix = cardById(shapes[0][0]).matrix,
+            left = catalogCard(shapes[0], matrix),
+            right = shapes[1] && catalogCard(shapes[1], pairedMatrix(kind, matrix, cardById(shapes[1][0]).matrix));
         if (!left && !right) continue;
         grid.append(left || catalogGap(), right || catalogGap());
     }
     if (several) rovePickerFocus(pickerInputs()[0]);
 
-    // A shape's tile: a radio for its first free copy (or the hand slot's own card), or a checkbox for all of them.
+    // A shape's tile: a radio for its last free copy (the highest number goes first, the tile keeps its lowest) or for
+    // the hand slot's own card, or a checkbox for all of them.
     function catalogCard(copies, shown) {
         const free = copies.filter((id) => !taken.has(id));
         if (!free.length) return null;
@@ -695,18 +690,18 @@ function renderPicker() {
         const input = document.createElement('input');
         input.type = several ? 'checkbox' : 'radio';
         input.name = 'catalogCard';
-        input.value = String(free.includes(current) ? current : free[0]);
+        input.value = String(free.includes(current) ? current : free.at(-1));
         input.dataset.cardIds = free.join(' ');
         input.className = 'visually-hidden';
         const inDeck = free.filter((id) => draft.deck.has(id)).length;
         input.checked = several ? inDeck === free.length : free.includes(current);
         input.indeterminate = several && inDeck > 0 && inDeck < free.length;
-        const numbers = free.map((id) => '#' + id).join(', ');
-        input.setAttribute('aria-label', 'Карта ' + numbers);
+        const numbers = free.map((id) => '#' + id);
+        input.setAttribute('aria-label', 'Карта ' + numbers.join(', '));
         const ids = document.createElement('span');
         ids.className = 'caption challenge-editor__catalog-ids';
         ids.setAttribute('aria-hidden', 'true');
-        ids.textContent = numbers;
+        ids.textContent = numbers.join('\n');
         label.append(input, ids, createCardPreview(shown, 'challenge-editor__catalog-preview', 20));
         if (several) {
             const mark = document.createElement('span');
@@ -716,6 +711,16 @@ function renderPicker() {
         }
         return label;
     }
+}
+
+// The right shape of a pair is drawn to match the left one: a mirror image as its reflection, a similar shape turned
+// the way that differs from it in fewer cells.
+function pairedMatrix(kind, left, right) {
+    if (kind === 'mirror') return left.map((row) => [...row].reverse());
+    const cells = left.flat(),
+        differ = (m) => m.flat().filter((cell, i) => cell !== cells[i]).length,
+        turned = rotateMatrix(right, 2);
+    return differ(turned) < differ(right) ? turned : right;
 }
 
 function catalogGap() {

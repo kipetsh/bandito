@@ -11,87 +11,116 @@
   "order": "top to bottom, original orientation, duplicates retained",
   "startCards": "Topology only: prison room abstracted as connected passages",
   "backCard": "Card 70 is a card back and has matrix=null",
-  "shapesNote": "Tunnel shapes, sorted by the lowest card ID: copies are the same card up to a 180° turn, mirror lists the copies of its left-right reflection (the copies themselves for a symmetric shape). A pair is listed once, the shape with the lower ID first.",
-  "shapes": [
+  "pairsNote": "Tunnel shapes in pairs, the catalog order of the challenge editor. A shape lists its copies: the same card up to a 180° turn. A mirror pair is a shape and its left-right reflection; a shape of a similar pair or a single one is symmetric, its own reflection. Similar pairs join the symmetric shapes that differ in the fewest cells. Mirror pairs come first, then similar pairs, then the single shape; within a kind the pairs go by their lowest card, a pair puts its lower shape first.",
+  "pairs": [
     {
-      "copies": [1, 52, 60],
-      "mirror": [20, 51, 69]
+      "kind": "mirror",
+      "shapes": [
+        [1, 52, 60],
+        [20, 51, 69]
+      ]
     },
     {
-      "copies": [2, 58],
-      "mirror": [53, 63]
+      "kind": "mirror",
+      "shapes": [
+        [2, 58],
+        [53, 63]
+      ]
     },
     {
-      "copies": [3, 4],
-      "mirror": [3, 4]
+      "kind": "mirror",
+      "shapes": [
+        [5, 46, 64],
+        [45, 55, 59]
+      ]
     },
     {
-      "copies": [5, 46, 64],
-      "mirror": [45, 55, 59]
+      "kind": "mirror",
+      "shapes": [
+        [6, 68],
+        [61, 67]
+      ]
     },
     {
-      "copies": [6, 68],
-      "mirror": [61, 67]
+      "kind": "mirror",
+      "shapes": [
+        [10, 12],
+        [15, 47]
+      ]
     },
     {
-      "copies": [7, 26],
-      "mirror": [7, 26]
+      "kind": "mirror",
+      "shapes": [
+        [11, 21],
+        [16, 41]
+      ]
     },
     {
-      "copies": [8, 42],
-      "mirror": [8, 42]
+      "kind": "mirror",
+      "shapes": [
+        [14, 39],
+        [19, 44]
+      ]
     },
     {
-      "copies": [9, 25, 56],
-      "mirror": [9, 25, 56]
+      "kind": "mirror",
+      "shapes": [
+        [18, 33],
+        [23, 28]
+      ]
     },
     {
-      "copies": [10, 12],
-      "mirror": [15, 47]
+      "kind": "mirror",
+      "shapes": [
+        [27, 35],
+        [30, 37]
+      ]
     },
     {
-      "copies": [11, 21],
-      "mirror": [16, 41]
+      "kind": "mirror",
+      "shapes": [
+        [29, 48],
+        [34, 43]
+      ]
     },
     {
-      "copies": [13, 38],
-      "mirror": [13, 38]
+      "kind": "mirror",
+      "shapes": [
+        [31, 57],
+        [36, 40]
+      ]
     },
     {
-      "copies": [14, 39],
-      "mirror": [19, 44]
+      "kind": "similar",
+      "shapes": [
+        [3, 4],
+        [13, 38]
+      ]
     },
     {
-      "copies": [17, 22],
-      "mirror": [17, 22]
+      "kind": "similar",
+      "shapes": [
+        [7, 26],
+        [9, 25, 56]
+      ]
     },
     {
-      "copies": [18, 33],
-      "mirror": [23, 28]
+      "kind": "similar",
+      "shapes": [
+        [17, 22],
+        [50, 65, 66]
+      ]
     },
     {
-      "copies": [24, 49, 54],
-      "mirror": [24, 49, 54]
+      "kind": "similar",
+      "shapes": [
+        [24, 49, 54],
+        [32, 62]
+      ]
     },
     {
-      "copies": [27, 35],
-      "mirror": [30, 37]
-    },
-    {
-      "copies": [29, 48],
-      "mirror": [34, 43]
-    },
-    {
-      "copies": [31, 57],
-      "mirror": [36, 40]
-    },
-    {
-      "copies": [32, 62],
-      "mirror": [32, 62]
-    },
-    {
-      "copies": [50, 65, 66],
-      "mirror": [50, 65, 66]
+      "kind": "single",
+      "shapes": [[8, 42]]
     }
   ],
   "cards": [

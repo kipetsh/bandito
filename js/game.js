@@ -22,8 +22,8 @@ const gameMenu = createMenu($('#gameMenuToggle'), $('#gameMenu'));
 // Current game state; multiplayer.js replaces it from the room snapshot.
 export const state = {
     all: [],
-    // The tunnel shapes from cards.json: the copies of each and of its mirror image, in the catalog order.
-    shapes: [],
+    // The tunnel shapes from cards.json in pairs (mirror, similar or a single shape), in the catalog order.
+    pairs: [],
     deck: [],
     hand: [],
     placed: [],
@@ -1715,7 +1715,7 @@ fetch('./resources/bandido-matrices/cards.json')
     })
     .then((d) => {
         state.all = d.cards.filter((c) => c.matrix);
-        state.shapes = d.shapes;
+        state.pairs = d.pairs;
         window.dispatchEvent?.(new Event('bandito:cards-ready'));
         document.querySelectorAll('[data-start]').forEach((b) => (b.disabled = false));
         $('#loadstate').classList.remove('hidden');
