@@ -751,22 +751,26 @@ function renderHand(canAct) {
         label.classList.toggle('hand-card--pointed', card.id === pointedCardId && !disabled);
         // The miniature is drawn again only when the card turns between upright and flat.
         if (label.dataset.upright !== String(upright)) {
-            const m = rotated(card.m, upright + handFlip(card.id)),
-                mini = document.createElement('span');
-            mini.className = 'hand-card__mini';
-            mini.style.cssText = `grid-template-columns:repeat(${m[0].length},var(--hand-card-size));grid-template-rows:repeat(${m.length},var(--hand-card-size))`;
-            m.flat().forEach((v) => {
-                const q = document.createElement('i');
-                q.className = 'hand-card__cell' + (v ? '' : ' hand-card__cell--wall');
-                mini.append(q);
-            });
             input.nextElementSibling?.remove();
-            label.append(mini);
+            label.append(createHandMini(rotated(card.m, upright + handFlip(card.id))));
             label.dataset.upright = upright;
         }
         // Kept cards are already in order: moving a node would drop its focus and hover.
         if (hand.children[i] !== label) hand.insertBefore(label, hand.children[i] ?? null);
     });
+}
+// The miniature of a hand card: the cells of the matrix as it is to be shown. The challenge editor draws its hand and
+// catalog with it; outside a hand card it passes the cell size.
+export function createHandMini(m, cell = 'var(--hand-card-size)') {
+    const mini = document.createElement('span');
+    mini.className = 'hand-card__mini';
+    mini.style.cssText = `grid-template-columns:repeat(${m[0].length},${cell});grid-template-rows:repeat(${m.length},${cell})`;
+    m.flat().forEach((v) => {
+        const q = document.createElement('i');
+        q.className = 'hand-card__cell' + (v ? '' : ' hand-card__cell--wall');
+        mini.append(q);
+    });
+    return mini;
 }
 const handInputs = () => [...$('#hand').querySelectorAll('input')];
 // The card under a hovering pointer (lit).

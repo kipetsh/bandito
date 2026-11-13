@@ -165,7 +165,8 @@
         bottom: 16px;
         display: flex;
         flex-direction: column;
-        width: min(400px, calc(100vw - 32px));
+        width: max-content;
+        max-width: calc(100vw - 32px);
         overflow: hidden;
         border: 1px solid var(--color-border-strong);
         border-radius: var(--radius-lg);
@@ -183,7 +184,7 @@
     /* A row for each shape, a column for each of its copies. */
     .challenge-editor__picker-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(3, max-content);
         align-content: start;
         gap: var(--space-2);
         min-height: 0;
@@ -407,16 +408,21 @@
         line-height: 1.1;
     }
 
+    /* The start hand repeats the game's: three upright cards share the width as in the game panel. */
     .challenge-editor__hand-slots {
+        --hand-card-cell: calc((100cqw - 2 * var(--space-4) - 1px) / 9);
+
+        container-type: inline-size;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: var(--space-2);
+        gap: var(--space-4);
     }
 
     .challenge-editor__hand-slot-wrap {
         display: grid;
+        align-content: start;
         justify-items: center;
-        gap: 5px;
+        gap: var(--space-1);
         min-width: 0;
     }
 
@@ -438,8 +444,7 @@
         transition: background 120ms ease;
     }
 
-    .challenge-editor__slot:hover,
-    .challenge-editor__slot.is-active {
+    .challenge-editor__slot:hover {
         border-style: solid;
         background: var(--color-surface-selected);
     }

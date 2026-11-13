@@ -2,6 +2,7 @@ import {
     beginChallenge,
     centerCamera,
     clone,
+    createHandMini,
     normalizeChallengeArray,
     render as renderGameBoard,
     rotateMatrix,
@@ -671,8 +672,8 @@ function closePicker() {
 
 // The catalog is a group of radios for one card (the board, a hand slot) and of checkboxes for the deck. Either way
 // it is one stop for Tab, the arrows move between the cards, and Tab goes on to the buttons below.
-// The catalog has a row for each tunnel shape, in the pairs of cards.json: a shape and then its mirror image, then
-// two similar symmetric shapes. A row holds a tile for each copy of the shape, free ones first; a copy on the board
+// The catalog has a row for each tunnel shape: the shapes of three copies, then of two, each group in the pairs of
+// cards.json (a shape and then its mirror image, then two similar symmetric shapes). A row holds a tile for each copy of the shape, free ones first; a copy on the board
 // or in the hand stays in its place dimmed and disabled, so the rows never move.
 function renderPicker() {
     const grid = root.querySelector('[data-picker-grid]');
@@ -684,11 +685,19 @@ function renderPicker() {
         ...draft.hand.filter((id, index) => id !== null && (pickerMode !== 'hand' || index !== pickerSlot)),
     ]);
     const current = pickerMode === 'hand' ? draft.hand[pickerSlot] : null;
+    // The cards stand upright and are as large as in the hand: a hand place is three cells wide.
+    const cell =
+        document.querySelector('#play [data-hand-slots] .hand-card').firstElementChild.getBoundingClientRect().width /
+            3 +
+        'px';
+    const rows = [];
     for (const { kind, shapes } of state.pairs) {
         const matrix = cardById(shapes[0][0]).matrix;
-        catalogRow(shapes[0], matrix);
-        if (shapes[1]) catalogRow(shapes[1], pairedMatrix(kind, matrix, cardById(shapes[1][0]).matrix));
+        rows.push([shapes[0], matrix]);
+        if (shapes[1]) rows.push([shapes[1], pairedMatrix(kind, matrix, cardById(shapes[1][0]).matrix)]);
     }
+    // The shapes with more copies come first; the sort is stable, so the pairs keep their order within each group.
+    for (const [copies, shown] of rows.sort((a, b) => b[0].length - a[0].length)) catalogRow(copies, shown);
     if (several) rovePickerFocus(pickerInputs()[0]);
 
     // The free copies go first, the highest number first, as a card goes to the board; empty cells fill the row.
@@ -711,7 +720,7 @@ function renderPicker() {
         input.disabled = used;
         input.checked = several ? !used && draft.deck.has(id) : id === current;
         input.setAttribute('aria-label', 'Карта #' + id);
-        label.append(input, createCardPreview(shown, 'challenge-editor__catalog-preview', 16));
+        label.append(input, createHandMini(rotateMatrix(shown, 1), cell));
         return label;
     }
 }
@@ -817,20 +826,27 @@ function renderHandSlots() {
     draft.hand.forEach((id, index) => {
         const slot = document.createElement('div');
         slot.className = 'challenge-editor__hand-slot-wrap';
+        // A card of the game's hand, upright as on a wide screen; an empty place is a dashed card of the same size.
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'challenge-editor__slot' + (draft.activeHandSlot === index ? ' is-active' : '');
+        button.className = 'hand-card';
         button.dataset.handSlot = String(index);
         button.setAttribute(
             'aria-label',
             id === null ? 'Добавить карту в слот ' + (index + 1) : 'Изменить карту в слоте ' + (index + 1)
         );
         if (id === null) {
-            button.innerHTML = '<span class="icon icon--plus challenge-editor__slot-plus" aria-hidden="true"></span>';
+            button.innerHTML =
+                '<span class="hand-card__slot"><span class="icon icon--plus" aria-hidden="true"></span></span>';
         } else {
-            const card = cardById(id);
-            button.append(createCardPreview(card.matrix));
+            button.append(createHandMini(rotateMatrix(cardById(id).matrix, 1)));
         }
+        // As in the game, a hovering pointer lights the card; touch does not hover.
+        button.addEventListener(
+            'pointerenter',
+            (event) => event.pointerType !== 'touch' && button.classList.add('hand-card--pointed')
+        );
+        button.addEventListener('pointerleave', () => button.classList.remove('hand-card--pointed'));
         slot.append(button);
         if (id !== null) {
             const clear = document.createElement('button');

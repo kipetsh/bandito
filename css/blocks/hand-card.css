@@ -45,8 +45,15 @@
        placed from the keyboard keeps the ring (--ringed, set by JS) while the focus is in the placements. The cards'
        paddings and the hand's own leave room for the ring. */
     .hand-card:has(:focus-visible) .hand-card__mini,
-    .hand-card--ringed .hand-card__mini {
+    .hand-card--ringed .hand-card__mini,
+    .hand-card:focus-visible .hand-card__mini,
+    .hand-card:focus-visible .hand-card__slot {
         box-shadow: 0 0 0 3px var(--color-focus);
+    }
+
+    /* The challenge editor's hand is made of buttons: the ring goes round the miniature, as in the game. */
+    .hand-card:focus-visible {
+        outline: none;
     }
 
     /* The selected card has a thin bar under it, on the line of the bottom edges of the other cards: the lifted
@@ -99,6 +106,27 @@
         transition:
             background var(--duration-fast),
             border-color var(--duration-fast);
+    }
+
+    /* An empty place in the challenge editor's hand: a dashed card of a miniature's size (three cells by six, as
+       an upright card) with a plus. */
+    .hand-card__slot {
+        display: grid;
+        place-items: center;
+        width: calc(3 * var(--hand-card-size));
+        height: calc(6 * var(--hand-card-size));
+        border: 1px dashed var(--color-border-strong);
+        border-radius: var(--radius-xs);
+        background: var(--color-surface-sunken);
+        color: var(--color-text-secondary);
+        transition:
+            background var(--duration-fast),
+            border-color var(--duration-fast);
+    }
+
+    .hand-card--pointed .hand-card__slot {
+        border-color: var(--color-border-hover);
+        background: var(--color-surface-hover);
     }
 
     /* A card just drawn from the deck rises by a quarter of its height into the slot of the played card and fades in;
