@@ -308,9 +308,11 @@
         padding: 20px clamp(16px, 4.7vw, 78px);
     }
 
+    /* The fields share a line; the difficulty switch keeps its options roomy and moves to a line of its own when
+       they do not fit. */
     .challenge-editor__metadata-bar {
-        display: grid;
-        grid-template-columns: minmax(160px, 1fr) minmax(180px, 1.25fr) minmax(230px, 1.15fr);
+        display: flex;
+        flex-wrap: wrap;
         gap: var(--space-2) var(--space-3);
         margin-bottom: var(--space-3);
         padding: var(--space-3) var(--space-4);
@@ -524,15 +526,28 @@
         cursor: pointer;
     }
 
-    /* Each field takes two rows of the bar, so the captions share one line and the controls another,
-       although the difficulty switch is taller than a text input. */
+    /* The captions share one line and the controls are centred below them, although the difficulty switch is
+       taller than a text input. */
     .challenge-editor__field,
     .challenge-editor__difficulty-wrap {
         display: grid;
-        grid-row: span 2;
-        grid-template-rows: subgrid;
+        grid-template-rows: auto 1fr;
+        gap: var(--space-2);
         align-items: center;
         min-width: 0;
+    }
+
+    .challenge-editor__field {
+        flex: 1 1 200px;
+    }
+
+    .challenge-editor__field--wide {
+        flex-grow: 1.25;
+    }
+
+    .challenge-editor__difficulty-wrap {
+        flex: 0 0 auto;
+        --segmented-min-width: max-content;
     }
 
     .challenge-editor__piece {
@@ -546,14 +561,6 @@
     }
 
     @media (max-width: 980px) and (min-width: 761px) {
-        .challenge-editor__metadata-bar {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .challenge-editor__metadata-bar .challenge-editor__difficulty-wrap {
-            grid-column: 1 / -1;
-        }
-
         .challenge-editor__layout {
             grid-template-columns: minmax(0, 1fr) 250px;
         }

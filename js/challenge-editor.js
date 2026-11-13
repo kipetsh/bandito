@@ -211,7 +211,7 @@ function createEditorChrome() {
     editorMetadata.innerHTML =
         '<label class="challenge-editor__field"><span class="caption">Название испытания</span>' +
         '<input class="input" type="text" maxlength="60" placeholder="Например, узкий тоннель" data-field="title"></label>' +
-        '<label class="challenge-editor__field"><span class="caption">Описание</span>' +
+        '<label class="challenge-editor__field challenge-editor__field--wide"><span class="caption">Описание</span>' +
         '<input class="input" type="text" maxlength="240" placeholder="Кратко опиши задачу" data-field="description"></label>' +
         '<div class="challenge-editor__difficulty-wrap"><span class="caption">Сложность</span>' +
         '<div class="segmented" role="radiogroup" aria-label="Сложность испытания">' +

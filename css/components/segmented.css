@@ -1,6 +1,8 @@
 /* Segmented control: a native radio group drawn as one pill with a sliding bubble under the checked option.
    Markup: .segmented > span.segmented__bubble + label.segmented__option > input.segmented__input + text.
-   The bubble follows the checked radio in CSS, so the script only checks a radio. Up to four options. */
+   The bubble follows the checked radio in CSS, so the script only checks a radio. Up to four options.
+   --segmented-min-width: max-content keeps every option wide enough for its label and padding; the options stay
+   equal, so the control is then as wide as its widest option times their number. */
 @layer components {
     .segmented {
         --segmented-count: 3;
@@ -11,7 +13,7 @@
         align-items: center;
         gap: 2px;
         width: 100%;
-        min-width: 0;
+        min-width: var(--segmented-min-width, 0);
         padding: var(--space-1);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-full);
