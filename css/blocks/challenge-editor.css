@@ -219,15 +219,14 @@
         outline-offset: 2px;
     }
 
-    /* The picture is centred on the card, the numbers of the shape's free copies stand at its left in a column. */
+    /* The picture is centred on the card, the number of the shape's free copies stands in its corner. */
     .challenge-editor__catalog-preview,
-    .challenge-editor__catalog-ids {
+    .challenge-editor__catalog-count {
         grid-area: card;
     }
 
-    .challenge-editor__catalog-ids {
+    .challenge-editor__catalog-count {
         place-self: start;
-        white-space: pre-line;
     }
 
     .challenge-editor__catalog-mark {

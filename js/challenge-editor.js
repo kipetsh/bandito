@@ -698,11 +698,14 @@ function renderPicker() {
         input.indeterminate = several && inDeck > 0 && inDeck < free.length;
         const numbers = free.map((id) => '#' + id);
         input.setAttribute('aria-label', 'Карта ' + numbers.join(', '));
-        const ids = document.createElement('span');
-        ids.className = 'caption challenge-editor__catalog-ids';
-        ids.setAttribute('aria-hidden', 'true');
-        ids.textContent = numbers.join('\n');
-        label.append(input, ids, createCardPreview(shown, 'challenge-editor__catalog-preview', 20));
+        label.append(input, createCardPreview(shown, 'challenge-editor__catalog-preview', 20));
+        if (free.length > 1) {
+            const count = document.createElement('span');
+            count.className = 'caption challenge-editor__catalog-count';
+            count.setAttribute('aria-hidden', 'true');
+            count.textContent = '×' + free.length;
+            label.append(count);
+        }
         if (several) {
             const mark = document.createElement('span');
             mark.className = 'icon challenge-editor__catalog-mark';
