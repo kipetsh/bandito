@@ -220,6 +220,9 @@ function createEditorChrome() {
         '<label class="segmented__option"><input class="visually-hidden" type="radio" name="editorExits" value="5" data-editor-exits>Стандартная</label>' +
         '<label class="segmented__option"><input class="visually-hidden" type="radio" name="editorExits" value="6" data-editor-exits>Сложная</label>' +
         '</div></div>';
+    // Checked before the switch is on the page: checked later, after the board render has laid it out, its bubble
+    // would slide in from the first option.
+    editorMetadata.querySelector(`[data-editor-exits][value="${draft.exits}"]`).checked = true;
     play.insertBefore(editorMetadata, play.querySelector('.game__layout'));
 }
 
