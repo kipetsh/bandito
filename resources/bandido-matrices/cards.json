@@ -11,6 +11,89 @@
   "order": "top to bottom, original orientation, duplicates retained",
   "startCards": "Topology only: prison room abstracted as connected passages",
   "backCard": "Card 70 is a card back and has matrix=null",
+  "shapesNote": "Tunnel shapes, sorted by the lowest card ID: copies are the same card up to a 180° turn, mirror lists the copies of its left-right reflection (the copies themselves for a symmetric shape). A pair is listed once, the shape with the lower ID first.",
+  "shapes": [
+    {
+      "copies": [1, 52, 60],
+      "mirror": [20, 51, 69]
+    },
+    {
+      "copies": [2, 58],
+      "mirror": [53, 63]
+    },
+    {
+      "copies": [3, 4],
+      "mirror": [3, 4]
+    },
+    {
+      "copies": [5, 46, 64],
+      "mirror": [45, 55, 59]
+    },
+    {
+      "copies": [6, 68],
+      "mirror": [61, 67]
+    },
+    {
+      "copies": [7, 26],
+      "mirror": [7, 26]
+    },
+    {
+      "copies": [8, 42],
+      "mirror": [8, 42]
+    },
+    {
+      "copies": [9, 25, 56],
+      "mirror": [9, 25, 56]
+    },
+    {
+      "copies": [10, 12],
+      "mirror": [15, 47]
+    },
+    {
+      "copies": [11, 21],
+      "mirror": [16, 41]
+    },
+    {
+      "copies": [13, 38],
+      "mirror": [13, 38]
+    },
+    {
+      "copies": [14, 39],
+      "mirror": [19, 44]
+    },
+    {
+      "copies": [17, 22],
+      "mirror": [17, 22]
+    },
+    {
+      "copies": [18, 33],
+      "mirror": [23, 28]
+    },
+    {
+      "copies": [24, 49, 54],
+      "mirror": [24, 49, 54]
+    },
+    {
+      "copies": [27, 35],
+      "mirror": [30, 37]
+    },
+    {
+      "copies": [29, 48],
+      "mirror": [34, 43]
+    },
+    {
+      "copies": [31, 57],
+      "mirror": [36, 40]
+    },
+    {
+      "copies": [32, 62],
+      "mirror": [32, 62]
+    },
+    {
+      "copies": [50, 65, 66],
+      "mirror": [50, 65, 66]
+    }
+  ],
   "cards": [
     {
       "id": 1,

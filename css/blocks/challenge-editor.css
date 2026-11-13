@@ -193,9 +193,10 @@
     .challenge-editor__catalog-card {
         position: relative;
         display: grid;
+        align-content: center;
         place-items: center;
+        gap: var(--space-2);
         min-width: 0;
-        min-height: 88px;
         padding: var(--space-3);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
@@ -223,6 +224,11 @@
         justify-self: center;
     }
 
+    /* The numbers of the shape's free copies, a row above its picture. */
+    .challenge-editor__catalog-ids {
+        justify-self: start;
+    }
+
     .challenge-editor__catalog-mark {
         position: absolute;
         top: 8px;
@@ -234,6 +240,11 @@
 
     .challenge-editor__catalog-card:has(:checked) .challenge-editor__catalog-mark {
         --icon-image: url('@tabler-size/16/outline/check.svg');
+    }
+
+    /* Some of the shape's copies are in the deck, some are not. */
+    .challenge-editor__catalog-card:has(:indeterminate) .challenge-editor__catalog-mark {
+        --icon-image: url('@tabler-size/16/outline/minus.svg');
     }
 
     .challenge-editor__picker-footer {

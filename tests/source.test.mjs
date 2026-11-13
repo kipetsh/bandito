@@ -370,6 +370,40 @@ test('the card data is structurally valid and contains all supported starting ca
     assert.equal(starts.get(71), 6, 'Six-exit start card is missing');
 });
 
+test('the shapes table groups every tunnel card with its copies and its mirror image', () => {
+    const data = JSON.parse(readFileSync(resolve(projectRoot, 'resources/bandido-matrices/cards.json'), 'utf8'));
+    const matrices = new Map(data.cards.filter((card) => card.kind === 'tunnel').map((card) => [card.id, card.matrix]));
+    const key = (m) => m.map((row) => row.join('')).join('/');
+    const turned = (m) => [...m].reverse().map((row) => [...row].reverse());
+    const flipped = (m) => m.map((row) => [...row].reverse());
+    // The same card up to the 180° turn that keeps a card lying lengthwise.
+    const same = (a, b) => key(a) === key(b) || key(a) === key(turned(b));
+    const listed = [];
+    let previous = 0;
+    for (const { copies, mirror } of data.shapes) {
+        const first = matrices.get(copies[0]);
+        for (const id of copies) assert.ok(same(matrices.get(id), first), `Card ${id} is not a copy of ${copies[0]}`);
+        for (const id of mirror)
+            assert.ok(same(matrices.get(id), flipped(first)), `Card ${id} is not the mirror of ${copies[0]}`);
+        const symmetric = mirror[0] === copies[0];
+        assert.equal(symmetric, same(first, flipped(first)), `Card ${copies[0]} has a wrong mirror`);
+        assert.ok(Math.min(...copies) < (symmetric ? Infinity : Math.min(...mirror)), 'The lower shape goes first');
+        assert.ok(Math.min(...copies) > previous, 'Shapes are sorted by their lowest card');
+        previous = Math.min(...copies);
+        listed.push(...copies, ...(symmetric ? [] : mirror));
+    }
+    assert.deepEqual(
+        listed.sort((a, b) => a - b),
+        [...matrices.keys()].sort((a, b) => a - b),
+        'Every tunnel card is listed once'
+    );
+    // Copies of different shapes are different cards.
+    const shapes = data.shapes.flatMap(({ copies, mirror }) => (mirror[0] === copies[0] ? [copies] : [copies, mirror]));
+    for (const [i, a] of shapes.entries())
+        for (const b of shapes.slice(i + 1))
+            assert.ok(!same(matrices.get(a[0]), matrices.get(b[0])), `Cards ${a[0]} and ${b[0]} are copies`);
+});
+
 test('settings modal reveals a static backdrop blur without animating the filter', () => {
     const css = readFileSync(resolve(projectRoot, 'css/blocks/modal.css'), 'utf8');
     const keyframesStart = css.indexOf('@keyframes settings-backdrop-in');

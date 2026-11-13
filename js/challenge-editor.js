@@ -658,37 +658,70 @@ function closePicker() {
 
 // The catalog is a group of radios for one card (the board, a hand slot) and of checkboxes for the deck. Either way
 // it is one stop for Tab, the arrows move between the cards, and Tab goes on to the buttons below.
+// The catalog shows each tunnel shape once, numbered with its copies still free, and its mirror image right of it.
+// The rows keep the order of the shapes in cards.json, by the lowest number of the pair, whichever copies are left;
+// a symmetric shape, and a shape whose mirror is all used, leave the right cell empty.
 function renderPicker() {
     const grid = root.querySelector('[data-picker-grid]');
     grid.replaceChildren();
     const several = pickerMode === 'deck';
     grid.setAttribute('role', several ? 'group' : 'radiogroup');
-    const boardIds = new Set(draft.board.map((piece) => piece.id));
-    const handIds = new Set(
-        draft.hand.filter((id, index) => id !== null && (pickerMode !== 'hand' || index !== pickerSlot))
-    );
+    const taken = new Set([
+        ...draft.board.map((piece) => piece.id),
+        ...draft.hand.filter((id, index) => id !== null && (pickerMode !== 'hand' || index !== pickerSlot)),
+    ]);
     const current = pickerMode === 'hand' ? draft.hand[pickerSlot] : null;
-    tunnelCards().forEach((card) => {
-        if (boardIds.has(card.id) || handIds.has(card.id)) return;
+    for (const shape of state.shapes) {
+        const matrix = cardById(shape.copies[0]).matrix,
+            symmetric = shape.mirror[0] === shape.copies[0],
+            left = catalogCard(shape.copies, matrix),
+            right = symmetric
+                ? null
+                : catalogCard(
+                      shape.mirror,
+                      matrix.map((row) => [...row].reverse())
+                  );
+        if (!left && !right) continue;
+        grid.append(left || catalogGap(), right || catalogGap());
+    }
+    if (several) rovePickerFocus(pickerInputs()[0]);
+
+    // A shape's tile: a radio for its first free copy (or the hand slot's own card), or a checkbox for all of them.
+    function catalogCard(copies, shown) {
+        const free = copies.filter((id) => !taken.has(id));
+        if (!free.length) return null;
         const label = document.createElement('label');
         label.className = 'challenge-editor__catalog-card';
         const input = document.createElement('input');
         input.type = several ? 'checkbox' : 'radio';
         input.name = 'catalogCard';
-        input.value = String(card.id);
+        input.value = String(free.includes(current) ? current : free[0]);
+        input.dataset.cardIds = free.join(' ');
         input.className = 'visually-hidden';
-        input.checked = several ? draft.deck.has(card.id) : card.id === current;
-        input.setAttribute('aria-label', 'Карта ' + card.id);
-        label.append(input, createCardPreview(card.matrix, 'challenge-editor__catalog-preview', 20));
+        const inDeck = free.filter((id) => draft.deck.has(id)).length;
+        input.checked = several ? inDeck === free.length : free.includes(current);
+        input.indeterminate = several && inDeck > 0 && inDeck < free.length;
+        const numbers = free.map((id) => '#' + id).join(', ');
+        input.setAttribute('aria-label', 'Карта ' + numbers);
+        const ids = document.createElement('span');
+        ids.className = 'caption challenge-editor__catalog-ids';
+        ids.setAttribute('aria-hidden', 'true');
+        ids.textContent = numbers;
+        label.append(input, ids, createCardPreview(shown, 'challenge-editor__catalog-preview', 20));
         if (several) {
             const mark = document.createElement('span');
             mark.className = 'icon challenge-editor__catalog-mark';
             mark.setAttribute('aria-hidden', 'true');
             label.append(mark);
         }
-        grid.append(label);
-    });
-    if (several) rovePickerFocus(pickerInputs()[0]);
+        return label;
+    }
+}
+
+function catalogGap() {
+    const gap = document.createElement('span');
+    gap.setAttribute('aria-hidden', 'true');
+    return gap;
 }
 
 const pickerInputs = () => [...root.querySelectorAll('[data-picker-grid] input')];
@@ -733,13 +766,16 @@ function handlePickerChange(event) {
     const input = event.target;
     if (input.type === 'checkbox') {
         rovePickerFocus(input);
-        toggleDeckCard(Number(input.value), input.checked);
+        toggleDeckCards(input.dataset.cardIds.split(' ').map(Number), input.checked);
     } else if (!pickerArrow) chooseCatalogCard(Number(input.value));
 }
 
-function toggleDeckCard(id, inDeck) {
-    if (inDeck) draft.deck.add(id);
-    else draft.deck.delete(id);
+// A shape's checkbox takes all its free copies into the deck or out of it.
+function toggleDeckCards(ids, inDeck) {
+    for (const id of ids) {
+        if (inDeck) draft.deck.add(id);
+        else draft.deck.delete(id);
+    }
     renderDeck();
     updateSaveButton();
 }
