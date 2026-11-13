@@ -185,7 +185,7 @@ function createEditorChrome() {
     editorPanel.className = 'challenge-editor__tools';
     editorPanel.innerHTML =
         '<section class="challenge-editor__tool-group">' +
-        '<h3>Инструменты</h3>' +
+        '<h3>Карты</h3>' +
         '<div class="challenge-editor__tool-grid">' +
         '<button class="challenge-editor__tool" type="button" data-picker-open="board">' +
         '<span class="icon icon--plus challenge-editor__tool-icon" aria-hidden="true"></span><span class="challenge-editor__tool-label">Добавить</span></button>' +
