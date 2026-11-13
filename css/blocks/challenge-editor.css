@@ -165,7 +165,7 @@
         bottom: 16px;
         display: flex;
         flex-direction: column;
-        width: min(440px, calc(100vw - 32px));
+        width: min(400px, calc(100vw - 32px));
         overflow: hidden;
         border: 1px solid var(--color-border-strong);
         border-radius: var(--radius-lg);
@@ -180,9 +180,10 @@
         border-bottom: 1px solid var(--color-border);
     }
 
+    /* A row for each shape, a column for each of its copies. */
     .challenge-editor__picker-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         align-content: start;
         gap: var(--space-2);
         min-height: 0;
@@ -193,10 +194,9 @@
     .challenge-editor__catalog-card {
         position: relative;
         display: grid;
-        grid-template-areas: 'card';
         place-items: center;
         min-width: 0;
-        padding: var(--space-3);
+        padding: var(--space-2);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
         background: var(--color-surface);
@@ -206,16 +206,14 @@
         cursor: pointer;
     }
 
-    /* A label around a hidden radio or checkbox: the checked card is lit like a hovered one, and the focus ring goes
+    /* A label around a hidden radio or checkbox: hover moves halfway to the checked look, and the focus ring goes
        on the card. */
     .challenge-editor__catalog-card:hover {
         border-color: var(--color-border-hover);
         background: var(--color-surface-hover);
     }
 
-    /* A radio in a group with nothing checked is :indeterminate too, so only a deck checkbox counts as partly in. */
-    .challenge-editor__catalog-card:has(:checked),
-    .challenge-editor__catalog-card:has([type='checkbox']:indeterminate) {
+    .challenge-editor__catalog-card:has(:checked) {
         border-color: var(--color-border-strong);
         background: var(--color-surface-selected);
     }
@@ -225,33 +223,12 @@
         outline-offset: 2px;
     }
 
-    /* The picture is centred on the card, the number of the shape's free copies stands in its corner. */
-    .challenge-editor__catalog-preview,
-    .challenge-editor__catalog-count {
-        grid-area: card;
-    }
-
-    .challenge-editor__catalog-count {
-        place-self: start;
-    }
-
-    /* The deck tile's marks stand in its corner one under another. */
-    .challenge-editor__catalog-marks {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        display: flex;
-        flex-direction: column;
-        color: var(--color-text-strong);
-    }
-
-    .challenge-editor__catalog-mark {
-        --icon-size: 16px;
-        --icon-image: url('@tabler-size/16/outline/plus.svg');
-    }
-
-    .challenge-editor__catalog-mark--in {
-        --icon-image: url('@tabler-size/16/outline/check.svg');
+    /* A tile is free, checked or used: a copy on the board or in the hand keeps its place in the row, but cannot be
+       picked. */
+    .challenge-editor__catalog-card--used {
+        opacity: 0.4;
+        cursor: default;
+        pointer-events: none;
     }
 
     .challenge-editor__picker-footer {

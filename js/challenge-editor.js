@@ -671,9 +671,9 @@ function closePicker() {
 
 // The catalog is a group of radios for one card (the board, a hand slot) and of checkboxes for the deck. Either way
 // it is one stop for Tab, the arrows move between the cards, and Tab goes on to the buttons below.
-// The catalog shows each tunnel shape once, numbered with its copies still free, in the pairs of cards.json: a shape
-// and its mirror image first, then two similar symmetric shapes. The rows keep that order whichever copies are left; a
-// single shape, and one whose pair is all used, leave the other cell empty.
+// The catalog has a row for each tunnel shape, in the pairs of cards.json: a shape and then its mirror image, then
+// two similar symmetric shapes. A row holds a tile for each copy of the shape, free ones first; a copy on the board
+// or in the hand stays in its place dimmed and disabled, so the rows never move.
 function renderPicker() {
     const grid = root.querySelector('[data-picker-grid]');
     grid.replaceChildren();
@@ -685,48 +685,39 @@ function renderPicker() {
     ]);
     const current = pickerMode === 'hand' ? draft.hand[pickerSlot] : null;
     for (const { kind, shapes } of state.pairs) {
-        const matrix = cardById(shapes[0][0]).matrix,
-            left = catalogCard(shapes[0], matrix),
-            right = shapes[1] && catalogCard(shapes[1], pairedMatrix(kind, matrix, cardById(shapes[1][0]).matrix));
-        if (!left && !right) continue;
-        grid.append(left || catalogGap(), right || catalogGap());
+        const matrix = cardById(shapes[0][0]).matrix;
+        catalogRow(shapes[0], matrix);
+        if (shapes[1]) catalogRow(shapes[1], pairedMatrix(kind, matrix, cardById(shapes[1][0]).matrix));
     }
     if (several) rovePickerFocus(pickerInputs()[0]);
 
-    // A shape's tile: a radio for its last free copy (the highest number goes first, the tile keeps its lowest) or for
-    // the hand slot's own card, or a checkbox that counts its copies in the deck.
-    function catalogCard(copies, shown) {
-        const free = copies.filter((id) => !taken.has(id));
-        if (!free.length) return null;
-        const label = document.createElement('label');
-        label.className = 'challenge-editor__catalog-card';
+    // The free copies go first, the highest number first, as a card goes to the board; empty cells fill the row.
+    function catalogRow(copies, shown) {
+        const free = copies.filter((id) => !taken.has(id)).sort((a, b) => b - a),
+            tiles = [...free, ...copies.filter((id) => taken.has(id))].map((id) => catalogCard(id, shown));
+        grid.append(...tiles, ...Array.from({ length: CATALOG_COLUMNS - tiles.length }, catalogGap));
+    }
+
+    // A copy's tile: a radio for the board or the hand slot, a checkbox for the deck.
+    function catalogCard(id, shown) {
+        const used = taken.has(id),
+            label = document.createElement('label');
+        label.className = 'challenge-editor__catalog-card' + (used ? ' challenge-editor__catalog-card--used' : '');
         const input = document.createElement('input');
         input.type = several ? 'checkbox' : 'radio';
         input.name = 'catalogCard';
-        input.value = String(free.includes(current) ? current : free.at(-1));
-        input.dataset.cardIds = free.join(' ');
+        input.value = String(id);
         input.className = 'visually-hidden';
-        input.checked = !several && free.includes(current);
-        input.setAttribute('aria-label', 'Карта ' + free.map((id) => '#' + id).join(', '));
-        label.append(input, createCardPreview(shown, 'challenge-editor__catalog-preview', 20));
-        if (free.length > 1) {
-            const count = document.createElement('span');
-            count.className = 'caption challenge-editor__catalog-count';
-            count.setAttribute('aria-hidden', 'true');
-            count.textContent = '×' + free.length;
-            label.append(count);
-        }
-        if (several) {
-            const marks = document.createElement('span');
-            marks.className = 'challenge-editor__catalog-marks';
-            marks.setAttribute('aria-hidden', 'true');
-            marks.dataset.deckMarks = '';
-            label.append(marks);
-            showDeckCopies(input);
-        }
+        input.disabled = used;
+        input.checked = several ? !used && draft.deck.has(id) : id === current;
+        input.setAttribute('aria-label', 'Карта #' + id);
+        label.append(input, createCardPreview(shown, 'challenge-editor__catalog-preview', 16));
         return label;
     }
 }
+
+// As many copies as the commonest shape has.
+const CATALOG_COLUMNS = 3;
 
 // The right shape of a pair is drawn to match the left one: a mirror image as its reflection, a similar shape turned
 // the way that differs from it in fewer cells.
@@ -744,7 +735,7 @@ function catalogGap() {
     return gap;
 }
 
-const pickerInputs = () => [...root.querySelectorAll('[data-picker-grid] input')];
+const pickerInputs = () => [...root.querySelectorAll('[data-picker-grid] input:not(:disabled)')];
 
 // Checkboxes are each a Tab stop natively: only the one the arrows came to stays in the Tab order.
 function rovePickerFocus(active) {
@@ -786,37 +777,11 @@ function handlePickerChange(event) {
     const input = event.target;
     if (input.type === 'checkbox') {
         rovePickerFocus(input);
-        addDeckCopy(input.dataset.cardIds.split(' ').map(Number));
-        showDeckCopies(input);
+        if (input.checked) draft.deck.add(Number(input.value));
+        else draft.deck.delete(Number(input.value));
+        renderDeck();
+        updateSaveButton();
     } else if (!pickerArrow) chooseCatalogCard(Number(input.value));
-}
-
-// A shape's checkbox adds one more of its free copies to the deck, the lowest number first; once all of them are in,
-// it takes them all out.
-function addDeckCopy(ids) {
-    const next = ids.find((id) => !draft.deck.has(id));
-    if (next === undefined) for (const id of ids) draft.deck.delete(id);
-    else draft.deck.add(next);
-    renderDeck();
-    updateSaveButton();
-}
-
-// A deck tile has a check for each of its copies in the deck, or a plus when there are none; the checkbox is checked
-// with all of them in and mixed with some.
-function showDeckCopies(input) {
-    const ids = input.dataset.cardIds.split(' ').map(Number),
-        inDeck = ids.filter((id) => draft.deck.has(id)).length;
-    input.checked = inDeck === ids.length;
-    input.indeterminate = inDeck > 0 && inDeck < ids.length;
-    const marks = input.closest('label').querySelector('[data-deck-marks]');
-    marks.replaceChildren(
-        ...Array.from({ length: Math.max(inDeck, 1) }, () => {
-            const mark = document.createElement('span');
-            mark.className =
-                'icon challenge-editor__catalog-mark' + (inDeck ? ' challenge-editor__catalog-mark--in' : '');
-            return mark;
-        })
-    );
 }
 
 function chooseCatalogCard(id) {
