@@ -467,6 +467,27 @@
         background: var(--color-surface-selected);
     }
 
+    /* The add slot has the proportions of a card lying lengthwise, and the picked card fills it whole. */
+    .challenge-editor__slot--card {
+        align-self: center;
+        min-height: 0;
+        aspect-ratio: 2;
+    }
+
+    .challenge-editor__slot--filled {
+        padding: 0;
+        overflow: hidden;
+        border-style: solid;
+        border-color: var(--color-tile-outline);
+        border-radius: var(--radius-xs);
+    }
+
+    .challenge-editor__preview--fill {
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
     .challenge-editor__slot-plus {
         color: var(--color-text-secondary);
     }

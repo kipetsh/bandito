@@ -187,7 +187,7 @@ function createEditorChrome() {
         '<section class="challenge-editor__tool-group">' +
         '<h3>Карты</h3>' +
         '<div class="challenge-editor__tool-grid">' +
-        '<button class="challenge-editor__slot" type="button" data-picker-open="board"></button>' +
+        '<button class="challenge-editor__slot challenge-editor__slot--card" type="button" data-picker-open="board"></button>' +
         '<button class="challenge-editor__tool" type="button" data-tool="delete" disabled>' +
         '<span class="icon icon--backspace challenge-editor__tool-icon" aria-hidden="true"></span><span class="challenge-editor__tool-label">Удалить</span></button>' +
         '</div></section>' +
@@ -532,11 +532,13 @@ function syncEditorGameState() {
     renderGameBoard({ hand: false });
 }
 
+// A cell size in pixels, or '1fr' for a preview that fills its box.
 function createCardPreview(matrix, className = '', cellSize = 6) {
-    const preview = document.createElement('span');
+    const preview = document.createElement('span'),
+        cell = typeof cellSize === 'number' ? cellSize + 'px' : cellSize;
     preview.className = 'challenge-editor__preview ' + className;
-    preview.style.gridTemplateColumns = 'repeat(' + matrix[0].length + ', ' + cellSize + 'px)';
-    preview.style.gridTemplateRows = 'repeat(' + matrix.length + ', ' + cellSize + 'px)';
+    preview.style.gridTemplateColumns = 'repeat(' + matrix[0].length + ', ' + cell + ')';
+    preview.style.gridTemplateRows = 'repeat(' + matrix.length + ', ' + cell + ')';
     matrix.flat().forEach((value) => {
         const cell = document.createElement('i');
         cell.className = value ? 'challenge-editor__preview-cell' : 'challenge-editor__preview-cell is-wall';
@@ -545,18 +547,20 @@ function createCardPreview(matrix, className = '', cellSize = 6) {
     return preview;
 }
 
-// The add button is an empty card slot, and shows the card picked in the catalog until it is placed on the board.
+// The add button is an empty card slot, and turns into the card picked in the catalog until it is placed on the board.
 function renderBoardControls() {
     const canDelete = draft.selectedPiece !== null && draft.selectedPiece > 0 && draft.pendingCard === null;
     document.querySelector('#play [data-tool="delete"]').disabled = !canDelete;
     const add = document.querySelector('#play [data-picker-open="board"]');
-    add.classList.toggle('is-active', draft.pendingCard !== null);
+    add.classList.toggle('challenge-editor__slot--filled', draft.pendingCard !== null);
     if (draft.pendingCard === null) {
         add.setAttribute('aria-label', 'Добавить карту на поле');
         add.innerHTML = '<span class="icon icon--plus challenge-editor__slot-plus" aria-hidden="true"></span>';
     } else {
         add.setAttribute('aria-label', 'Выбрана карта #' + draft.pendingCard + ', выбрать другую');
-        add.replaceChildren(createCardPreview(cardById(draft.pendingCard).matrix));
+        add.replaceChildren(
+            createCardPreview(cardById(draft.pendingCard).matrix, 'challenge-editor__preview--fill', '1fr')
+        );
     }
 }
 
