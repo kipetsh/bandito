@@ -92,6 +92,8 @@
         --color-surface-sunken: #f4efe6cc;
         --color-surface-tint: #f0e9ddcc;
         --color-surface-selected: #f2dfc4cc;
+        /* A hovered item that can be selected: halfway to the selected surface. */
+        --color-surface-hover: #f9eddacc;
         --color-surface-icon: #ead3aecc;
         /* Dialogs, popovers and menus are opaque; only the game board and side panels are translucent. */
         --color-surface-dialog: #fff;
@@ -102,6 +104,7 @@
         /* Borders */
         --color-border: #ddc5a5;
         --color-border-strong: #a9794e;
+        --color-border-hover: #c39f7a;
 
         /* Controls */
         --color-control: #fff;
@@ -201,6 +204,7 @@
         --color-surface-sunken: #292d32e6;
         --color-surface-tint: #393e45e6;
         --color-surface-selected: #393e45e6;
+        --color-surface-hover: #2f3338e6;
         --color-surface-icon: #34383ee6;
         --color-surface-dialog: #292d32;
         --color-surface-dialog-hover: var(--color-surface-selected);
@@ -208,6 +212,7 @@
 
         --color-border: #464b52;
         --color-border-strong: #747b84;
+        --color-border-hover: #5d636b;
 
         --color-control: #34383e;
         --color-control-border: #555c65;

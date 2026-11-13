@@ -187,8 +187,7 @@ function createEditorChrome() {
         '<section class="challenge-editor__tool-group">' +
         '<h3>Карты</h3>' +
         '<div class="challenge-editor__tool-grid">' +
-        '<button class="challenge-editor__tool" type="button" data-picker-open="board">' +
-        '<span class="icon icon--plus challenge-editor__tool-icon" aria-hidden="true"></span><span class="challenge-editor__tool-label">Добавить</span></button>' +
+        '<button class="challenge-editor__slot" type="button" data-picker-open="board"></button>' +
         '<button class="challenge-editor__tool" type="button" data-tool="delete" disabled>' +
         '<span class="icon icon--backspace challenge-editor__tool-icon" aria-hidden="true"></span><span class="challenge-editor__tool-label">Удалить</span></button>' +
         '</div></section>' +
@@ -546,9 +545,19 @@ function createCardPreview(matrix, className = '', cellSize = 6) {
     return preview;
 }
 
+// The add button is an empty card slot, and shows the card picked in the catalog until it is placed on the board.
 function renderBoardControls() {
     const canDelete = draft.selectedPiece !== null && draft.selectedPiece > 0 && draft.pendingCard === null;
     document.querySelector('#play [data-tool="delete"]').disabled = !canDelete;
+    const add = document.querySelector('#play [data-picker-open="board"]');
+    add.classList.toggle('is-active', draft.pendingCard !== null);
+    if (draft.pendingCard === null) {
+        add.setAttribute('aria-label', 'Добавить карту на поле');
+        add.innerHTML = '<span class="icon icon--plus challenge-editor__slot-plus" aria-hidden="true"></span>';
+    } else {
+        add.setAttribute('aria-label', 'Выбрана карта #' + draft.pendingCard + ', выбрать другую');
+        add.replaceChildren(createCardPreview(cardById(draft.pendingCard).matrix));
+    }
 }
 
 function confirmPendingPlacement(option) {
@@ -841,14 +850,14 @@ function renderHandSlots() {
         slot.className = 'challenge-editor__hand-slot-wrap';
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'challenge-editor__hand-slot' + (draft.activeHandSlot === index ? ' is-active' : '');
+        button.className = 'challenge-editor__slot' + (draft.activeHandSlot === index ? ' is-active' : '');
         button.dataset.handSlot = String(index);
         button.setAttribute(
             'aria-label',
             id === null ? 'Добавить карту в слот ' + (index + 1) : 'Изменить карту в слоте ' + (index + 1)
         );
         if (id === null) {
-            button.innerHTML = '<span class="icon icon--plus challenge-editor__hand-plus" aria-hidden="true"></span>';
+            button.innerHTML = '<span class="icon icon--plus challenge-editor__slot-plus" aria-hidden="true"></span>';
         } else {
             const card = cardById(id);
             button.append(createCardPreview(card.matrix));

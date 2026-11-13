@@ -208,9 +208,14 @@
 
     /* A label around a hidden radio or checkbox: the checked card is lit like a hovered one, and the focus ring goes
        on the card. */
-    .challenge-editor__catalog-card:hover,
+    .challenge-editor__catalog-card:hover {
+        border-color: var(--color-border-hover);
+        background: var(--color-surface-hover);
+    }
+
+    /* A radio in a group with nothing checked is :indeterminate too, so only a deck checkbox counts as partly in. */
     .challenge-editor__catalog-card:has(:checked),
-    .challenge-editor__catalog-card:has(:indeterminate) {
+    .challenge-editor__catalog-card:has([type='checkbox']:indeterminate) {
         border-color: var(--color-border-strong);
         background: var(--color-surface-selected);
     }
@@ -438,7 +443,7 @@
         min-width: 0;
     }
 
-    .challenge-editor__hand-slot {
+    .challenge-editor__slot {
         position: relative;
         display: grid;
         place-items: center;
@@ -456,13 +461,13 @@
         transition: background 120ms ease;
     }
 
-    .challenge-editor__hand-slot:hover,
-    .challenge-editor__hand-slot.is-active {
+    .challenge-editor__slot:hover,
+    .challenge-editor__slot.is-active {
         border-style: solid;
         background: var(--color-surface-selected);
     }
 
-    .challenge-editor__hand-plus {
+    .challenge-editor__slot-plus {
         color: var(--color-text-secondary);
     }
 
@@ -597,7 +602,7 @@
             min-height: 50px;
         }
 
-        .challenge-editor__hand-slot {
+        .challenge-editor__slot {
             min-height: 58px;
         }
     }
