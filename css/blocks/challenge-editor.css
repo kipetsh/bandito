@@ -547,16 +547,13 @@
         min-width: 0;
     }
 
+    /* On one line the fields take all the room left and the difficulty switch keeps its least width: their growth
+       outweighs its own a thousand times. On a line of its own the switch is the only one to grow and spans it. */
     .challenge-editor__field {
-        flex: 1 1 200px;
+        flex: 1000 1 200px;
     }
 
-    .challenge-editor__field--wide {
-        flex-grow: 1.25;
-    }
-
-    /* The switch grows with the line like the fields, but does not shrink below the width at which its options keep
-       their least padding: the line wraps instead. */
+    /* Not narrower than at its options' least padding: the line wraps instead. */
     .challenge-editor__difficulty-wrap {
         flex: 1 1 auto;
         min-width: max-content;
