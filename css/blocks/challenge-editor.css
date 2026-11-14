@@ -294,8 +294,7 @@
         padding: 20px clamp(16px, 4.7vw, 78px);
     }
 
-    /* The fields share a line; the difficulty switch keeps its options roomy and moves to a line of its own when
-       they do not fit. */
+    /* The fields and the difficulty switch share a line; the switch moves to a line of its own when they do not fit. */
     .challenge-editor__metadata-bar {
         display: flex;
         flex-wrap: wrap;
@@ -556,8 +555,11 @@
         flex-grow: 1.25;
     }
 
+    /* The switch grows with the line like the fields, but does not shrink below the width at which its options keep
+       their least padding: the line wraps instead. */
     .challenge-editor__difficulty-wrap {
-        flex: 0 0 auto;
+        flex: 1 1 auto;
+        min-width: max-content;
         --segmented-min-width: max-content;
     }
 
